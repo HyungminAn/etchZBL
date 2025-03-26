@@ -1,0 +1,2 @@
+Adding bulk to the slab structure h (13.37 A) < h_min (30) A
+add_str_shoot_0.coo written

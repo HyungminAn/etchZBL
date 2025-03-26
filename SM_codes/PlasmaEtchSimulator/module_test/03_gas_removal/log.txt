@@ -1,0 +1,4 @@
+Cluster 1 : C1O2 is in byproduct list : True
+Cluster 2 : C1O2 is in byproduct list : True
+Cluster 3 : O2 is in byproduct list : True
+Cluster 4 : O2 is in byproduct list : True

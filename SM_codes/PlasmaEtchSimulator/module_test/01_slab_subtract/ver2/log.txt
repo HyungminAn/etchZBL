@@ -1,0 +1,2 @@
+CHF ratio 0.770 > 0.700 the number of atoms 804 > 700 Substracting bulk to the slab structure:
+save_str_shoot_0.coo written

@@ -1,0 +1,62 @@
+################################################################################
+#                                 basic inputs                                 #
+################################################################################
+units           metal
+newton          on
+dimension       3
+boundary        p p p
+atom_style 	    atomic
+
+#box tilt large
+read_data       input.data
+
+################################################################################
+#                                pair potential                                #
+################################################################################
+pair_style      e3gnn
+
+variable        element_list    string  "Si O C H F"
+pair_coeff      * * ${path_potential} ${element_list}
+
+variable        MASS_Si        equal   28.0855
+variable        MASS_O         equal   15.999
+variable        MASS_C         equal   12.011
+variable        MASS_H         equal   1.00784
+variable        MASS_F         equal   18.998
+mass    1   ${MASS_Si}
+mass    2   ${MASS_O}
+mass    3   ${MASS_C}
+mass    4   ${MASS_H}
+mass    5   ${MASS_F}
+
+neighbor 2 bin
+# When the neighbours list will be updated http://lammps.sandia.gov/doc/neigh_modify.html
+neigh_modify    every 10 delay 0 check yes
+# All atoms will be involved in the simulation http://lammps.sandia.gov/doc/compute.html
+compute 	_rg all gyration
+
+
+
+##########################################################
+# Minimize                                               #
+##########################################################
+
+variable    log_step    equal   1
+thermo      ${log_step}
+variable    path_dump   string  "relax.dump"
+
+dump        dMovie  all     custom  ${log_step} ${path_dump} &
+            id element xu yu zu  vx vy vz fx fy fz
+dump_modify dMovie  sort id time yes &
+            format line "%d %s %.15f %.15f %.15f %.3f %.3f %.3f %.3f %.3f %.3f"
+dump_modify dMovie  element  ${element_list}
+
+variable    etol       equal   0
+variable    ftol       equal   0.02
+variable    maxiter    equal   100000
+variable    maxeval    equal   100000
+
+min_style   cg
+minimize    ${etol} ${ftol} ${maxiter} ${maxeval}
+
+write_data  relaxed.coo

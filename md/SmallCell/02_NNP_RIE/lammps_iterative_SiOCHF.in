@@ -1,0 +1,182 @@
+################################################################################
+#                                 basic inputs                                 #
+################################################################################
+units           metal
+newton          on
+dimension       3
+boundary        p p f
+atom_style 	    atomic
+
+read_data       input.data
+
+################################################################################
+#                                pair potential                                #
+################################################################################
+pair_style      e3gnn
+
+variable        element_list    string  "Si O C H F"
+pair_coeff      * * ${path_potential} ${element_list}
+
+variable        MASS_Si        equal   28.0855
+variable        MASS_O         equal   15.999
+variable        MASS_C         equal   12.011
+variable        MASS_H         equal   1.00784
+variable        MASS_F         equal   18.998
+mass    1   ${MASS_Si}
+mass    2   ${MASS_O}
+mass    3   ${MASS_C}
+mass    4   ${MASS_H}
+mass    5   ${MASS_F}
+
+neighbor 2 bin
+# When the neighbours list will be updated http://lammps.sandia.gov/doc/neigh_modify.html
+neigh_modify    every 10 delay 0 check yes
+# All atoms will be involved in the simulation http://lammps.sandia.gov/doc/compute.html
+compute 	_rg all gyration
+
+################################################################################
+#                                  Fix bottom                                  #
+################################################################################
+variable    zFix        equal   2.0
+region      rFixed      block   INF INF INF INF 0.0 ${zFix}
+group       gBottom     region  rFixed
+velocity    gBottom     set     0.0 0.0 0.0
+fix         freeze_bottom   gBottom     setforce    0.0 0.0 0.0
+
+################################################################################
+#                                Modifications                                 #
+################################################################################
+fix         f_balance   all     balance     0 1.2 shift z 20 1.05 weight time 1
+fix         dt_fix      all     dt/reset    1   NULL 0.0005  0.1 emax 1 units box
+
+################################################################################
+#                                     LOGS                                     #
+################################################################################
+compute     POT_E       all pe
+
+variable    zTemp       equal   5.0
+region      rtemp       block   INF INF  INF INF  ${zTemp} INF
+group       gtemp       dynamic all  region rtemp
+#variable V_initial equal   -xxxxx  # angs/ps,sqrt(Ek/(0.5*(18.9984+1.008)*1e-3/6.02e23*6.242e18))/1e-10*1e-12
+compute     TEMP        gtemp   temp
+compute_modify  TEMP    dynamic/dof     yes
+compute     KIN_E       gtemp   ke
+variable    myTEMP      equal   c_TEMP
+
+# "compute count/type" is available after LAMMPS version 15Jun2023.
+# See "https://docs.lammps.org/compute_count_type.html"
+compute     atom_count  all  count/type  atom
+
+thermo          0
+thermo_modify   lost ignore  flush yes
+
+################################################################################
+#                             Molecule Insertions                              #
+################################################################################
+variable    ION_MASS        equal   "my_ion_mass"
+variable    ION_KE          equal   my_ion_kE
+variable    PATH_MOL_ION    string  "path_my_mol_path"
+
+variable    N_INSERT        equal   50
+variable    stepInnerLoop   equal   200
+variable    N_InnerLoop     equal   50
+variable    zInsertMin      equal   18.0
+variable    zInsertMax      equal   19.0
+
+variable    DepoInsertNum   equal   1
+variable    DepoInsertFreq  equal   10000000
+variable    DepoNearCutoff  equal   4.0
+variable    DepoAttemptMax  equal   1000
+variable    zEvaporate      equal   17.0
+variable    freqEvapCheck   equal   1000
+variable    EvapDelNum      equal   100
+variable    log_step  equal   20
+
+variable    T_NVT           equal   300.0
+variable    T_NVT_damp      equal   0.1
+variable    T_NVT_crit      equal   350.0
+variable    step_NVT        equal   100000
+variable    freqHaltCheck   equal   1000
+
+region      rIncident  block   EDGE EDGE  EDGE EDGE  ${zInsertMin} ${zInsertMax}
+region      rUpper      block   INF INF  INF INF  ${zEvaporate} INF
+molecule    mol_ion      ${PATH_MOL_ION}  toff 0
+
+# Start of i-th loop
+label       loop_i
+    variable    i       loop    ${N_INSERT}
+
+    ############################################################################
+    #         Setting dumps and print for thermodynamic quantities             #
+    ############################################################################
+    fix         PrintTherm  all print 100 "" file thermo_${i}.dat screen no title &
+                "STEP TIME TEMP POT_E KIN_E etotal num_Si num_O num_C num_H num_F"
+    unfix       PrintTherm
+
+    fix         PrintTherm  all print ${log_step} &
+                "$(step) $(time) $(c_TEMP) $(c_POT_E) $(c_KIN_E) $(etotal) $(c_atom_count[1]) $(c_atom_count[2]) $(c_atom_count[3]) $(c_atom_count[4]) $(c_atom_count[5])" &
+                append thermo_${i}.dat screen no
+
+    dump        dMovie  all     custom  ${log_step}   dump_${i}.lammps &
+                id element xu yu zu  vx vy vz fx fy fz
+    dump_modify dMovie  sort id time yes &
+                format line "%d %s %.15f %.15f %.15f %.3f %.3f %.3f %.3f %.3f %.3f"
+    dump_modify dMovie  element  ${element_list}
+
+    ################################################################################
+    #                            Incidence & evaporate                             #
+    ################################################################################
+    variable    V_initial       equal   $(sqrt((v_ION_KE*1.6e-19)/(0.5*v_ION_MASS*1e-3/6.02e23))*1e10/1e12)
+    variable    angle_incidence equal   $(abs(random(0,75,v_SEEDS)/180*PI))
+    variable    angle_phi       equal   $(random(0,360,v_SEEDS)/180*PI)
+    variable    vel_Z           equal   $(-v_V_initial*cos(v_angle_incidence))
+    variable    vel_X           equal   $(-v_V_initial*sin(v_angle_incidence)*cos(v_angle_phi))
+    variable    vel_Y           equal   $(-v_V_initial*sin(v_angle_incidence)*sin(v_angle_phi))
+    variable    pos_seed        equal   $(round(random(1,10000,v_SEEDS)))
+
+    fix         fDepo           all     deposit  ${DepoInsertNum}  0  ${DepoInsertFreq}  &
+                ${pos_seed}  region rIncident  near  ${DepoNearCutoff}  mol mol_ion &
+                vx $(v_vel_X) $(v_vel_X) &
+                vy $(v_vel_Y) $(v_vel_Y) &
+                vz $(v_vel_Z) $(v_vel_Z) attempt ${DepoAttemptMax}
+
+    fix         fEvap       all     evaporate ${freqEvapCheck} ${EvapDelNum} rUpper ${SEEDS}
+
+    fix         fNVE            all     nve
+
+    variable    start_time      equal $(time)
+    label       run_loop
+        variable    run_i   loop    ${N_InnerLoop}
+        run         ${stepInnerLoop}
+        if "$(time-v_start_time) >= 2" then "jump SELF break"
+        next        run_i
+    jump        SELF    run_loop
+    label       break
+
+    variable    start_time     delete
+    variable    run_i   delete
+    unfix       fNVE
+
+    ############################################################################
+    #                               NVT cooling                                #
+    ############################################################################
+    group       gNVT    subtract    all     gBottom
+    fix         fNVT    gNVT    nvt  temp  ${T_NVT}  ${T_NVT}  ${T_NVT_damp}
+    fix         F_halt  all     halt ${freqHaltCheck}  v_myTEMP <= ${T_NVT_crit}  error continue
+
+    run         ${step_NVT}
+
+    unfix       F_halt
+    unfix       fNVT
+    unfix       fDepo
+    undump      dMovie
+    unfix       PrintTherm
+    group       gNVT    delete
+
+    write_data  ion_shoot_${i}.coo
+
+    next        i
+jump        SELF    loop_i
+# End of i-th loop
+
+write_data FINAL.coo

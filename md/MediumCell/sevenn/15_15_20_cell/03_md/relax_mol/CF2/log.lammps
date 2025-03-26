@@ -1,0 +1,151 @@
+LAMMPS (2 Aug 2023 - Update 3)
+  using 1 OpenMP thread(s) per MPI task
+################################################################################
+#                                 basic inputs                                 #
+################################################################################
+units           metal
+newton          on
+dimension       3
+boundary        f f f
+atom_style 	    atomic
+
+#box tilt large
+read_data       input.data
+Reading data file ...
+  triclinic box = (0 0 0) to (15 15 15) with tilt (0 0 0)
+  1 by 1 by 1 MPI processor grid
+  reading atoms ...
+  3 atoms
+  read_data CPU = 0.000 seconds
+
+################################################################################
+#                                pair potential                                #
+################################################################################
+pair_style      e3gnn
+PairE3GNN using device : CUDA
+
+variable        element_list    string  "Si O C H F"
+pair_coeff      * * ${path_potential} ${element_list}
+pair_coeff      * * /data2_1/team_etch/pot_7net_chg_tot_l3i3_zbl_a0.104.pt ${element_list}
+pair_coeff      * * /data2_1/team_etch/pot_7net_chg_tot_l3i3_zbl_a0.104.pt Si O C H F
+Chemical specie 'Si' is assigned to type 1
+Chemical specie 'O' is assigned to type 2
+Chemical specie 'C' is assigned to type 3
+Chemical specie 'H' is assigned to type 4
+Chemical specie 'F' is assigned to type 5
+from sevenn version '0.10.0' single precision model trained at 2024-11-08 is loaded
+
+variable        MASS_Si        equal   28.0855
+variable        MASS_O         equal   15.999
+variable        MASS_C         equal   12.011
+variable        MASS_H         equal   1.00784
+variable        MASS_F         equal   18.998
+mass    1   ${MASS_Si}
+mass    1   28.0855
+mass    2   ${MASS_O}
+mass    2   15.999
+mass    3   ${MASS_C}
+mass    3   12.011
+mass    4   ${MASS_H}
+mass    4   1.00784
+mass    5   ${MASS_F}
+mass    5   18.998
+
+neighbor 2 bin
+# When the neighbours list will be updated http://lammps.sandia.gov/doc/neigh_modify.html
+neigh_modify    every 10 delay 0 check yes
+# All atoms will be involved in the simulation http://lammps.sandia.gov/doc/compute.html
+compute 	_rg all gyration
+
+##########################################################
+# Minimize                                               #
+##########################################################
+
+variable    log_step    equal   1
+thermo      ${log_step}
+thermo      1
+variable    path_dump   string  "relax.dump"
+
+dump        dMovie  all     custom  ${log_step} ${path_dump}             id element xu yu zu  vx vy vz fx fy fz
+dump        dMovie  all     custom  1 ${path_dump}             id element xu yu zu  vx vy vz fx fy fz
+dump        dMovie  all     custom  1 relax.dump             id element xu yu zu  vx vy vz fx fy fz
+dump_modify dMovie  sort id time yes             format line "%d %s %.15f %.15f %.15f %.3f %.3f %.3f %.3f %.3f %.3f"
+dump_modify dMovie  element  ${element_list}
+dump_modify dMovie  element  Si O C H F
+
+variable    etol       equal   0
+variable    ftol       equal   0.01
+variable    maxiter    equal   100000
+variable    maxeval    equal   100000
+
+min_style   cg
+minimize    ${etol} ${ftol} ${maxiter} ${maxeval}
+minimize    0 ${ftol} ${maxiter} ${maxeval}
+minimize    0 0.01 ${maxiter} ${maxeval}
+minimize    0 0.01 100000 ${maxeval}
+minimize    0 0.01 100000 100000
+Switching to 'neigh_modify every 1 delay 0 check yes' setting during minimization
+Generated 0 of 10 mixed pair_coeff terms from geometric mixing rule
+Neighbor list info ...
+  update: every = 1 steps, delay = 0 steps, check = yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 7
+  ghost atom cutoff = 7
+  binsize = 3.5, bins = 5 5 5
+  1 neighbor lists, perpetual/occasional/extra = 1 0 0
+  (1) pair e3gnn, perpetual
+      attributes: full, newton on
+      pair build: full/bin/atomonly
+      stencil: full/bin/3d
+      bin: standard
+Per MPI rank memory allocation (min/avg/max) = 4.162 | 4.162 | 4.162 Mbytes
+   Step          Temp          E_pair         E_mol          TotEng         Press     
+         0   0             -14.678453      0             -14.678453     -464.06809    
+         1   0             -14.777345      0             -14.777345     -207.73732    
+         2   0             -14.791464      0             -14.791464     -47.768915    
+         3   0             -14.795655      0             -14.795655     -31.028178    
+         4   0             -14.795784      0             -14.795784     -13.414183    
+         5   0             -14.795834      0             -14.795834     -1.7101441    
+         6   0             -14.795848      0             -14.795848     -3.1845225    
+         7   0             -14.79585       0             -14.79585      -0.1047834    
+Loop time of 0.39881 on 1 procs for 7 steps with 3 atoms
+
+99.4% CPU use with 1 MPI tasks x 1 OpenMP threads
+
+Minimization stats:
+  Stopping criterion = force tolerance
+  Energy initial, next-to-last, final = 
+     -14.6784534454346  -14.7958478927612  -14.7958498001099
+  Force two-norm initial, final = 2.6322002 0.0015133569
+  Force max component initial, final = 1.9398042 0.00096780062
+  Final line search alpha, max atom move = 1 0.00096780062
+  Iterations, force evaluations = 7 14
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 0.39806    | 0.39806    | 0.39806    |   0.0 | 99.81
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 1.4518e-05 | 1.4518e-05 | 1.4518e-05 |   0.0 |  0.00
+Output  | 0.00046018 | 0.00046018 | 0.00046018 |   0.0 |  0.12
+Modify  | 0          | 0          | 0          |   0.0 |  0.00
+Other   |            | 0.000273   |            |       |  0.07
+
+Nlocal:              3 ave           3 max           3 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:              0 ave           0 max           0 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:              0 ave           0 max           0 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+FullNghs:            6 ave           6 max           6 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 6
+Ave neighs/atom = 2
+Neighbor list builds = 0
+Dangerous builds = 0
+
+write_data  relaxed.coo
+System init for write_data ...
+Generated 0 of 10 mixed pair_coeff terms from geometric mixing rule
+Total wall time: 0:00:01

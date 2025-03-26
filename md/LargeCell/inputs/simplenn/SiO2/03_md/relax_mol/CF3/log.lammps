@@ -1,0 +1,149 @@
+LAMMPS (2 Aug 2023 - Update 1)
+  using 1 OpenMP thread(s) per MPI task
+##########################################################
+# Simple cell relaxation CUBIC CELL
+##########################################################
+units           metal
+newton          on
+dimension       3
+boundary        p p f
+atom_style 	    atomic
+
+#box tilt large
+read_data       input.data
+Reading data file ...
+  triclinic box = (0 0 0) to (15 15 15) with tilt (0 0 0)
+  2 by 4 by 4 MPI processor grid
+  reading atoms ...
+  4 atoms
+  read_data CPU = 0.003 seconds
+
+variable        path_potential  string  "/data2/andynn/Etch/05_md_nnp_ver_2/potential_saved_bestmodel"
+variable        SEEDS           equal   20230925
+pair_style      hybrid/overlay  nn/intel   zbl/pair
+pair_coeff      * * nn/intel ${path_potential} Si O C H F
+pair_coeff      * * nn/intel /data2/andynn/Etch/05_md_nnp_ver_2/potential_saved_bestmodel Si O C H F
+AVX2 for angular descriptor G4 calc : on
+AVX2 for angular descriptor G5 calc : off
+AVX512 for descriptor calc : off
+
+# pair_coeff  1 1  zbl/pair    14 14    1.94 2.05
+pair_coeff  1 1  zbl/pair    14 14     1.598 2.054
+pair_coeff  1 2  zbl/pair    14  8     1.070 1.376
+pair_coeff  1 3  zbl/pair    14  6     1.208 1.553
+pair_coeff  1 4  zbl/pair    14  1     1.079 1.388
+pair_coeff  1 5  zbl/pair    14  9     1.145 1.472
+pair_coeff  2 2  zbl/pair     8  8     0.863 1.110
+pair_coeff  2 3  zbl/pair     8  6     0.800 1.029
+pair_coeff  2 4  zbl/pair     8  1     0.691 0.888
+pair_coeff  2 5  zbl/pair     8  9     0.961 1.235
+pair_coeff  3 3  zbl/pair     6  6     0.920 1.183
+pair_coeff  3 4  zbl/pair     6  1     0.797 1.024
+pair_coeff  3 5  zbl/pair     6  9     0.908 1.168
+pair_coeff  4 4  zbl/pair     1  1     0.525 0.675
+pair_coeff  4 5  zbl/pair     1  9     0.657 0.844
+pair_coeff  5 5  zbl/pair     9  9     0.997 1.282
+
+
+mass    1   28.0855
+mass    2   15.999
+mass    3   12.011
+mass    4   1.00784
+mass    5   18.998
+
+
+compute     POT_E       all     pe
+variable    seeds       equal   ${SEEDS}
+variable    seeds       equal   20230925
+variable    log_step    equal   1
+
+
+##########################################################
+# Minimize                                               #
+##########################################################
+
+thermo 1
+
+dump        dMovie  all     custom  ${log_step} relax.dump             id element xu yu zu  vx vy vz fx fy fz
+dump        dMovie  all     custom  1 relax.dump             id element xu yu zu  vx vy vz fx fy fz
+dump_modify dMovie  sort id time yes             format line "%d %s %.15f %.15f %.15f %.3f %.3f %.3f %.3f %.3f %.3f"
+dump_modify dMovie  element  Si O C H F
+
+min_style   cg
+minimize    0   0.0001 100000 100000
+Generated 0 of 10 mixed pair_coeff terms from geometric mixing rule
+Neighbor list info ...
+  update: every = 1 steps, delay = 0 steps, check = yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 8
+  ghost atom cutoff = 8
+  binsize = 4, bins = 4 4 4
+  2 neighbor lists, perpetual/occasional/extra = 2 0 0
+  (1) pair nn/intel, perpetual
+      attributes: full, newton on
+      pair build: full/bin/atomonly
+      stencil: full/bin/3d
+      bin: standard
+  (2) pair zbl/pair, perpetual, half/full trim from (1)
+      attributes: half, newton on, cut 4.054
+      pair build: halffull/newton/trim
+      stencil: none
+      bin: none
+Per MPI rank memory allocation (min/avg/max) = 4.744 | 4.744 | 4.744 Mbytes
+   Step          Temp          E_pair         E_mol          TotEng         Press     
+         0   0             -18.352787      0             -18.352787     -1464.5257    
+         1   0             -18.799323      0             -18.799323     -841.29604    
+         2   0             -19.128252      0             -19.128252      616.92661    
+         3   0             -19.319139      0             -19.319139      441.3805     
+         4   0             -19.362198      0             -19.362198     -78.691264    
+         5   0             -19.364178      0             -19.364178     -61.642253    
+         6   0             -19.368023      0             -19.368023      61.789772    
+         7   0             -19.368452      0             -19.368452      8.218367     
+         8   0             -19.368485      0             -19.368485     -13.50595     
+         9   0             -19.368546      0             -19.368546     -0.89595531   
+        10   0             -19.368555      0             -19.368555      0.50520562   
+        11   0             -19.368555      0             -19.368555     -0.060180496  
+        12   0             -19.368555      0             -19.368555      0.0090619834 
+        13   0             -19.368555      0             -19.368555      0.037607839  
+        14   0             -19.368555      0             -19.368555     -0.018233033  
+Loop time of 0.00649876 on 32 procs for 14 steps with 4 atoms
+
+96.7% CPU use with 32 MPI tasks x 1 OpenMP threads
+
+Minimization stats:
+  Stopping criterion = force tolerance
+  Energy initial, next-to-last, final = 
+     -18.3527865553148  -19.3685547696532  -19.3685547701305
+  Force two-norm initial, final = 6.1197593 6.459348e-05
+  Force max component initial, final = 3.8545771 3.6377616e-05
+  Final line search alpha, max atom move = 1 3.6377616e-05
+  Iterations, force evaluations = 14 28
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 1.0239e-05 | 9.5841e-05 | 0.0016985  |   0.0 |  1.47
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 0.00051286 | 0.00099669 | 0.0025225  |   0.0 | 15.34
+Output  | 0.0015813  | 0.0023573  | 0.0032225  |   1.0 | 36.27
+Modify  | 0          | 0          | 0          |   0.0 |  0.00
+Other   |            | 0.003049   |            |       | 46.92
+
+Nlocal:          0.125 ave           2 max           0 min
+Histogram: 29 0 0 0 0 2 0 0 0 1
+Nghost:             10 ave          14 max           5 min
+Histogram: 1 2 13 0 0 0 0 4 4 8
+Neighs:         0.1875 ave           3 max           0 min
+Histogram: 29 0 0 1 0 0 1 0 0 1
+FullNghs:        0.375 ave           6 max           0 min
+Histogram: 29 0 0 0 0 2 0 0 0 1
+
+Total # of neighbors = 12
+Ave neighs/atom = 3
+Neighbor list builds = 0
+Dangerous builds = 0
+
+write_data  relaxed.coo
+System init for write_data ...
+Generated 0 of 10 mixed pair_coeff terms from geometric mixing rule
+Total wall time: 0:00:00

@@ -1,0 +1,158 @@
+################################################################################
+#                                Basic settings                                #
+################################################################################
+units           metal
+newton          on
+dimension       3
+boundary        p p p   # periodic boundary conditions (f ? aperiodic/ p - periodic)
+atom_style 	    atomic  # Define what style of atoms to use in a simulation. http://lammps.sandia.gov/doc/atom_style.html
+
+read_data    ${input_structure}
+
+################################################################################
+#                               Potential setup                                #
+################################################################################
+variable        element_list    string  "Si O C H F"
+
+pair_style      hybrid/overlay      e3gnn    d3 9000 1600 damp_bj pbe
+pair_coeff      * * e3gnn ${path_potential}  ${element_list}
+pair_coeff      * * d3 ${element_list}
+
+variable        mass_Si        equal   28.0855
+variable        mass_O         equal   15.999
+variable        mass_C         equal   12.011
+variable        mass_H         equal   1.00784
+variable        mass_F         equal   18.998
+
+mass    1   ${mass_Si}
+mass    2   ${mass_O}
+mass    3   ${mass_C}
+mass    4   ${mass_H}
+mass    5   ${mass_F}
+
+neighbor 2 bin
+# When the neighbours list will be updated http://lammps.sandia.gov/doc/neigh_modify.html
+neigh_modify    every 10 delay 0 check yes
+# All atoms will be involved in the simulation http://lammps.sandia.gov/doc/compute.html
+compute 	_rg all gyration
+
+################################################################################
+#                                  Fix bottom                                  #
+################################################################################
+region      rFixed      block   INF INF INF INF 0.0 2.0
+group       gBottom     region  rFixed
+velocity    gBottom     set     0.0 0.0 0.0
+fix         freeze_bottom   gBottom     setforce    0.0 0.0 0.0
+
+################################################################################
+#                                Modifications                                 #
+################################################################################
+fix         f_balance   all     balance     0 1.2 shift z 20 1.05 weight time 1
+fix         dt_fix      all     dt/reset    1   NULL 0.0005  0.1 emax 1 units box
+
+################################################################################
+#                                     LOGS                                     #
+################################################################################
+compute     POT_E       all pe
+
+region      rtemp       block   INF INF  INF INF  ${temp_z} INF
+group       gtemp       dynamic all  region rtemp
+#variable V_initial equal   -xxxxx  # angs/ps,sqrt(Ek/(0.5*(18.9984+1.008)*1e-3/6.02e23*6.242e18))/1e-10*1e-12
+compute     TEMP        gtemp   temp
+compute_modify  TEMP    dynamic/dof     yes
+compute     KIN_E       gtemp   ke
+
+variable    myTEMP      equal   c_TEMP
+variable    seeds       equal   ${SEEDS}
+variable    log_step  equal   100
+
+# "compute count/type" is available after LAMMPS version 15Jun2023.
+# See "https://docs.lammps.org/compute_count_type.html"
+compute     atom_count  all  count/type  atom
+
+thermo          0
+thermo_modify   lost ignore  flush yes
+
+fix         PrintTherm  all print 100 "" file thermo_${i}.dat screen no title &
+            "STEP TIME TEMP POT_E KIN_E etotal num_Si num_O num_C num_H num_F"
+unfix       PrintTherm
+
+fix         PrintTherm  all print ${log_step} &
+            "$(step) $(time) $(c_TEMP) $(c_POT_E) $(c_KIN_E) $(etotal) $(c_atom_count[1]) $(c_atom_count[2]) $(c_atom_count[3]) $(c_atom_count[4]) $(c_atom_count[5])" &
+            append thermo_${i}.dat screen no
+
+################################################################################
+#                                    Dumps                                     #
+################################################################################
+dump        dMovie  all     custom  ${log_step}   dump_${i}.lammps &
+            id element xu yu zu  vx vy vz fx fy fz
+dump_modify dMovie  sort id time yes &
+            format line "%d %s %.15f %.15f %.15f %.3f %.3f %.3f %.3f %.3f %.3f"
+dump_modify dMovie  element  ${element_list}
+
+
+################################################################################
+#                             Molecule Insertions                              #
+################################################################################
+
+#variable angle_incidence equal $(abs(normal(v_angle_target,1,v_seeds)/180*PI))
+# angs/ps,sqrt(Ek/(0.5*(18.9984+1.008)*1e-3/6.02e23*6.242e18))/1e-10*1e-12
+# mass: C : 12.011 / H : 1.0089 / F : 18.9984
+
+variable    ion_mass        equal   69.0062
+variable    ion_kE          equal   500
+variable    V_initial       equal   $(sqrt((v_ion_kE*1.6e-19)/(0.5*v_ion_mass*1e-3/6.02e23))*1e10/1e12)
+# variable    V_initial       equal   $(random(98.19,219.56,v_seeds))
+variable    angle_incidence equal   $(abs(normal(0,5,v_seeds)/180*PI))
+variable    angle_phi       equal   $(random(0,360,v_seeds)/180*PI)
+variable    vel_Z           equal   $(-v_V_initial*cos(v_angle_incidence))
+variable    vel_X           equal   $(-v_V_initial*sin(v_angle_incidence)*cos(v_angle_phi))
+variable    vel_Y           equal   $(-v_V_initial*sin(v_angle_incidence)*sin(v_angle_phi))
+variable    pos_seed        equal   $(round(random(1,10000,v_seeds)))
+
+# 0.001 = 1 fs
+# timestep    0.001 (this would not be needed, as variable timestep is set)
+variable    hIncLow     equal   ${crit_z}+18.0
+variable    hIncHigh    equal   ${hIncLow}+1.0
+
+region      rIncident  block   EDGE EDGE  EDGE EDGE  ${hIncLow} ${hIncHigh}
+variable    path_mol_ion        string      "mol_CF3"
+molecule    mol_ion      ${path_mol_ion}  toff 0
+
+variable    hEvap       equal   ${hIncLow}-1.0
+region      rUpper      block   INF INF  INF INF  ${hEvap} INF
+fix         fEvap       all     evaporate 1000 10000 rUpper 1
+
+fix         fDepo           all     deposit  1  0  1000000  &
+            ${pos_seed}  region rIncident  near  4.0  mol mol_ion &
+            vx $(v_vel_X) $(v_vel_X) &
+            vy $(v_vel_Y) $(v_vel_Y) &
+            vz $(v_vel_Z) $(v_vel_Z) attempt 1000
+
+fix         fNVE            all     nve
+
+variable    start_time      equal $(time)
+label       run_loop
+    variable    run_i   loop    50
+    run         200
+    if "$(time-v_start_time) >= 2" then "jump SELF break"
+    next        run_i
+jump        SELF    run_loop
+label       break
+
+# NVT cooling (until myTEMP below criteria)
+variable    run_i   delete
+unfix       fNVE
+group       gNVT    subtract    all     gBottom
+fix         fNVT    gNVT    nvt  temp 300.0 300.0 0.05
+fix         F_halt  all     halt ${log_step}  v_myTEMP <= 350  error continue
+run         100000
+
+################################################################################
+#                                  Finishing                                   #
+################################################################################
+unfix       fNVT
+unfix       fDepo
+undump      dMovie
+
+write_data ${output_structure}

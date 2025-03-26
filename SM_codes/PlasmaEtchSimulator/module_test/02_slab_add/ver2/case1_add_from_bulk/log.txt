@@ -1,0 +1,2 @@
+Slab is penetrated: 
+add_str_shoot_0.coo written

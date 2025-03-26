@@ -1,0 +1,56 @@
+units           metal
+newton          on
+dimension       3
+boundary        p p p
+atom_style 	atomic
+box tilt large
+
+read_data       ${strin}
+
+mass  1 28.085 
+mass  2 14.007 
+mass  3 12.011 
+mass  4 1.008 
+mass  5 18.998403163 
+
+pair_style hybrid/overlay nn/intel   d2 15 0.75 20 zbl/pair
+#pair_style hybrid/overlay nn   d2 15 0.75 20 zbl/pair
+
+variable element_list string "Si N C H F"
+
+pair_coeff * * nn/intel /home01/x3045a07/etchZBL/pot/SiN/pot_SiNCHF_old  ${element_list}
+#pair_coeff * * nn /home01/x3045a07/etchZBL/pot/SiN/pot_SiNCHF_old ${element_list}
+pair_coeff 1 1 zbl/pair 14 14 1.598 2.054
+pair_coeff 1 2 zbl/pair 14 7 1.104 1.42
+pair_coeff 1 3 zbl/pair 14 6 1.208 1.553
+pair_coeff 1 4 zbl/pair 14 1 1.079 1.388
+pair_coeff 1 5 zbl/pair 14 9 1.145 1.472
+pair_coeff 2 2 zbl/pair 7 7 0.78 1.002
+pair_coeff 2 3 zbl/pair 7 6 1.104 1.42
+pair_coeff 2 4 zbl/pair 7 1 0.735 0.945
+pair_coeff 2 5 zbl/pair 7 9 0.938 1.206
+pair_coeff 3 3 zbl/pair 6 6 0.92 1.183
+pair_coeff 3 4 zbl/pair 6 1 0.797 1.024
+pair_coeff 3 5 zbl/pair 6 9 0.908 1.168
+pair_coeff 4 4 zbl/pair 1 1 0.525 0.675
+pair_coeff 4 5 zbl/pair 1 9 0.657 0.844
+pair_coeff 5 5 zbl/pair 9 9 0.997 1.282
+pair_coeff 1 1 d2 95.674993 3.432
+pair_coeff 1 2 d2 34.9204616 3.113
+pair_coeff 1 3 d2 41.659745 3.168
+pair_coeff 1 4 d2 11.783155 2.717
+pair_coeff 1 5 d2 27.272705 3.003
+pair_coeff 2 2 d2 12.74772 2.794
+pair_coeff 2 3 d2 15.20544 2.849
+pair_coeff 2 4 d2 4.30106 2.398
+pair_coeff 2 5 d2 9.954622 2.684
+pair_coeff 3 3 d2 18.139896 2.904
+pair_coeff 3 4 d2 5.130737 2.453
+pair_coeff 3 5 d2 11.875349 2.739
+pair_coeff 4 4 d2 1.451192 2.002
+pair_coeff 4 5 d2 3.358856 2.288
+pair_coeff 5 5 d2 7.774241 2.574
+
+dump dMovie all custom 1 dump.lammps id type element xu yu zu  fx fy fz
+dump_modify dMovie sort id element ${element_list} time yes format line "%d %d %s %.2f %.2f %.2f %.2f %.2f %.2f"
+run 0

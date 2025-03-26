@@ -1,0 +1,37 @@
+##########################################################
+# Simple cell relaxation CUBIC CELL
+##########################################################
+units           metal
+newton          on
+dimension       3
+boundary        p p p   # periodic boundary conditions (f ? aperiodic/ p - periodic)
+
+
+read_data coo                        # from where coordinates are read
+
+variable   element_list   string   "Si O C H F"
+pair_style   e3gnn
+pair_coeff * * ${pot_path}  ${element_list}
+
+variable        MASS_Si        equal   28.0855
+variable        MASS_O         equal   15.999
+variable        MASS_C         equal   12.011
+variable        MASS_H         equal   1.00784
+variable        MASS_F         equal   18.998
+mass    1   ${MASS_Si}
+mass    2   ${MASS_O}
+mass    3   ${MASS_C}
+mass    4   ${MASS_H}
+mass    5   ${MASS_F}
+
+neighbor 2 bin
+neigh_modify    every 10 delay 0 check yes   # When the neighbours list will be updated http://lammps.sandia.gov/doc/neigh_modify.html
+dump traj all custom 5 traj_rlx.dump id type x y z 
+dump_modify traj sort id
+
+minimize 0 5.0e-2 3000 10000
+write_data rlx.coo
+
+run 0
+variable pe equal pe
+print "free  energy ${pe}"

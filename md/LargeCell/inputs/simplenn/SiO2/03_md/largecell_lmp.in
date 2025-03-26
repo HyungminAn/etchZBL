@@ -1,0 +1,170 @@
+##########################################################
+# Simple cell relaxation CUBIC CELL
+##########################################################
+
+units           metal
+newton          on
+dimension       3
+boundary        p p f   # periodic boundary conditions (f ? aperiodic/ p - periodic)
+atom_style 	atomic      # Define what style of atoms to use in a simulation. http://lammps.sandia.gov/doc/atom_style.html
+
+read_data    ${input_structure}
+# variable        box_size        equal       60.0
+# change_box  all z final 0.0 ${box_size} units box
+
+variable        path_potential  string  "/data2/andynn/Etch/05_md_nnp_ver_2/potential_saved_bestmodel"
+pair_style      hybrid/overlay nn/intel   d2 15 0.75 20     zbl/pair
+pair_coeff      * * nn/intel ${path_potential} Si O C H F
+
+pair_coeff 1 1 d2 95.674993 3.432
+pair_coeff 1 2 d2 26.347936 3.058
+pair_coeff 1 3 d2 41.659745 3.168
+pair_coeff 1 4 d2 11.783155 2.717
+pair_coeff 1 5 d2 27.272705 3.003
+pair_coeff 2 2 d2 7.255958 2.684
+pair_coeff 2 3 d2 11.472677 2.794
+pair_coeff 2 4 d2 3.244963 2.343
+pair_coeff 2 5 d2 7.510630 2.629
+pair_coeff 3 3 d2 18.139896 2.904
+pair_coeff 3 4 d2 5.130737 2.453
+pair_coeff 3 5 d2 11.875349 2.739
+pair_coeff 4 4 d2 1.451192 2.002
+pair_coeff 4 5 d2 3.358856 2.288
+pair_coeff 5 5 d2 7.774241 2.574
+
+# pair_coeff  1 1  zbl/pair    14 14    1.94 2.05
+# Fitt
+pair_coeff  1 1  zbl/pair    14 14     1.598 2.054
+pair_coeff  1 2  zbl/pair    14  8     1.070 1.376
+pair_coeff  1 3  zbl/pair    14  6     1.208 1.553
+pair_coeff  1 4  zbl/pair    14  1     1.079 1.388
+pair_coeff  1 5  zbl/pair    14  9     1.145 1.472
+pair_coeff  2 2  zbl/pair     8  8     0.863 1.110
+pair_coeff  2 3  zbl/pair     8  6     0.800 1.029
+pair_coeff  2 4  zbl/pair     8  1     0.691 0.888
+pair_coeff  2 5  zbl/pair     8  9     0.961 1.235
+pair_coeff  3 3  zbl/pair     6  6     0.920 1.183
+pair_coeff  3 4  zbl/pair     6  1     0.797 1.024
+pair_coeff  3 5  zbl/pair     6  9     0.908 1.168
+pair_coeff  4 4  zbl/pair     1  1     0.525 0.675
+pair_coeff  4 5  zbl/pair     1  9     0.657 0.844
+pair_coeff  5 5  zbl/pair     9  9     0.997 1.282
+
+mass    1   28.0855
+mass    2   15.999
+mass    3   12.011
+mass    4   1.00784
+mass    5   18.998
+
+
+
+
+neighbor 2 bin
+neigh_modify    every 10 delay 0 check yes   # When the neighbours list will be updated http://lammps.sandia.gov/doc/neigh_modify.html
+compute 	_rg all gyration                # All atoms will be involved in the simulation http://lammps.sandia.gov/doc/compute.html
+#---------------------------------------
+#
+##########################################################
+# Setting groups and regions (also fix bottom)           #
+##########################################################
+# 0.001 = 1 fs
+# timestep    0.001 (this would not be needed, as variable timestep is set)
+
+region      rFixed      block   INF INF INF INF 0.0 2.0
+group       gBottom     region  rFixed
+velocity    gBottom     set     0.0 0.0 0.0
+fix         freeze_bottom   gBottom     setforce    0.0 0.0 0.0
+
+variable    hIncLow     equal   ${crit_z}+18.0
+variable    hIncHigh    equal   ${hIncLow}+1.0
+
+region      rIncident  block   EDGE EDGE  EDGE EDGE  ${hIncLow} ${hIncHigh}
+variable    path_mol_ion        string      "mol_CF3"
+molecule    mol_ion      ${path_mol_ion}  toff 0
+
+region      rtemp       block   INF INF  INF INF  ${temp_z} INF
+group       gtemp       dynamic all  region rtemp
+#variable V_initial equal   -xxxxx  # angs/ps,sqrt(Ek/(0.5*(18.9984+1.008)*1e-3/6.02e23*6.242e18))/1e-10*1e-12
+
+variable    hEvap       equal   ${hIncLow}-1.0
+region      rUpper      block   INF INF  INF INF  ${hEvap} INF
+fix         fEvap       all     evaporate 1000 10000 rUpper 1
+
+fix         f_balance   all     balance     0 1.2 shift z 20 1.05 weight time 1
+fix         dt_fix      all     dt/reset    1   NULL 0.0005  0.1 emax 1 units box
+
+compute     POT_E       all pe
+compute     TEMP        gtemp   temp
+compute_modify  TEMP    dynamic/dof     yes
+compute     KIN_E       gtemp   ke
+variable    myTEMP      equal   c_TEMP
+variable    seeds       equal   ${SEEDS}
+variable    log_step  equal   100
+
+# "compute count/type" is available after LAMMPS version 15Jun2023.
+# See "https://docs.lammps.org/compute_count_type.html"
+compute     atom_count  all  count/type  atom
+
+thermo          0
+thermo_modify   lost ignore  flush yes
+
+# Setting dumps and print for thermodynamic quantities
+dump        dMovie  all     custom  ${log_step}   dump_${i}.lammps &
+            id element xu yu zu  vx vy vz fx fy fz
+dump_modify dMovie  sort id time yes &
+            format line "%d %s %.15f %.15f %.15f %.3f %.3f %.3f %.3f %.3f %.3f"
+dump_modify dMovie  element  Si O C H F
+
+fix         PrintTherm  all print 100 "" file thermo_${i}.dat screen no title &
+            "STEP TIME TEMP POT_E KIN_E etotal num_Si num_O num_C num_H num_F"
+unfix       PrintTherm
+
+fix         PrintTherm  all print ${log_step} &
+            "$(step) $(time) $(c_TEMP) $(c_POT_E) $(c_KIN_E) $(etotal) $(c_atom_count[1]) $(c_atom_count[2]) $(c_atom_count[3]) $(c_atom_count[4]) $(c_atom_count[5])" &
+            append thermo_${i}.dat screen no
+
+# Insertion of molecules
+
+#variable angle_incidence equal $(abs(normal(v_angle_target,1,v_seeds)/180*PI))
+# angs/ps,sqrt(Ek/(0.5*(18.9984+1.008)*1e-3/6.02e23*6.242e18))/1e-10*1e-12
+# mass: C : 12.011 / H : 1.0089 / F : 18.9984
+variable    ion_mass        equal   "12.011+3*18.9984"
+variable    ion_kE          equal   my_ion_kE
+variable    V_initial       equal   $(sqrt((v_ion_kE*1.6e-19)/(0.5*v_ion_mass*1e-3/6.02e23))*1e10/1e12)
+# variable    V_initial       equal   $(random(98.19,219.56,v_seeds))
+variable    angle_incidence equal   $(abs(normal(0,5,v_seeds)/180*PI))
+variable    angle_phi       equal   $(random(0,360,v_seeds)/180*PI)
+variable    vel_Z           equal   $(-v_V_initial*cos(v_angle_incidence))
+variable    vel_X           equal   $(-v_V_initial*sin(v_angle_incidence)*cos(v_angle_phi))
+variable    vel_Y           equal   $(-v_V_initial*sin(v_angle_incidence)*sin(v_angle_phi))
+variable    pos_seed        equal   $(round(random(1,10000,v_seeds)))
+fix         fDepo           all     deposit  1  0  1000000  &
+            ${pos_seed}  region rIncident  near  4.0  mol mol_ion &
+            vx $(v_vel_X) $(v_vel_X) &
+            vy $(v_vel_Y) $(v_vel_Y) &
+            vz $(v_vel_Z) $(v_vel_Z) attempt 1000
+
+fix         fNVE            all     nve
+
+variable    start_time      equal $(time)
+label       run_loop
+variable    run_i   loop    50
+run         200
+if "$(time-v_start_time) >= 2" then "jump SELF break"
+next        run_i
+jump        SELF    run_loop
+label       break
+
+# NVT cooling (until myTEMP below criteria)
+variable    run_i   delete
+unfix       fNVE
+group       gNVT    subtract    all     gBottom
+fix         fNVT    gNVT    nvt  temp 300.0 300.0 0.05
+fix         F_halt  all     halt ${log_step}  v_myTEMP <= 350  error continue
+run         100000
+
+unfix       fNVT
+unfix       fDepo
+undump      dMovie
+
+write_data ${output_structure}

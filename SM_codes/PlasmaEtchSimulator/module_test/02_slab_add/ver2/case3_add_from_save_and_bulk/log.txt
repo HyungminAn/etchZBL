@@ -1,0 +1,3 @@
+Slab is penetrated: 
+Adding bulk to the slab structure from the saved file save_str_shoot_2420.coo
+add_str_shoot_2430.coo written

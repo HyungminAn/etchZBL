@@ -1,0 +1,31 @@
+clear
+units metal
+dimension 3
+boundary p p p
+atom_style 	    atomic
+
+read_data ${path_in_input}
+
+pair_style      e3gnn
+
+variable        element_list    string  "Si O C H F"
+pair_coeff      * * ${path_potential} ${element_list}
+
+variable        MASS_Si        equal   28.0855
+variable        MASS_O         equal   15.999
+variable        MASS_C         equal   12.011
+variable        MASS_H         equal   1.00784
+variable        MASS_F         equal   18.998
+mass    1   ${MASS_Si}
+mass    2   ${MASS_O}
+mass    3   ${MASS_C}
+mass    4   ${MASS_H}
+mass    5   ${MASS_F}
+
+dump mydump all custom 1 ${path_out_dump} &
+            id element xu yu zu vx vy vz fx fy fz
+dump_modify mydump  element  ${element_list}
+
+fix thermo_out all print 1 "$(step) $(pe)" file ${path_out_thermo} screen no
+
+rerun ${path_in_dump} dump x y z vx vy vz

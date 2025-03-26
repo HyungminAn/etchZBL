@@ -1,0 +1,47 @@
+# preset that will enable the LLVM based Intel compilers with support for MPI and OpenMP and Fortran (on Linux boxes)
+
+set(CMAKE_CXX_COMPILER "icpx" CACHE STRING "" FORCE)
+set(CMAKE_C_COMPILER "icx" CACHE STRING "" FORCE)
+set(CMAKE_Fortran_COMPILER "ifx" CACHE STRING "" FORCE)
+set(CMAKE_CXX_FLAGS_DEBUG "-Wall -Wextra -g -xAVX -DNDEBUG -pg" CACHE STRING "" FORCE)
+set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-Wall -Wextra -g -O2 -DNDEBUG" CACHE STRING "" FORCE)
+###modified line
+# set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG -xAVX" CACHE STRING "" FORCE)
+# set(CMAKE_CXX_FLAGS_RELEASE "-O3 -g -xCORE-AVX2" CACHE STRING "" FORCE)
+# set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG -xCORE-AVX512" CACHE STRING "" FORCE)
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -g -xMIC-AVX512" CACHE STRING "" FORCE)
+# set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -mkl=cluster")
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx512vl")
+###modified line
+set(CMAKE_Fortran_FLAGS_DEBUG "-Wall -Wextra -g" CACHE STRING "" FORCE)
+set(CMAKE_Fortran_FLAGS_RELWITHDEBINFO "-Wall -Wextra -g -O2 -DNDEBUG" CACHE STRING "" FORCE)
+set(CMAKE_Fortran_FLAGS_RELEASE "-O3 -DNDEBUG" CACHE STRING "" FORCE)
+set(CMAKE_C_FLAGS_DEBUG "-Wall -Wextra -g" CACHE STRING "" FORCE)
+set(CMAKE_C_FLAGS_RELWITHDEBINFO "-Wall -Wextra -g -O2 -DNDEBUG" CACHE STRING "" FORCE)
+set(CMAKE_C_FLAGS_RELEASE "-O3 -DNDEBUG" CACHE STRING "" FORCE)
+
+###modified line
+set(MPI_CXX "mpiicpc" CACHE STRING "" FORCE)
+set(MPI_CXX_COMPILER "mpiicpc" CACHE STRING "" FORCE)
+###modified line
+unset(HAVE_OMP_H_INCLUDE CACHE)
+set(OpenMP_C "icx" CACHE STRING "" FORCE)
+set(OpenMP_C_FLAGS "-qopenmp" CACHE STRING "" FORCE)
+set(OpenMP_C_LIB_NAMES "omp" CACHE STRING "" FORCE)
+set(OpenMP_CXX "icpx" CACHE STRING "" FORCE)
+set(OpenMP_CXX_FLAGS "-qopenmp" CACHE STRING "" FORCE)
+set(OpenMP_CXX_LIB_NAMES "omp" CACHE STRING "" FORCE)
+set(OpenMP_Fortran_FLAGS "-qopenmp" CACHE STRING "" FORCE)
+set(OpenMP_omp_LIBRARY "libiomp5.so" CACHE PATH "" FORCE)
+
+# Include COMPRESS package (to compress dump files)
+set(PKG_COMPRESS ON CACHE BOOL "" FORCE)
+
+# Include MPI
+find_package(MPI REQUIRED)
+
+# Diff from SM
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -L${MKLROOT}/lib/intel64 -ltbbmalloc -lmkl_intel_ilp64 -lmkl_sequential -lmkl_core")
+add_definitions(-DMPICH_SKIP_MPICXX -DOMPI_SKIP_MPICXX=1)
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -g -xMIC-AVX512")
+
