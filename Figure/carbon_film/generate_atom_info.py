@@ -69,6 +69,10 @@ def main():
     src = sys.argv[1]
     n_incidence = int(sys.argv[2])
 
+    if os.path.exists(f'atom_dict_{n_incidence}.h5'):
+        print(f'atom_dict_{n_incidence}.h5 already exists')
+        sys.exit(1)
+
     idx_range = range(n_incidence + 1)
     save_freq = 1000
     my_atom_dict = AtomDict()
