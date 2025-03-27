@@ -98,10 +98,11 @@ def read_files(src, mol_dict):
 
 
 def main():
-    if len(sys.argv) < 2:
-        print("Usage: python gen_mol_dict.py <path/to/cluster.log> ...")
+    if len(sys.argv) < 3:
+        print("Usage: python <gen_mol_dict.py> <dst> <path/to/cluster.log> ...")
         sys.exit(1)
-    src_files = sys.argv[1:]
+    dst = sys.argv[1]
+    src_files = sys.argv[2:]
 
     mol_dict = defaultdict(list)
     for src in src_files:
@@ -111,7 +112,7 @@ def main():
     # conv_dict = Si3N4ConvDict().conv_dict
 
     mol_dict = {conv_dict[k]: v for k, v in mol_dict.items()}
-    with open("mol_dict.pkl", "wb") as f:
+    with open(f"{dst}_mol_dict.pkl", "wb") as f:
         pickle.dump(mol_dict, f)
 
 

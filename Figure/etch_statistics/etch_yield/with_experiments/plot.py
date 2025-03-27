@@ -23,9 +23,8 @@ class PlotInfo:
     ]
     legend_props = {
         'fontsize': 14,
-        'loc': 'upper center',
-        'bbox_to_anchor': (0.5, -0.2),
-        'ncol': 3,
+        'loc': 'upper left',
+        'bbox_to_anchor': (0.02, 0.98),
     }
     scatter_props = {
         's': 70,
@@ -66,7 +65,7 @@ class DataPlotter:
             self.plot_points(ax, data)
 
         self.decorate(ax)
-        fig.tight_layout()
+        # fig.tight_layout()
         fig.savefig(f'etch_yield_total.png')
 
     def plot_separate(self, data_total):
@@ -90,12 +89,18 @@ class DataPlotter:
         for ion_type in data[key].keys():
             x = np.array([i for i in data[key][ion_type].keys()])
             y = np.array([i for i in data[key][ion_type].values()])
+
+            x = np.sqrt(x)
             plot_color, plot_marker = PlotInfo.color_marker_list[ion_type]
             ax.scatter(x, y,
                        color=plot_color,
                        marker=plot_marker,
                        label=f"{ion_type}",
                        **PlotInfo.scatter_props)
+
+            idx_select = np.where(np.abs(y) > 0.01)
+            x = x[idx_select]
+            y = y[idx_select]
 
             z = np.polyfit(x, y, 1)
             y_hat = np.poly1d(z)(x)
@@ -140,23 +145,21 @@ class DataPlotter:
                            **PlotInfo.scatter_props_ref)
 
     def decorate(self, ax):
-        # Re-order legends
-        handles, labels = plt.gca().get_legend_handles_labels()
-        order = np.argsort(np.array(labels))
-        handles_sorted = [handles[i] for i in order]
-        labels_sorted = [labels[i] for i in order]
+        # # Re-order legends
+        # handles, labels = plt.gca().get_legend_handles_labels()
+        # order = np.argsort(np.array(labels))
+        # handles_sorted = [handles[i] for i in order]
+        # labels_sorted = [labels[i] for i in order]
+        # import matplotlib.patches as mpatches
+        # empty_patch = mpatches.Patch(color=(0,0,0,0), label="")
+        # handles_padded = handles_sorted[:2] + [empty_patch] + handles_sorted[2:4] + [empty_patch] + handles_sorted[4:7]
+        # labels_padded = labels_sorted[:2] + [""] + labels_sorted[2:4] + [""] + labels_sorted[4:7]
 
-        import matplotlib.patches as mpatches
-        empty_patch = mpatches.Patch(color=(0,0,0,0), label="")
-        handles_padded = handles_sorted[:2] + [empty_patch] + handles_sorted[2:4] + [empty_patch] + handles_sorted[4:7]
-        labels_padded = labels_sorted[:2] + [""] + labels_sorted[2:4] + [""] + labels_sorted[4:7]
+        # ax.legend(handles_padded, labels_padded, **PlotInfo.legend_props)
+        ax.legend(**PlotInfo.legend_props)
 
-        ax.legend(handles_padded, labels_padded, **PlotInfo.legend_props)
-        # ax.legend(DataPlotter.flip(handles_sorted, PlotInfo.legend_props['ncol']),
-        #           DataPlotter.flip(labels_sorted, PlotInfo.legend_props['ncol']),
-        #           **PlotInfo.legend_props)
-        ax.set_xlim(0, None)
-        ax.set_ylim(0, None)
+        ax.set_xlim(0, 50)
+        ax.set_ylim(0, 2.0)
         ax.set_xlabel(r'$\sqrt{\text{(ion energy)/eV}}$')
         ax.set_ylabel('Etch yield (Si/ion)')
 
@@ -170,8 +173,8 @@ def main():
     plotter = DataPlotter()
     with open('dat.yaml', 'r') as f:
         data_total = yaml.safe_load(f)
-    # plotter.plot_separate(data_total)
-    plotter.plot_all_in_one(data_total)
+    plotter.plot_separate(data_total)
+    # plotter.plot_all_in_one(data_total)
 
 
 if __name__ == '__main__':

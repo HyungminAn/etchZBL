@@ -1,11 +1,14 @@
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib as mpl
+
+mpl.rcParams['font.family'] = 'Arial'
 
 
 class EtchYieldPlotter():
     @staticmethod
-    def run(path_yield, dst):
+    def run(path_yield, dst, display_Si=False):
         data = np.loadtxt(path_yield, skiprows=2)
         norm_factor = 10 / 9000
         x_yield = data[:, 0] * norm_factor
@@ -13,14 +16,16 @@ class EtchYieldPlotter():
         etch_yield = data[:, 2]
 
         plt.rcParams.update({'font.size': 16})
-        fig, (ax_Si, ax_yield) = plt.subplots(2, 1, figsize=(8, 6))
-
-        ax_Si.plot(x_yield, n_Si_etched, color='black')
-        ax_Si.set_xlabel(r"ion dose ($ \times 10^{16} \mathrm{cm}^{-2}$)")
-        ax_Si.set_ylabel("number of etched Si")
+        if display_Si:
+            fig, (ax_Si, ax_yield) = plt.subplots(2, 1, figsize=(8, 6))
+            ax_Si.plot(x_yield, n_Si_etched, color='black')
+            ax_Si.set_xlabel(r"Ion dose ($ \times 10^{16} \mathrm{cm}^{-2}$)")
+            ax_Si.set_ylabel("# Si")
+        else:
+            fig, ax_yield = plt.subplots(1, 1, figsize=(8, 6))
 
         ax_yield.plot(x_yield, etch_yield, color='orange')
-        ax_yield.set_xlabel(r"ion dose ($ \times 10^{16} \mathrm{cm}^{-2}$)")
+        ax_yield.set_xlabel(r"Ion dose ($ \times 10^{16} \mathrm{cm}^{-2}$)")
         ax_yield.set_ylabel("Etch yield (Si/ion)")
 
         # yield_avg = np.mean(y_yield[-self.interval:])
@@ -32,6 +37,10 @@ class EtchYieldPlotter():
                       verticalalignment='bottom',
                       transform=ax_yield.transAxes)
 
+        ax_yield.set_xlim(0, 10)
+        ax_yield.set_ylim(0, 1.5)
+
+        fig.suptitle(dst)
         fig.tight_layout()
         fig.savefig(f'{dst}.png')
 
