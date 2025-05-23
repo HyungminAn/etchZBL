@@ -34,6 +34,22 @@ file_list=(
   "/data2_1/andynn/Etch/data_nurion/set_uncomplete/CHF2_1000_coo.tar.gz"
 )
 
+# file_list=(
+#   "/data2_1/andynn/Etch/data_nurion/set_uncomplete/CF_750_log.tar.gz"
+#   "/data2_1/andynn/Etch/data_nurion/set_uncomplete/CF_1000_log.tar.gz"
+#   "/data2_1/andynn/Etch/data_nurion/set_uncomplete/CF2_1000_log.tar.gz"
+#   "/data2_1/andynn/Etch/data_nurion/set_uncomplete/CH2F_750_log.tar.gz"
+#   "/data2_1/andynn/Etch/data_nurion/set_uncomplete/CH2F_1000_log.tar.gz"
+#   "/data2_1/andynn/Etch/data_nurion/set_uncomplete/CHF2_1000_log.tar.gz"
+# )
+
+# file_list=(
+#   "/data_etch/data_HM/nurion/set_3/CF_300_log.tar.gz"
+#   "/data2_1/andynn/Etch/data_nurion/set_3/CH2F_250_log.tar.gz"
+#   "/data2_1/andynn/Etch/data_nurion/set_3/CH2F_500_log.tar.gz"
+#     )
+
+
 for file in ${file_list[@]};do
     sh mount.sh ${file}
 done

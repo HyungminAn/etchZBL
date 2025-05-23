@@ -1,0 +1,38 @@
+SiO2:
+  energy:
+    dft: "src/inputs/dft_data/energy.dat"
+    nnp: "src/results/00_simplenn/energy.dat"
+
+  force:
+    dft: "src/inputs/dft_data/force.dat"
+    nnp: "src/results/00_simplenn/force.dat"
+
+  nions: "src/inputs/dft_data/nions.dat"
+  # structure_idx: "src/inputs/dft_data/structure_idx.dat"
+  structure_idx: "structure_idx_subset.pkl"
+
+# dummy:
+#   energy:
+#     dft: "src/inputs/dft_data/energy.dat"
+#     nnp: "src/results/00_simplenn/energy.dat"
+
+#   force:
+#     dft: "src/inputs/dft_data/force.dat"
+#     nnp: "src/results/00_simplenn/force.dat"
+
+#   nions: "src/inputs/dft_data/nions.dat"
+#   # structure_idx: "src/inputs/dft_data/structure_idx.dat"
+#   structure_idx: "structure_idx_subset.pkl"
+
+Si3N4:
+  energy:
+    dft: "/data_etch/figure_SM/DatatoHM/01_parity_plot_training/src/dft_energy.dat"
+    nnp: "/data_etch/figure_SM/DatatoHM/01_parity_plot_training/src/nnp_energy.dat"
+
+  force:
+    dft: "/data_etch/figure_SM/DatatoHM/01_parity_plot_training/src/dft_force.dat"
+    nnp: "/data_etch/figure_SM/DatatoHM/01_parity_plot_training/src/nnp_force.dat"
+
+  nions: "/data_etch/figure_SM/DatatoHM/01_parity_plot_training/src/nions.dat"
+  structure_idx: "/data_etch/figure_SM/DatatoHM/01_parity_plot_training/src/structure_idx.dat"
+  # structure_idx: "structure_idx_subset.pkl"

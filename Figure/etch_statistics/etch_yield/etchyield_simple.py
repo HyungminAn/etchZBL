@@ -24,23 +24,30 @@ class EtchYieldPlotter():
         else:
             fig, ax_yield = plt.subplots(1, 1, figsize=(8, 6))
 
-        ax_yield.plot(x_yield, etch_yield, color='orange')
+        ax_yield.plot(x_yield, etch_yield, color='red')
         ax_yield.set_xlabel(r"Ion dose ($ \times 10^{16} \mathrm{cm}^{-2}$)")
         ax_yield.set_ylabel("Etch yield (Si/ion)")
 
-        # yield_avg = np.mean(y_yield[-self.interval:])
         yield_avg = etch_yield[-1]
         textbox = f"yield = {yield_avg:.3f}"
-        ax_yield.text(0.95, 0.05, textbox,
-                      bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5),
-                      horizontalalignment='right',
-                      verticalalignment='bottom',
+        if yield_avg > 0.5:
+            x_text, y_text, ha, va = 0.95, 0.05, 'right', 'bottom'
+        else:
+            x_text, y_text, ha, va = 0.95, 0.95, 'right', 'top'
+
+        ax_yield.text(x_text, y_text, textbox,
+                      # bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5),
+                      horizontalalignment=ha,
+                      verticalalignment=va,
                       transform=ax_yield.transAxes)
 
-        ax_yield.set_xlim(0, 10)
+        ax_yield.set_xlim(0, None)
         ax_yield.set_ylim(0, 1.5)
 
-        fig.suptitle(dst)
+        ax_yield.axvline(5.0, color='grey', linestyle='--', alpha=0.5)
+        ax_yield.set_title(dst)
+
+        # fig.suptitle(dst)
         fig.tight_layout()
         fig.savefig(f'{dst}.png')
 

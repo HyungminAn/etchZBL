@@ -1,3 +1,4 @@
+import os
 import sys
 import pickle
 import time
@@ -92,16 +93,63 @@ class CarbonStateClassifier:
 
     @staticmethod
     def get_bondtype(symbols):
-        symbols = symbols.split()
-        symbol_set = set(symbols)
-        if symbol_set == {'C'}:
+        case_dict = {
+            ('C',): 'CX',
+            ('C', 'H'): 'CX',
+
+            # SiC cluster
+            ('Si',): 'SiC_cluster',
+            ('H', 'Si'): 'SiC_cluster',
+            ('C', 'Si'): 'SiC_cluster',
+            ('C', 'H', 'Si'): 'SiC_cluster',
+
+            # SiC cluster with F --> 'SiC_cluster'
+            ('F', 'Si'): 'SiC_cluster',
+            ('F', 'H', 'Si'): 'SiC_cluster',
+            ('C', 'F', 'Si'): 'SiC_cluster',
+            ('C', 'F', 'H', 'Si'): 'SiC_cluster',
+
+            # SiC cluster with O --> 'SiC_cluster'
+            ('C', 'O', 'Si'): 'SiC_cluster',
+            ('C', 'H', 'O', 'Si'): 'SiC_cluster',
+
+            # Fluorocarbon
+            ('C', 'F'): 'Fluorocarbon',
+            ('C', 'F', 'H'): 'Fluorocarbon',
+
+            # Fluorocarbon with O --> 'Fluorocarbon'
+            ('C', 'O'): 'Fluorocarbon',
+            ('C', 'H', 'O'): 'Fluorocarbon',
+            ('C', 'F', 'O'): 'Fluorocarbon',
+            ('C', 'F', 'H', 'O'): 'Fluorocarbon',
+            ('C', 'F', 'O', 'Si'): 'Fluorocarbon',
+            ('C', 'F', 'H', 'O', 'Si'): 'Fluorocarbon',
+
+            # ('H',):
+            # ('F',):
+            # ('F', 'H'):
+            # ('F', 'O'):
+            # ('F', 'H', 'O'):
+            # ('O',):
+            # ('H', 'O'):
+
+            # ('O', 'Si'):
+            # ('H', 'O', 'Si'):
+
+            # ('F', 'O', 'Si'):
+            # ('F', 'H', 'O', 'Si'):
+        }
+
+        if symbols is not None:
+            symbols = symbols.split()
+        else:
+            return 'etc'
+
+        symbol_set = case_dict.get(tuple(sorted(set(symbols))))
+        if symbol_set == 'CX':
             return f"C{symbols.count('C')}"
-        elif symbol_set == {'Si', 'C'}:
-            return "SiC_cluster"
-        elif 'F' in symbols:
-            return "Fluorocarbon"
-        elif 'O' in symbols:
-            return "with_O"
+        elif symbol_set is not None:
+            return symbol_set
         else:
             return "etc"
 
@@ -187,6 +235,8 @@ class DataCombinator:
 
         n_struct = coo_stat['n_struct']
         n_carbon = coo_stat['n_carbon']
+        interval = coo_stat['interval']
+        n_incidence = coo_stat['n_incidence']
 
         df_atom, df_bond = self.load_dict()
         cf = CarbonFilter(df_atom, df_bond, n_struct, n_carbon)
@@ -204,7 +254,7 @@ class DataCombinator:
 
         np_idx = 0
 
-        for struct_idx in range(n_struct):
+        for struct_idx in range(0, n_incidence, interval):
             for global_idx in range(n_carbon):
                 if cf.check(global_idx):
                     continue
@@ -235,17 +285,23 @@ class DataCombinator:
 def main():
     src_atom_data = sys.argv[1]
     src_bond_data = sys.argv[2]
-    n_incidence = sys.argv[3]
+    n_incidence = int(sys.argv[3])
 
     batch_count = 1000
-    count = int(n_incidence) // batch_count
+    # batch_count = 500
+    count = n_incidence // batch_count
 
     coo_stat = {
         'start_idx': 0,
         'end_idx': batch_count,
         'stride': batch_count,
+        'interval': 10,
         'count': count,
+        'n_incidence': n_incidence,
     }
+
+    if os.path.exists('total_dict.h5'):
+        sys.exit()
 
     combinator = DataCombinator(src_atom_data, src_bond_data, coo_stat)
     combinator.run()

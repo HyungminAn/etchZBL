@@ -4,15 +4,18 @@ from dataclasses import dataclass
 import numpy as np
 import matplotlib.pyplot as plt
 
-
 @dataclass
 class PlotInfo:
-    color_marker_list = {
-        'CF3': ('red', 'o'),
-        'CF2': ('red', 's'),
-        'CF': ('red', '^'),
-        'CH2F': ('red', 'd'),
-        'CHF2': ('red', 'p'),
+    color_list = {
+        'SiO2': 'red',
+        'Si3N4': 'blue',
+    }
+    marker_list = {
+        'CF3': 'o',
+        'CF2': 's',
+        'CF': '^',
+        'CH2F': 'd',
+        'CHF2': 'p',
     }
     species_list = [
         'CF3_',
@@ -40,6 +43,13 @@ class PlotInfo:
         'linestyle': '--',
         'alpha': 0.3,
     }
+    label_map = {
+        'CF3': 'CF${}_{3}^{+}$',
+        'CF2': 'CF${}_{2}^{+}$',
+        'CF': 'CF$^{+}$',
+        'CHF2': 'CHF${}_{2}^{+}$',
+        'CH2F': 'CH$_2$F$^{+}$',
+    }
 
 class DataPlotter:
     def get_plot_fig(self):
@@ -47,41 +57,78 @@ class DataPlotter:
             'font.size': 16,
             'font.family': 'arial',
             })
-        fig, ax = plt.subplots(figsize=(6, 6))
-        ax.set_xlabel(r'$\sqrt{E}$')
-        ax.set_ylabel('Etch yield (Si/ion)')
-        return fig, ax
+        n_row, n_col = 2, 3
+        fig, axes = plt.subplots(n_row, n_col, figsize=(6*n_col, 6*n_row))
 
-    def plot_all_in_one(self, data_total):
-        fig, ax = self.get_plot_fig()
-        selected_species = ['CF3_', 'CF2_', 'CF_']
-
-        for species in selected_species:
-            data_exp = {k.replace('_', ''): v for k, v in data_total['exp'].items() if species in k}
-            data_sim = {k.replace('_', ''): v for k, v in data_total['sim'].items() if species in k}
-            data = {'exp': data_exp, 'sim': data_sim}
-
-            self.plot_ref(ax, data)
-            self.plot_points(ax, data)
-
-        self.decorate(ax)
-        # fig.tight_layout()
-        fig.savefig(f'etch_yield_total.png')
+        ax_dict = {
+                'SiO2': {
+                    'CF$_3$': axes[0, 0],
+                    'CF$_2$': axes[0, 1],
+                    'CF': axes[1, 0],
+                    'CHF$_2$/CH$_2$F': axes[1, 1],
+                },
+                'Si3N4': {
+                    'CF$_2$': axes[0, 2],
+                    'CHF$_2$/CH$_2$F': axes[1, 2],
+                },
+            }
+        for _, axes in ax_dict.items():
+            for key, ax in axes.items():
+                ax.set_xlabel(r'$\sqrt{E}$')
+                ax.set_ylabel('Etch yield (Si/ion)')
+                # ax.set_title(key)
+        return fig, ax_dict
 
     def plot_separate(self, data_total):
-        fig, ax = self.get_plot_fig()
-        for species in PlotInfo.species_list:
-            ax.clear()
-            data_exp = {k.replace('_', ''): v for k, v in data_total['exp'].items() if species in k}
-            data_sim = {k.replace('_', ''): v for k, v in data_total['sim'].items() if species in k}
-            data = {'exp': data_exp, 'sim': data_sim}
+        fig, ax_dict = self.get_plot_fig()
+        key_convert_dict = {
+                'CF3_': 'CF$_3$',
+                'CF2_': 'CF$_2$',
+                'CF_': 'CF',
+                'CHF2_': 'CHF$_2$/CH$_2$F',
+                'CH2F_': 'CHF$_2$/CH$_2$F',
+                }
 
-            self.plot_ref(ax, data)
-            self.plot_points(ax, data)
-            self.decorate(ax)
+        for system_type, value_dict in data_total.items():
+            for species in PlotInfo.species_list:
+                ax = ax_dict[system_type].get(key_convert_dict[species])
+                if ax is None:
+                    continue
+                data_exp = {k.replace('_', ''): v for k, v in value_dict['exp'].items() if species in k}
+                data_sim = {k.replace('_', ''): v for k, v in value_dict['sim'].items() if species in k}
 
-            fig.tight_layout()
-            fig.savefig(f'etch_yield_{species}.png')
+                data_dict = {'exp': data_exp, 'sim': data_sim, 'system': system_type}
+
+                self.plot_ref(ax, data_dict)
+                self.plot_points(ax, data_dict)
+                self.decorate(ax)
+
+        text_opts = {
+                'fontsize': 24,
+                'ha': 'left',
+                'va': 'top',
+                }
+        stride_x, stride_y, shift_x, shift_y = 1/3, 0.5, 0.15, 0.2
+
+        texts = [
+                ('SiO2',  'CF$_3$',          -shift_x, 1 + shift_y, '(a) SiO$_2$, CF${}_{3}^{+}$'),
+                ('SiO2',  'CF$_2$',          -shift_x, 1 + shift_y, '(b) SiO$_2$, CF${}_{2}^{+}$'),
+                ('Si3N4', 'CF$_2$',          -shift_x, 1 + shift_y, '(e) Si$_3$N$_4$, CF${}_{2}^{+}$'),
+                ('SiO2',  'CF',              -shift_x, 1 + shift_y, '(c) SiO$_2$, CF$^{+}$'),
+                ('SiO2',  'CHF$_2$/CH$_2$F', -shift_x, 1 + shift_y, '(d) SiO$_2$, CHF${}_{2}^{+}$/CH$_2$F$^{+}$'),
+                ('Si3N4', 'CHF$_2$/CH$_2$F', -shift_x, 1 + shift_y, '(f) Si$_3$N$_4$, CHF${}_{2}^{+}$'),
+                ]
+        for (system, ion, x, y, text) in texts:
+            ax = ax_dict[system].get(ion)
+            ax.text(x, y, text, transform=ax.transAxes, **text_opts)
+
+        line = plt.Line2D([2/3, 2/3], [0.02, 0.98], color='grey', linestyle='--')
+        fig.add_artist(line)
+        fig.tight_layout(pad=2.0)
+        name = 'result'
+        fig.savefig(f'{name}.png')
+        fig.savefig(f'{name}.pdf')
+        fig.savefig(f'{name}.eps')
 
 
     def plot_points(self, ax, data):
@@ -91,11 +138,13 @@ class DataPlotter:
             y = np.array([i for i in data[key][ion_type].values()])
 
             x = np.sqrt(x)
-            plot_color, plot_marker = PlotInfo.color_marker_list[ion_type]
+            plot_marker = PlotInfo.marker_list[ion_type]
+            plot_color = PlotInfo.color_list[data['system']]
+            label = f'{PlotInfo.label_map[ion_type]}'
             ax.scatter(x, y,
                        color=plot_color,
                        marker=plot_marker,
-                       label=f"{ion_type}",
+                       label=label,
                        **PlotInfo.scatter_props)
 
             idx_select = np.where(np.abs(y) > 0.01)
@@ -127,40 +176,33 @@ class DataPlotter:
         for ion_type in data[key].keys():
             x = np.array([i for i in data[key][ion_type].keys()])
             y = np.array([i for i in data[key][ion_type].values()])
-            _, marker = PlotInfo.color_marker_list[ion_type.split()[0]]
+            marker = PlotInfo.marker_list[ion_type.split()[0]]
+
+            my_ion, label = ion_type.split()[0], ""
+            if my_ion in PlotInfo.label_map.keys():
+                label = ion_type.replace(my_ion, PlotInfo.label_map[my_ion])
             if len(y) > 1:
                 ax.plot(x, y, color='k', linestyle='--')
             if count == 0:
                 ax.scatter(x, y,
-                           label=f"{ion_type} (Exp)",
+                           label=f"{label} (Exp)",
                            marker=marker,
                            facecolor='none',
                            **PlotInfo.scatter_props_ref)
                 count += 1
             else:
                 ax.scatter(x, y,
-                           label=f"{ion_type} (Exp)",
+                           label=f"{label} (Exp)",
                            marker=marker,
                            facecolor='black',
                            **PlotInfo.scatter_props_ref)
 
     def decorate(self, ax):
-        # # Re-order legends
-        # handles, labels = plt.gca().get_legend_handles_labels()
-        # order = np.argsort(np.array(labels))
-        # handles_sorted = [handles[i] for i in order]
-        # labels_sorted = [labels[i] for i in order]
-        # import matplotlib.patches as mpatches
-        # empty_patch = mpatches.Patch(color=(0,0,0,0), label="")
-        # handles_padded = handles_sorted[:2] + [empty_patch] + handles_sorted[2:4] + [empty_patch] + handles_sorted[4:7]
-        # labels_padded = labels_sorted[:2] + [""] + labels_sorted[2:4] + [""] + labels_sorted[4:7]
-
-        # ax.legend(handles_padded, labels_padded, **PlotInfo.legend_props)
         ax.legend(**PlotInfo.legend_props)
 
         ax.set_xlim(0, 50)
         ax.set_ylim(0, 2.0)
-        ax.set_xlabel(r'$\sqrt{\text{(ion energy)/eV}}$')
+        ax.set_xlabel(r'$\sqrt{E_{\text{ion}}/\text{eV}}$')
         ax.set_ylabel('Etch yield (Si/ion)')
 
     @staticmethod
@@ -174,7 +216,6 @@ def main():
     with open('dat.yaml', 'r') as f:
         data_total = yaml.safe_load(f)
     plotter.plot_separate(data_total)
-    # plotter.plot_all_in_one(data_total)
 
 
 if __name__ == '__main__':

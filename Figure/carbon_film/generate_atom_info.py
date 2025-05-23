@@ -10,7 +10,16 @@ from utils import read_structure as read
 
 
 @timeit
-def load_coo(src, struct_idx):
+def load_coo(src_list, struct_idx):
+    path_coo_final = None
+    src_selected = None
+    for src in src_list:
+        path_coo_final = os.path.join(src, f'str_shoot_{struct_idx}_after_mod.coo')
+        if os.path.exists(path_coo_final):
+            src_selected = src
+            break
+    src = src_selected
+
     path_coo = os.path.join(src, f'str_shoot_{struct_idx}.coo')
     path_coo_rm = os.path.join(src, f'rm_byproduct_str_shoot_{struct_idx}.coo')
     path_coo_add = os.path.join(src, f'add_str_shoot_{struct_idx}.coo')
@@ -63,11 +72,11 @@ def load_coo(src, struct_idx):
 
 def main():
     if len(sys.argv) < 3:
-        print('Usage: python generate_atom_info.py <src> <n_images>')
+        print('Usage: python generate_atom_info.py <n_images> <src1> <src2> ...')
         sys.exit(1)
 
-    src = sys.argv[1]
-    n_incidence = int(sys.argv[2])
+    n_incidence = int(sys.argv[1])
+    src_list = sys.argv[2:]
 
     if os.path.exists(f'atom_dict_{n_incidence}.h5'):
         print(f'atom_dict_{n_incidence}.h5 already exists')
@@ -78,16 +87,12 @@ def main():
     my_atom_dict = AtomDict()
 
     for struct_idx in idx_range:
-        coo_dict = load_coo(src, struct_idx)
+        coo_dict = load_coo(src_list, struct_idx)
         my_atom_dict.update(coo_dict, struct_idx)
 
         if struct_idx > 0 and struct_idx % save_freq == 0:
             print(f'Saving the current state at structure {struct_idx}')
-            # with open(f'atom_dict_{struct_idx}.pkl', 'wb') as f:
-            #     pickle.dump(my_atom_dict, f)
             my_atom_dict.atomdict_to_dataframe(struct_idx)
-    # with open(f'atom_dict_final.pkl', 'wb') as f:
-    #     pickle.dump(my_atom_dict, f)
     my_atom_dict.atomdict_to_dataframe(n_incidence)
 
 

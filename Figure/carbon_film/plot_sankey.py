@@ -3,6 +3,7 @@ import pickle
 import pandas as pd
 import plotly.graph_objects as go
 import plotly.express as px
+from utils import timeit
 
 class SankeyDiagram:
     """
@@ -87,6 +88,7 @@ class SankeyDiagram:
         # 1) Gather states and compute offsets
         for s_idx in struct_idx_list:
             unique_states = self.get_unique_states(s_idx)
+
             step_label_lists.append(unique_states)
             offsets.append(current_offset)
             current_offset += len(unique_states)
@@ -202,7 +204,8 @@ class SankeyDiagram:
         edge_colors = self.get_edge_colors(labels, source, target)
         node_labels, link_labels = self.get_labels_with_numbers(labels, source, value)
         fig = go.Figure(data=[go.Sankey(
-            arrangement="fixed",
+            # arrangement="fixed",
+            arrangement="snap",
             node=dict(
                 pad=15,
                 thickness=15,
@@ -240,6 +243,7 @@ class SankeyDiagram:
         fig.write_image(filename, width=width, height=height, scale=scale)
         print(f"Sankey diagram saved to {filename} (size: {width}x{height}, scale={scale}).")
 
+    @timeit
     def save_multi_step_sankey_diagram(self, struct_idx_list, filename, width=1200, height=800, scale=1.0):
         """
         (Multi-step version)
@@ -251,6 +255,10 @@ class SankeyDiagram:
         scale: Resolution scale factor.
         """
         labels, source, target, value = self.build_multi_step_sankey_data(struct_idx_list)
+        print(f'labels ({len(labels)}):', labels)
+        print(f'source ({len(source)}):', source)
+        print(f'target ({len(target)}):', target)
+        print(f'value ({len(value)}):', value)
         # Make a nice title from the struct_idx_list
         title_str = " → ".join(str(idx) for idx in struct_idx_list)
         fig = self.create_sankey_figure(
@@ -261,9 +269,8 @@ class SankeyDiagram:
         print(f"Multi-step Sankey diagram saved to {filename} (size: {width}x{height}, scale={scale}).")
 
 
-def main():
-    # 1) Load the pickled total_dict
-    df = pd.read_hdf('total_dict.h5', key='df')
+@timeit
+def reconstruct_total_dict(df):
     total_dict = {}
     for row in df.itertuples(index=False):
         struct_idx = int(row.struct_idx)
@@ -273,6 +280,27 @@ def main():
         if struct_idx not in total_dict:
             total_dict[struct_idx] = {}
         total_dict[struct_idx][global_idx] = state_C
+    return total_dict
+
+
+@timeit
+def load_pdf():
+    return pd.read_hdf('total_dict.h5', key='df')
+
+
+def main():
+    # 1) Load the pickled total_dict
+    df = load_pdf()
+    total_dict = reconstruct_total_dict(df)
+    # total_dict = {}
+    # for row in df.itertuples(index=False):
+    #     struct_idx = int(row.struct_idx)
+    #     global_idx = int(row.global_idx)
+    #     state_C = row.state_C
+
+    #     if struct_idx not in total_dict:
+    #         total_dict[struct_idx] = {}
+    #     total_dict[struct_idx][global_idx] = state_C
 
     # 2) Create an instance of the SankeyDiagram class
     diagram = SankeyDiagram(total_dict)
@@ -281,8 +309,10 @@ def main():
     # diagram.save_sankey_diagram(0, 1999, filename="two_step_sankey.png")
 
     # [B] Multi-step usage example (from struct_idx=0 to 500 to 1000)
+    # struct_indices = [300*i for i in range(14)] + [3999]
     struct_indices = [300*i for i in range(14)] + [3999]
     # struct_indices = [0, 300, 600, 900, 999]
+
     diagram.save_multi_step_sankey_diagram(
         struct_idx_list=struct_indices,
         filename="multi_step_sankey.png",

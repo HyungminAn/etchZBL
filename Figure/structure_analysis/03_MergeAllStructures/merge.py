@@ -66,7 +66,7 @@ class MergedCellGenerator:
                                                                      write_poscars=True)
 
     @cache_to_pkl("str_dicts.pkl")
-    def get_structure_dicts(self, src):
+    def get_structure_dicts(self, src_list):
         '''
         From src, read all .coo files and return a dictionary of the form:
         '''
@@ -90,34 +90,37 @@ class MergedCellGenerator:
         def strip_str(name):
             return int(name.replace('str_shoot_', '').replace('.coo', ''))
 
-        for root, dirs, files in os.walk(src):
-            dirs.sort()
-            files.sort()
+        for src in src_list:
+            for root, dirs, files in os.walk(src):
+                dirs.sort()
+                files.sort()
 
-            for file in files:
-                if not file.endswith('.coo'):
-                    continue
+                for file in files:
+                    if not file.endswith('.coo') or 'anneal' in file:
+                        continue
 
-                if 'rm_' in file:
-                    selected_dict = str_rm_dict
-                    key = strip_rm(file)
-                elif 'add_' in file:
-                    selected_dict = str_add_dict
-                    key = strip_add(file)
-                elif 'save_' in file:
-                    selected_dict = str_save_dict
-                    key = strip_save(file)
-                elif '_after_mod' in file:
-                    selected_dict = str_after_mod_dict
-                    key = strip_after_mod(file)
-                elif 'sub_' in file:
-                    selected_dict = str_sub_dict
-                    key = strip_sub(file)
-                else:
-                    selected_dict = str_dict
-                    key = strip_str(file)
-                value = os.path.join(root, file)
-                selected_dict[key] = value
+                    if 'rm_' in file:
+                        selected_dict = str_rm_dict
+                        key = strip_rm(file)
+                    elif 'add_' in file:
+                        selected_dict = str_add_dict
+                        key = strip_add(file)
+                    elif 'save_' in file:
+                        selected_dict = str_save_dict
+                        key = strip_save(file)
+                    elif '_after_mod' in file:
+                        selected_dict = str_after_mod_dict
+                        key = strip_after_mod(file)
+                    elif 'sub_' in file:
+                        selected_dict = str_sub_dict
+                        key = strip_sub(file)
+                    else:
+                        selected_dict = str_dict
+                        key = strip_str(file)
+                    value = os.path.join(root, file)
+                    if key in selected_dict:
+                        continue
+                    selected_dict[key] = value
 
         result = {
                 'str_dict': str_dict,
@@ -177,13 +180,14 @@ class MergedCellGenerator:
         Merge the added slab structures into a single structure,
         which can be used to create a merged cell.
         '''
-        str_save_dict = str_dicts['str_save_dict']
-        keys = set(added_slabs.keys()) | set(str_save_dict.keys())
+        # str_save_dict = str_dicts['str_save_dict']
+        # keys = set(added_slabs.keys()) | set(str_save_dict.keys())
+        keys = set(added_slabs.keys())
         keys = sorted(keys)
         poscar_adds = [(key, added_slabs[key]) for key in keys if
                        added_slabs.get(key) is not None]
-        poscar_subs = [(key, read(str_save_dict[key], **RWoptions.read_opts))
-                       for key in keys if str_save_dict.get(key) is not None]
+        # poscar_subs = [(key, read(str_save_dict[key], **RWoptions.read_opts))
+        #                for key in keys if str_save_dict.get(key) is not None]
 
         dst = 'poscars'
         if not os.path.exists(dst):
@@ -191,11 +195,11 @@ class MergedCellGenerator:
 
         result = {}
 
-        key, poscar_merged = poscar_lists[-1][0], poscar_lists[-1][1].copy()
+        key, poscar_merged = poscar_adds[-1][0], poscar_adds[-1][1].copy()
         result[key] = poscar_merged.copy()
         cell = poscar_merged.get_cell()
         shift_z = cell[2, 2]
-        for (key, poscar) in poscar_lists[:-1][::-1]:
+        for (key, poscar) in poscar_adds[::-1]:
             poscar.translate([0, 0, shift_z])
             shift_z += poscar.get_cell()[2, 2]
             cell[2, 2] = shift_z
@@ -238,6 +242,7 @@ class MergedCellGenerator:
                 }
 
         fix_h = 6.0
+        start_of_slab_subtract = min(str_save_dict.keys())
         for i in idx_list:
             poscar = read(str_after_mod_dict[i], **RWoptions.read_opts)
             _selected_idx = find_min_larger_value(keys, i)
@@ -255,13 +260,23 @@ class MergedCellGenerator:
                 slab = poscar.copy()
                 slab_z = 0.0
 
-            if str_save_dict.get(i) is not None:
-                save = read(str_save_dict[i], **RWoptions.read_opts)
-                pos = slab.get_positions()
-                pos[:, 2] += save.get_cell()[2, 2]
-                slab.set_positions(pos)
-                slab.extend(save)
-                slab_z += save.get_cell()[2, 2]
+            if i >= start_of_slab_subtract:
+                sub_keys = sorted(str_sub_dict.keys(), reverse=True)
+                for sub_key in sub_keys:
+                    if sub_key > i:
+                        continue
+                    save = read(str_save_dict[sub_key], **RWoptions.read_opts)
+
+                    cell = slab.get_cell()
+                    cell[2, 2] += save.get_cell()[2, 2]
+                    slab.set_cell(cell)
+
+                    pos = slab.get_positions()
+                    pos[:, 2] += save.get_cell()[2, 2]
+                    slab.set_positions(pos)
+
+                    slab.extend(save)
+                    # slab_z += save.get_cell()[2, 2]
 
             if write_poscars:
                 write(f'{dst}/{i}.lammps', slab, **RWoptions.write_opts)
@@ -347,7 +362,7 @@ class HeightPlotter:
         fig.savefig('result.png')
 
 
-if __name__ == "__main__":
+def main():
     if len(sys.argv) != 2:
         print(f"Usage: {sys.argv[0]} input.yaml")
         sys.exit(1)
@@ -365,3 +380,7 @@ if __name__ == "__main__":
     m.run(src, idx_list)
     p = HeightPlotter()
     p.run(m.write_poscars_with_merged_cells)
+
+
+if __name__ == "__main__":
+    main()

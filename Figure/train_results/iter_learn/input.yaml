@@ -1,0 +1,31 @@
+SiO2:
+  Iter_0:
+    dft: /data2/andynn/Etch/04_trainIterLearn/Iter_1/03_dft_oneshot/energy_dft.dat
+    nnp: /data2/andynn/Etch/04_trainIterLearn/Iter_1/05_nnp_oneshot/nnp_original/energy_nnp.dat
+
+  Iter_1:
+    dft: /data2/andynn/Etch/04_trainIterLearn/Iter_2/03_dft_oneshot/energy_dft.dat
+    nnp: /data2/andynn/Etch/04_trainIterLearn/Iter_2/05_nnp_oneshot/nnp_iter1/energy_nnp.dat
+
+  Iter_2:
+    dft: /data2/andynn/Etch/04_trainIterLearn/Iter_3/03_dft_oneshot/energy_dft.dat
+    nnp: /data2/andynn/Etch/04_trainIterLearn/Iter_3/05_nnp_oneshot/nnp_iter2/energy_nnp.dat
+
+  Iter_3:
+    dft: /data2/andynn/Etch/04_trainIterLearn/Iter_4/03_dft_oneshot/energy_dft.dat
+    nnp: /data2/andynn/Etch/04_trainIterLearn/Iter_4/04_nnp_oneshot/energy_nnp.dat
+
+Si3N4:
+  Iter_0:
+    dft: ./src_Si3N4/iter0/energy_dft.txt
+    nnp: ./src_Si3N4/iter0/energy_nnp.txt
+  Iter_1:
+    dft: ./src_Si3N4/iter1/energy_dft.txt
+    nnp: ./src_Si3N4/iter1/energy_nnp.txt
+  Iter_2:
+    dft: ./src_Si3N4/iter2/energy_dft.txt
+    nnp: ./src_Si3N4/iter2/energy_nnp.txt
+  Iter_3:
+    dft: ./src_Si3N4/iter3/energy_dft.txt
+    nnp: ./src_Si3N4/iter3/energy_nnp.txt
+
