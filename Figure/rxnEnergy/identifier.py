@@ -6,7 +6,6 @@ import ase.io,ase.build
 import pickle
 from graph_tool import Graph
 from graph_tool.topology import label_components
-from graph_similarity_save_pickle import atom_image
 
 import ase, os
 import numpy as np
@@ -17,7 +16,10 @@ from ase.constraints import FixAtoms
 import pickle
 from graph_tool import Graph
 from graph_tool.topology import label_components, similarity
-from graph_similarity_save_pickle import atom_image
+
+class BulkGasIdentifier:
+    def run(self):
+        pass
 
 
 def get_graph_info(images, bond_length_dict):

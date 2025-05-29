@@ -4,6 +4,10 @@ import ase.build
 
 from collections import Counter
 
+class UniqueRxnGenerator:
+    def run(self):
+        pass
+
 def get_stoichiometry(chemical_symbols, symbol_order):
     species_dict = dict(Counter(chemical_symbols))
     result = []
