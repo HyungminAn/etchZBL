@@ -32,12 +32,11 @@ class BulkGasIdentifier:
 
         with open(PARAMS.path_nnp_pickle, 'rb') as f:
             images = pickle.load(f)
-        for image in images:
-            image.set_pbc((True,True,False))
 
         result = {}
         for key, image in zip(keys, images):
             result[key] = image
+            image.set_pbc((True, True, False))
         return result
 
     def partition_images(self, images):
@@ -49,7 +48,6 @@ class BulkGasIdentifier:
         only_bulks = {}
         all_gases  = {}
         ga = GraphAnalyzer()
-        bulk_atom_indices = []
 
         for key, img in images.items():
             _graph, _vprop, cluster, hist = ga.run_single(img)
@@ -59,6 +57,7 @@ class BulkGasIdentifier:
 
             n_atoms_total = len(img)
             n_bulk_atoms = 0
+            bulk_atom_indices = []
 
             # identify gas‐clusters
             for cidx in set(cluster.a):
@@ -70,8 +69,8 @@ class BulkGasIdentifier:
                     n_atoms_total -= n_bulk_atoms
                 else:
                     n_gas_atoms = len(atoms_idx)
+                    incidence, image_idx = key
                     if avg_z > bulk_height + PARAMS.gas_crit:
-                        incidence, image_idx = key
                         gas_atoms = self.copy_image_with_selected_atoms(img, atoms_idx)
                         all_gases[(incidence, image_idx, cidx)] = gas_atoms
                     else:

@@ -2,7 +2,7 @@ import sys
 from stableconfigfinder import StableConfigFinder
 from imageloader import ImageLoader
 from identifier import BulkGasIdentifier
-# from uniquerxngenerator import UniqueRxnGenerator
+from uniquerxngenerator import UniqueRxnGenerator
 
 
 def main():
@@ -27,8 +27,8 @@ def main():
     bgi = BulkGasIdentifier()
     bgi.run()
 
-    # urg = UniqueRxnGenerator()
-    # urg.run()
+    urg = UniqueRxnGenerator()
+    urg.run()
 
     ### ---
     # DFT Relax should be done here

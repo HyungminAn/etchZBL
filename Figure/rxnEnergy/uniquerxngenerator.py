@@ -1,90 +1,91 @@
+from collections import Counter
+
 import numpy as np
 from ase.io import read
-import ase.build
 
-from collections import Counter
+from utils import PARAMS
 
 class UniqueRxnGenerator:
     def run(self):
-        pass
+        print("Running UniqueRxnGenerator...")
+        unique_bulk_idx = self.get_bulk_indices()
+        dump = read(PARAMS.path_unique_bulk_extxyz, index=":", format='extxyz')
+        line = self.get_reaction_data(dump, unique_bulk_idx)
+        with open(PARAMS.path_reaction_data, 'w') as f:
+            f.write(line)
+        print("Unique reactions generated successfully.")
 
-def get_stoichiometry(chemical_symbols, symbol_order):
-    species_dict = dict(Counter(chemical_symbols))
-    result = []
-    for symbol in symbol_order:
-        result.append(species_dict.get(symbol, 0))
+    def get_bulk_indices(self):
+        with open(PARAMS.path_unique_bulk, 'r') as f:
+            lines = f.readlines()[1:]
+        result = []
+        for line in lines:
+            inc, img = line.split(",")
+            result.append([int(inc), int(img)])
+        return np.array(result)
 
-    return np.array(result)
+    def get_stoichiometry(self, chemical_symbols):
+        species_dict = dict(Counter(chemical_symbols))
+        result = []
+        for symbol in PARAMS.SYSTEM_DEPENDENT.ELEM_LIST:
+            result.append(species_dict.get(symbol, 0))
+        return np.array(result)
 
+    def get_reaction_data(self, dump, unique_bulk_idx):
+        line = "#reactants,/products,/add_to_rxn_E\n"
+        atom_name = PARAMS.SYSTEM_DEPENDENT.ELEM_LIST
 
-def helper(i, comp_change, atom_name, unique_bulk_idx):
-    a = unique_bulk_idx
-    gas_dict = {
-        "HF": np.array([0,0,0,1,1], dtype=int),
-        "O2": np.array([0,2,0,0,0], dtype=int),
-        "SiF2": np.array([1,0,0,0,2], dtype=int),
-        "SiF4": np.array([1,0,0,0,4], dtype=int),
-        "CO": np.array([0,1,1,0,0], dtype=int),
-        "CF": np.array([0,0,1,0,1], dtype=int),
-        "CO2": np.array([0,2,1,0,0], dtype=int),
-    }
+        for i, (image0, image1) in enumerate(zip(dump[:-1], dump[1:]), start=1):
+            inc0, img0 = unique_bulk_idx[i-1]
+            inc1, img1 = unique_bulk_idx[i]
+            rxn0 = f"{inc0}_{img0}"
+            rxn1 = f"{inc1}_{img1}"
 
-    if np.sum(np.abs(comp_change))==0:
-        line = f"{a[i-1,0]}_{a[i-1,1]}/{a[i,0]}_{a[i,1]}\n"
+            comp0 = self.get_stoichiometry(image0.get_chemical_symbols())
+            comp1 = self.get_stoichiometry(image1.get_chemical_symbols())
+            comp_change = comp1 - comp0
+
+            if np.all(comp_change == 0):
+                line += f"{rxn0}/{rxn1}\n"
+                continue
+
+            neg_vec = np.where(comp_change < 0, -comp_change, 0)
+            pos_vec = np.where(comp_change > 0,  comp_change, 0)
+
+            removed = None
+            added = None
+
+            for gas, vec in PARAMS.SYSTEM_DEPENDENT.gas_dict.items():
+                vec = np.array(vec)
+                if removed is None and np.array_equal(neg_vec, vec):
+                    removed = gas
+                if added is None and np.array_equal(pos_vec, vec):
+                    added = gas
+
+            if removed is None and neg_vec.sum() == 1:
+                idx = np.nonzero(neg_vec)[0][0]
+                removed = atom_name[idx]
+            if added is None and pos_vec.sum() == 1:
+                idx = np.nonzero(pos_vec)[0][0]
+                added = atom_name[idx]
+
+            if removed and added:
+                # A + gas1 → B + gas2
+                line += f"{rxn0},{added}/{rxn1},{removed}\n"
+            elif removed:
+                # gas removed only
+                line += f"{rxn0}/{rxn1},{removed}\n"
+            elif added:
+                # gas added only
+                line += f"{rxn0},{added}/{rxn1}\n"
+            else:
+                line += f"{rxn0}/{rxn1}/{comp_change}, needs change!\n"
+
         return line
-
-    gas = None
-    for key, value in gas_dict.items():
-        if np.all(np.abs(comp_change)==value):
-            gas = key
-            break
-
-    if gas is not None:
-        if np.sum(np.abs(comp_change)) == 1:
-            gas = atom_name[np.nonzero(comp_change)[0][0]]
-
-        if np.sum(comp_change) > 0:
-            line = f"{a[i-1,0]}_{a[i-1,1]},{gas}/{a[i,0]}_{a[i,1]}\n"
-            return line
-        else:
-            line = f"{a[i-1,0]}_{a[i-1,1]}/{a[i,0]}_{a[i,1]},{gas}\n"
-            return line
-    else:
-        line = f"{a[i-1,0]}_{a[i-1,1]}/{a[i,0]}_{a[i,1]}/{comp_change}, needs change!\n"
-        return line
-
 
 def main():
-    file_name = "unique_bulk.dat"
-
-    with open(file_name, 'r') as O:
-        unique_bulk_idx = np.array([
-            [int(i) for i in line.split()[0].split(",")]
-            for line in O.readlines()[1:]
-        ])
-
-    path_dump = "unique_bulk.extxyz"
-    dump = read(path_dump, index=":",format='extxyz')
-
-    with open("desorbed_gas_id.dat",'r') as O:
-        lines=[j.split("/") for j  in O.readlines()[1:]]
-        for i in range(len(lines)):
-            incidence, gas_idx, composition, *_ = lines[i]
-            lines[i]=[incidence, gas_idx]+composition.split()
-
-    with open("rxn.dat",'w') as O:
-        O.write("#reactants,/products,/add_to_rxn_E\n")
-
-    atom_name = ["Si", "O", "C", "H", "F"]
-    for i in range(1,len(dump)):
-        composition0 =  get_stoichiometry(dump[i-1].get_chemical_symbols(), atom_name)
-        composition1 =  get_stoichiometry(dump[i].get_chemical_symbols(), atom_name)
-        comp_change = composition1 - composition0
-
-        with open("rxn.dat",'a') as O:
-            line = helper(i, comp_change, atom_name, unique_bulk_idx)
-            O.write(line)
-
+    urg = UniqueRxnGenerator()
+    urg.run()
 
 if __name__ == "__main__":
     main()

@@ -25,11 +25,30 @@ class PARAMS:
             3: 'H',
             4: 'F',
         }
+        ELEM_LIST = ['Si', 'O', 'C', 'H', 'F']
         LAMMPS_SAVE_OPTS = {
             'format': 'lammps-data',
             'atom_style': 'atomic',
-            'specorder': ["Si", "O", "C", "H", "F"],
+            'specorder': ELEM_LIST,
         }
+        gas_dict = {
+            "HF": np.array([0,0,0,1,1], dtype=int),
+            "O2": np.array([0,2,0,0,0], dtype=int),
+            "SiF2": np.array([1,0,0,0,2], dtype=int),
+            "SiF4": np.array([1,0,0,0,4], dtype=int),
+            "CO": np.array([0,1,1,0,0], dtype=int),
+            "CF": np.array([0,0,1,0,1], dtype=int),
+            "CO2": np.array([0,2,1,0,0], dtype=int),
+            "SiOF2": np.array([1,1,0,0,2], dtype=int),
+
+            "Si": np.array([1,0,0,0,0], dtype=int),
+            "O": np.array([0,1,0,0,0], dtype=int),
+            "C": np.array([0,0,1,0,0], dtype=int),
+            "H": np.array([0,0,0,1,0], dtype=int),
+            "F": np.array([0,0,0,0,1], dtype=int),
+        }
+
+
     LAMMPS_READ_OPTS = {
         "format": "lammps-data",
         "index": 0,
@@ -53,6 +72,8 @@ class PARAMS:
     path_unique_bulk = '03_unique_bulk.dat'
     path_unique_bulk_extxyz = '03_unique_bulk.extxyz'
     path_unique_gas = '03_desorbed_gas_id.dat'
+
+    path_reaction_data = '04_rxn.dat'
 
     gas_crit = 4.5
     delete_crit = 18
