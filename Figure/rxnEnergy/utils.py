@@ -1,4 +1,7 @@
+import os
 from dataclasses import dataclass
+from functools import wraps
+import pickle
 
 import numpy as np
 
@@ -118,4 +121,28 @@ class GraphAnalyzer:
 
     def is_two_graph_same(self, graph1, graph2):
         return gt.similarity(graph1, graph2, norm=False, distance=True, asymmetric=True) == 0.0
+
+class pklSaver:
+    @staticmethod
+    def run(func_gen_name):
+        '''
+        Decorator to save the result of a function as a numpy file.
+        '''
+        def decorator(func):
+            @wraps(func)
+            def wrapper(self, *args, **kwargs):
+                path_save = func_gen_name(self)
+                if os.path.exists(path_save):
+                    print(f"{path_save} already exists, loading data from it.")
+                    with open(path_save, 'rb') as f:
+                        data = pickle.load(f)
+                    return data
+
+                data = func(self, *args, **kwargs)
+                with open(path_save, 'wb') as f:
+                    pickle.dump(data, f)
+                    print(f"Data saved to {path_save}")
+                return data
+            return wrapper
+        return decorator
 
