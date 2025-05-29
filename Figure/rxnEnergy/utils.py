@@ -49,6 +49,13 @@ class PARAMS:
             "C": np.array([0,0,1,0,0], dtype=int),
             "H": np.array([0,0,0,1,0], dtype=int),
             "F": np.array([0,0,0,0,1], dtype=int),
+
+            "H2": np.array([0,0,0,2,0], dtype=int),
+            "CF3": np.array([0,0,1,0,3], dtype=int),
+            "F2": np.array([0,0,0,0,2], dtype=int),
+            "CF2": np.array([0,0,1,0,2], dtype=int),
+            "CH2F": np.array([0,0,1,2,1], dtype=int),
+            "CH": np.array([0,0,1,1,0], dtype=int),
         }
 
 
@@ -114,6 +121,7 @@ class GraphAnalyzer:
     def run_single(self, image):
         graph = gt.Graph(directed=False)
         NN_list = neighbor_list('ij', image, self.bond_length_dict)
+        graph.add_vertex(len(image))
         vprop = graph.new_vertex_property("short", vals=image.get_atomic_numbers())
         graph.add_edge_list(zip(NN_list[0], NN_list[1]))
         cluster, hist = label_components(graph, directed=False)

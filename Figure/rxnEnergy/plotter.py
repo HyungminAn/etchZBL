@@ -19,6 +19,9 @@ class DataLoader:
 
     def run(self, ion_type, ion_energy):
         self.log(f"Processing {ion_type} at {ion_energy} eV", self.log_dict['log'])
+        title = f"{ion_type} at {ion_energy} eV"
+        self.log(f"{title:*^80}", self.log_dict['energy'])
+        self.log(f"{title:*^80}", self.log_dict['need_change'])
 
         src = f"{self.src}/{ion_type}/{ion_energy}"
         rxn_list = self.get_reaction_list(src)
@@ -27,8 +30,6 @@ class DataLoader:
             return None
 
         n_rxn = len(rxn_list)
-        title = f"{ion_type} at {ion_energy} eV"
-        self.log(f"{title:*^80}", self.log_dict['energy'])
         self.log(f"{ion_type}, {ion_energy}, Number of reactions: {n_rxn}", self.log_dict['log'])
         line = [f"E_before ({self.cal_type_1})",
                 f"E_after ({self.cal_type_1})",
@@ -85,9 +86,14 @@ class DataLoader:
             return None
 
         with open(path_rxn_E, 'r') as f:
+            lines = f.readlines()[1:]
             rxn_list = [line.split()[0].split("/")
-                        for line in f.readlines()[1:]
+                        for line in lines
                         if 'needs' not in line]
+            unprocessed_lines = [line for line in lines if 'needs' in line]
+            for line in unprocessed_lines:
+                self.log(line, self.log_dict['need_change'])
+
         return rxn_list
 
     def log(self, message, logfile):
@@ -161,6 +167,7 @@ class DataProcessor:
                 'log': 'LOG',
                 'energy': 'LOG_energy',
                 'unfinished': 'LOG_unfinished',
+                'need_change': 'LOG_need_change',
                 }
 
     # @pklSaver.run(lambda self: f"rxn_E_total_{self.cal_type_1}_{self.cal_type_2}.pkl")
