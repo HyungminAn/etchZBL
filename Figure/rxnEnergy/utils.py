@@ -25,13 +25,16 @@ class PARAMS:
             3: 'H',
             4: 'F',
         }
-        LAMMPS_READ_OPTS = {
-                }
         LAMMPS_SAVE_OPTS = {
             'format': 'lammps-data',
             'atom_style': 'atomic',
             'specorder': ["Si", "O", "C", "H", "F"],
         }
+    LAMMPS_READ_OPTS = {
+        "format": "lammps-data",
+        "index": 0,
+        "atom_style": "atomic"
+    }
     VASP_SAVE_OPTS = {}
 
     @dataclass
@@ -42,6 +45,9 @@ class PARAMS:
 
     path_incidences = '01_incidences'
     path_to_rlx = '01_to_rlx.dat'
+
+    path_nnp_pickle = '02_nnp_rlx.pickle'
+    path_nnp_extxyz = '02_nnp_rlx.extxyz'
 
 def generate_bondlength_dict():
     bond_length_mat = PARAMS.SYSTEM_DEPENDENT.bond_length

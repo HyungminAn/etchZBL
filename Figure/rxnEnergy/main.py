@@ -1,6 +1,6 @@
 import sys
 from stableconfigfinder import StableConfigFinder
-# from imageloader import ImageLoader
+from imageloader import ImageLoader
 # from identifier import BulkGasIdentifier
 # from uniquerxngenerator import UniqueRxnGenerator
 
@@ -18,8 +18,11 @@ def main():
     # NNP Relax should be done here
     ### ---
 
-    # il = ImageLoader()
-    # il.run()
+    il = ImageLoader()
+    is_nnp_relax_done = il.run()
+    if is_nnp_relax_done is None:
+        print("NNP relaxation is not done. Exiting.")
+        sys.exit(1)
 
     # bgi = BulkGasIdentifier()
     # bgi.run()

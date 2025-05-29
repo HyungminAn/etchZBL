@@ -1,48 +1,33 @@
-import ase
-import ase.neighborlist
+import os
 from ase.io import read, write
-import ase.build
 import pickle
 
+from utils import PARAMS
 
 class ImageLoader:
     def run(self):
-        pass
+        with open(PARAMS.path_to_rlx, 'r') as f:
+            lines = f.readlines()[1:]
+        coos = []
 
+        for line in lines:
+            incidence, *img_indices = line.strip().split()
+            for img_idx in img_indices:
+                src = f"{PARAMS.path_incidences}/{incidence}/{incidence}_{img_idx}/rlx.coo"
+                if not os.path.exists(src):
+                    print(f"File {src} does not exist, please finish the relaxation first.")
+                    return None
+                coos.append(read(src, **PARAMS.LAMMPS_READ_OPTS))
 
-def main():
-    with open("./to_rlx.dat",'r') as f:
-        save_list=[
-            sorted([int(image_idx) for image_idx in line.split()[1:]])
-            for line in f.readlines()[1:]
-        ]
+        with open(PARAMS.path_nnp_pickle, 'wb') as f:
+            pickle.dump(coos, f)
 
-    coos = []
-    # nions = 50
-    nions = 20
+        write(PARAMS.path_nnp_extxyz, coos, format='extxyz')
+        print(f'Saved {len(coos)} images to {PARAMS.path_nnp_extxyz}')
 
-    read_options = {
-        "format": "lammps-data",
-        "index": 0,
-        "atom_style": "atomic"
-    }
-
-    for i in range(1, nions+1):
-        for j in range(len(save_list[i-1])):
-            src = f"./incidences/{i}/{i}_{save_list[i-1][j]}/rlx.coo"
-            coos.append(read(src, **read_options))
-
-    with open(f"nnp_rlx.pickle",'wb') as f:
-        pickle.dump(coos, f)
-
-    # matcher={1:14,2:7,3:1,4:9}
-
-    for i in range(len(coos)):
-        # coos[i].set_atomic_numbers([matcher[j] for j in coos[i].get_atomic_numbers()])
-        ase.build.sort(coos[i])
-
-    write("nnp_rlx.extxyz", coos, format='extxyz')
+        return coos
 
 
 if __name__ == '__main__':
-    main()
+    il = ImageLoader()
+    il.run()
