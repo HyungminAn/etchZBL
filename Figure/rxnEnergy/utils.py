@@ -49,6 +49,15 @@ class PARAMS:
     path_nnp_pickle = '02_nnp_rlx.pickle'
     path_nnp_extxyz = '02_nnp_rlx.extxyz'
 
+    path_post_process = '03_data_to_relax'
+    path_unique_bulk = '03_unique_bulk.dat'
+    path_unique_bulk_extxyz = '03_unique_bulk.extxyz'
+    path_unique_gas = '03_desorbed_gas_id.dat'
+
+    gas_crit = 4.5
+    delete_crit = 18
+    fix_h = 2.0
+
 def generate_bondlength_dict():
     bond_length_mat = PARAMS.SYSTEM_DEPENDENT.bond_length
     atom_idx = PARAMS.SYSTEM_DEPENDENT.atom_idx
