@@ -7,6 +7,10 @@ from utils import PARAMS
 
 class StableConfigFinder:
     def run(self, src):
+        if os.path.exists(PARAMS.path_to_rlx):
+            print(f"File {PARAMS.path_to_rlx} already exists. Skipping.")
+            return
+
         line = "#incidence,snapshots_idx\n"
         imgs_to_save = {}
         for incidence in range(1, PARAMS.DUMP_INFO.n_incidences+1):
@@ -18,6 +22,7 @@ class StableConfigFinder:
                 if incidence not in imgs_to_save:
                     imgs_to_save[incidence] = []
                 imgs_to_save[incidence].append((image_idx, dump[image_idx]))
+            print(f"Incidence {incidence} has stable configs: {stable_configs}")
 
         self.save(imgs_to_save)
 
@@ -37,6 +42,10 @@ class StableConfigFinder:
         for incidence, images in imgs_to_save.items():
             for image_idx, image in images:
                 dst = f"{PARAMS.path_incidences}/{incidence}/{incidence}_{image_idx}"
+                if os.path.exists(f'{dst}/coo'):
+                    print(f"Skipping {dst}/coo, already exists.")
+                    continue
+
                 os.makedirs(dst, exist_ok=True)
                 write(f"{dst}/coo", image, **PARAMS.SYSTEM_DEPENDENT.LAMMPS_SAVE_OPTS)
 
