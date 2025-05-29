@@ -27,8 +27,17 @@ class DataLoader:
             return None
 
         n_rxn = len(rxn_list)
+        title = f"{ion_type} at {ion_energy} eV"
+        self.log(f"{title:*^80}", self.log_dict['energy'])
         self.log(f"{ion_type}, {ion_energy}, Number of reactions: {n_rxn}", self.log_dict['log'])
-        self.log(f"{'E_bef_1:':<10} {'E_aft_1:':<10} {'E_bef_2:':<10} {'E_aft_2:':<10} {'E_rxn_1':<10} {'E_rxn_2':<10}", self.log_dict['log'])
+        line = [f"E_before ({self.cal_type_1})",
+                f"E_after ({self.cal_type_1})",
+                f"E_before ({self.cal_type_2})",
+                f"E_after ({self.cal_type_2})",
+                f"E_rxn ({self.cal_type_1})",
+                f"E_rxn ({self.cal_type_2})"]
+        line = [f"{item:>20}" for item in line]
+        self.log(f"{''.join(line)}", self.log_dict['energy'])
 
         path_gas = f"{src}/{PARAMS.path_post_process}/gas"
         ec = EnergyCalculator(src, path_gas, self.log_dict)
@@ -60,9 +69,9 @@ class DataLoader:
             line_energy = ""
             for item in [E_before_1, E_after_1, E_before_2, E_after_2, E_rxn_1, E_rxn_2]:
                 if item is not None:
-                    line_energy += f"{item:10.2f}"
+                    line_energy += f"{item:20.2f}"
                 else:
-                    line_energy += f"{'-':<10}"
+                    line_energy += f"{'-':>20}"
             self.log(line_energy, self.log_dict['energy'])
 
         E_1 = np.array([v for v in E_1.values() if v is not None])
@@ -93,8 +102,8 @@ class EnergyCalculator:
         self.log_dict = log_dict
 
     def run(self, rxn_info, cal_type):
-        if ',' in rxn_info:
-            idx, gas_list = rxn_info.split(",")[0], rxn_info.split(",")[1:]
+        if len(rxn_info) > 1:
+            idx, gas_list = rxn_info[0], rxn_info[1:]
         else:
             idx, gas_list = rxn_info[0], []
 
@@ -126,8 +135,9 @@ class EnergyCalculator:
             return E_gas
 
         for gas_type in gas_list:
-            idx = gas_type.split("_")
-            path_gas_E = f"{self.path_gas}/{idx}/{cal_type}/e"
+            # idx = gas_type.split("_")
+            # path_gas_E = f"{self.path_gas}/{idx}/{cal_type}/e"
+            path_gas_E = f"{self.path_gas}/{gas_type}/{cal_type}/e"
             if not os.path.exists(path_gas_E):
                 self.log(f"Energy of gas {gas_type} not calculated", self.log_dict['log'])
                 self.log(f"{path_gas_E}", self.log_dict['unfinished'])
