@@ -1,4 +1,5 @@
 import sys
+from dataclasses import dataclass
 import numpy as np
 import matplotlib.pyplot as plt
 from abc import ABC, abstractmethod
@@ -6,6 +7,22 @@ from collections import defaultdict
 from itertools import cycle
 from itertools import islice
 import pickle
+
+
+@dataclass
+class PARAMS:
+    GAS_CONVERT_DICT = {
+            'SiF4': 'SiF$_4$',
+            'OC': 'CO',
+            'O2C': 'CO$_2$',
+            'OCF2': 'COF$_2$',
+            'CF2': 'CF$_2$',
+            'O2': 'O$_2$',
+            'SiF2': 'SiF$_2$',
+            'CF4': 'CF$_4$',
+            'OF2': 'OF$_2$',
+            'F2': 'F$_2$',
+            }
 
 
 class AbstractGeneratedProductsPlotter(ABC):
@@ -70,36 +87,38 @@ class AbstractGeneratedProductsPlotter(ABC):
             labels = labels[:trunc_len] + [f'_{i}' for i in labels[trunc_len:]]
         return labels
 
-    def _plot(self, stack_mat, labels):
-        plt.rcParams.update({'font.size': 18})
-        fig, ax_stackplot = plt.subplots(figsize=(12, 6))
+    def _plot(self, stack_mat, labels, set_alpha=False):
+        plt.rcParams.update({'font.size': 14})
+        fig, ax_stackplot = plt.subplots(figsize=(6, 6))
 
         x = np.arange(stack_mat.shape[1])
         color_list = plt.rcParams['axes.prop_cycle'].by_key()['color']
         colors = islice(cycle(color_list), len(labels))
         hatches = ['/', '\\', '|', '-', '+', 'x', 'o', 'O', '.', '*'] * 100
+        labels = [PARAMS.GAS_CONVERT_DICT.get(label, label) for label in labels]
         stack_collection = ax_stackplot.stackplot(x, stack_mat, labels=labels, colors=colors)
 
         for stack, label, hatch in zip(stack_collection, labels, hatches[:len(labels)]):
             stack.set_hatch(hatch)
-            if 'Si' in label:
-                alpha = 1
-            else:
+            alpha = 1
+            if set_alpha and 'Si' not in label:
                 alpha = 0.1
             stack.set_alpha(alpha)
             stack.set_edgecolor((0, 0, 0, alpha))
 
         ax_stackplot.set_xlabel("Number of incidence")
         ax_stackplot.set_title(self._get_plot_title())
-        legend = ax_stackplot.legend(loc='center left', bbox_to_anchor=(1.05, 0.5),
-                                     ncol=2, fontsize='small')
+        legend = ax_stackplot.legend(loc='lower center', bbox_to_anchor=(0.5, -0.4),
+                                     ncol=len(labels)/2, fontsize='small')
 
         for patch in legend.get_patches():
             patch.set_edgecolor('black')
             patch.set_linewidth(0.5)
 
+        # Give enough space for the legend
         fig.tight_layout()
-        fig.savefig(self._get_output_filename(), bbox_inches='tight', dpi=300)
+        fig.subplots_adjust(bottom=0.25)
+        fig.savefig(self._get_output_filename(), bbox_inches='tight')
 
     @abstractmethod
     def _get_plot_title(self):
