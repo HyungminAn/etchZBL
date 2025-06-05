@@ -2,20 +2,21 @@ import sys
 
 import yaml
 
-from imageloader import ImageLoader, ImageLoaderExtended
+# from imageloader import ImageLoader
+from imageloader import ImageLoaderExtended
 from processor import HeightChangeProcessor, CarbonChangeProcessor, FilmAnalyzer, CarbonNeighborProcessor
-from plotter import DataPlotter, DataPlotterSelected
-
+from plotter import DataPlotter
+from plotter import DataPlotterSelected
 
 class DataProcessor:
     def __init__(self, name):
         self.name = name
         self.processors = {
-                'height_change': HeightChangeProcessor(name),
-                'carbon_thickness': CarbonChangeProcessor(name),
-                'film_data': FilmAnalyzer(name),
-                'neighbor_classification': CarbonNeighborProcessor(name),
-                }
+            'height_change': HeightChangeProcessor(name),
+            'carbon_thickness': CarbonChangeProcessor(name),
+            'film_data': FilmAnalyzer(name),
+            'neighbor_classification': CarbonNeighborProcessor(name),
+        }
 
     def run(self, src_list):
         all_exists = all([p.check_exists() for p in self.processors.values()])
