@@ -8,14 +8,15 @@ import matplotlib.pyplot as plt
 class PlotInfo:
     color_list = {
         'SiO2': 'red',
-        'Si3N4': 'blue',
+        # 'Si3N4': 'blue',
+        'Si3N4': 'red',
     }
     marker_list = {
         'CF3': 'o',
-        'CF2': 's',
-        'CF': '^',
-        'CH2F': 'd',
-        'CHF2': 'p',
+        'CF2': 'o',
+        'CF': 'o',
+        'CH2F': '^',
+        'CHF2': 'o',
     }
     species_list = [
         'CF3_',
@@ -25,17 +26,19 @@ class PlotInfo:
         'CH2F_',
     ]
     legend_props = {
-        'fontsize': 14,
-        'loc': 'upper left',
-        'bbox_to_anchor': (0.02, 0.98),
+        'loc': 'lower center',
+        'bbox_to_anchor': (0.5, 0),
+        'frameon': False,
+        # 'loc': 'lower center',
+        # 'bbox_to_anchor': (0.5, -0.2),
     }
     scatter_props = {
-        's': 70,
+        's': 30,
         'edgecolor': 'k',
         'alpha': 0.7,
     }
     scatter_props_ref = {
-        's': 70,
+        's': 30,
         'edgecolor': 'k',
         'color': 'w',
     }
@@ -44,54 +47,59 @@ class PlotInfo:
         'alpha': 0.3,
     }
     label_map = {
-        'CF3': 'CF${}_{3}^{+}$',
-        'CF2': 'CF${}_{2}^{+}$',
-        'CF': 'CF$^{+}$',
-        'CHF2': 'CHF${}_{2}^{+}$',
-        'CH2F': 'CH$_2$F$^{+}$',
+        'SiO2': {
+            'sim': {
+                'CF3': 'This study',
+                'CF2': 'This study',
+                'CF': 'This study',
+                'CHF2': 'This study',
+                # 'CHF2': 'This study (CHF${}_{2}^{+}$)',
+                # 'CH2F': 'This study (CH$_2$F${}^{+}$)',
+                },
+            'exp': {
+                'CF3 (ref.1)': 'Karahashi et al.',
+                'CF3 (ref.2)': 'Toyoda et al.',
+                'CF2': 'Karahashi et al.',
+                'CF': 'Karahashi et al.',
+                'CHF2': 'Ito et al.',
+                },
+            },
+        'Si3N4': {
+            'sim': {
+                'CF3': 'This study',
+                'CF2': 'This study',
+                'CF': 'This study',
+                'CHF2': 'This study',
+                'CH2F': 'This study',
+                },
+            'exp': {
+                'CF2': 'Ito et al.',
+                'CHF2': 'Ito et al.',
+                },
+            },
+        }
+
+    facecolor_map = {
+        'Karahashi et al.': 'black',
+        'Ito et al.': 'grey',
+        'Toyoda et al.': 'white',
     }
 
-class DataPlotter:
-    def get_plot_fig(self):
-        plt.rcParams.update({
-            'font.size': 16,
-            'font.family': 'arial',
-            })
-        n_row, n_col = 2, 3
-        fig, axes = plt.subplots(n_row, n_col, figsize=(6*n_col, 6*n_row))
-
-        ax_dict = {
-                'SiO2': {
-                    'CF$_3$': axes[0, 0],
-                    'CF$_2$': axes[0, 1],
-                    'CF': axes[1, 0],
-                    'CHF$_2$/CH$_2$F': axes[1, 1],
-                },
-                'Si3N4': {
-                    'CF$_2$': axes[0, 2],
-                    'CHF$_2$/CH$_2$F': axes[1, 2],
-                },
+    key_convert_dict = {
+            'CF3_': 'CF$_3$',
+            'CF2_': 'CF$_2$',
+            'CF_': 'CF',
+            'CHF2_': 'CHF$_2$/CH$_2$F',
+            'CH2F_': 'CHF$_2$/CH$_2$F',
             }
-        for _, axes in ax_dict.items():
-            for key, ax in axes.items():
-                ax.set_xlabel(r'$\sqrt{E}$')
-                ax.set_ylabel('Etch yield (Si/ion)')
-                # ax.set_title(key)
-        return fig, ax_dict
 
-    def plot_separate(self, data_total):
-        fig, ax_dict = self.get_plot_fig()
-        key_convert_dict = {
-                'CF3_': 'CF$_3$',
-                'CF2_': 'CF$_2$',
-                'CF_': 'CF',
-                'CHF2_': 'CHF$_2$/CH$_2$F',
-                'CH2F_': 'CHF$_2$/CH$_2$F',
-                }
+class DataPlotter:
+    def run(self, data_total):
+        fig, ax_dict = self.generate_figure()
 
         for system_type, value_dict in data_total.items():
             for species in PlotInfo.species_list:
-                ax = ax_dict[system_type].get(key_convert_dict[species])
+                ax = ax_dict[system_type].get(PlotInfo.key_convert_dict[species])
                 if ax is None:
                     continue
                 data_exp = {k.replace('_', ''): v for k, v in value_dict['exp'].items() if species in k}
@@ -103,33 +111,55 @@ class DataPlotter:
                 self.plot_points(ax, data_dict)
                 self.decorate(ax)
 
+        self.add_subtitles(ax_dict)
+        self.set_global_legend(fig, ax_dict)
+        self.save(fig)
+
+    def add_subtitles(self, ax_dict):
+        shift_x, shift_y = 0.15, 0.2
         text_opts = {
-                'fontsize': 24,
                 'ha': 'left',
                 'va': 'top',
                 }
-        stride_x, stride_y, shift_x, shift_y = 1/3, 0.5, 0.15, 0.2
-
         texts = [
                 ('SiO2',  'CF$_3$',          -shift_x, 1 + shift_y, '(a) SiO$_2$, CF${}_{3}^{+}$'),
                 ('SiO2',  'CF$_2$',          -shift_x, 1 + shift_y, '(b) SiO$_2$, CF${}_{2}^{+}$'),
                 ('Si3N4', 'CF$_2$',          -shift_x, 1 + shift_y, '(e) Si$_3$N$_4$, CF${}_{2}^{+}$'),
                 ('SiO2',  'CF',              -shift_x, 1 + shift_y, '(c) SiO$_2$, CF$^{+}$'),
-                ('SiO2',  'CHF$_2$/CH$_2$F', -shift_x, 1 + shift_y, '(d) SiO$_2$, CHF${}_{2}^{+}$/CH$_2$F$^{+}$'),
+                ('SiO2',  'CHF$_2$/CH$_2$F', -shift_x, 1 + shift_y, '(d) SiO$_2$, CHF${}_{2}^{+}$'),
                 ('Si3N4', 'CHF$_2$/CH$_2$F', -shift_x, 1 + shift_y, '(f) Si$_3$N$_4$, CHF${}_{2}^{+}$'),
                 ]
         for (system, ion, x, y, text) in texts:
             ax = ax_dict[system].get(ion)
             ax.text(x, y, text, transform=ax.transAxes, **text_opts)
 
-        line = plt.Line2D([2/3, 2/3], [0.02, 0.98], color='grey', linestyle='--')
-        fig.add_artist(line)
-        fig.tight_layout(pad=2.0)
-        name = 'result'
-        fig.savefig(f'{name}.png')
-        fig.savefig(f'{name}.pdf')
-        fig.savefig(f'{name}.eps')
+    def generate_figure(self):
+        plt.rcParams.update({
+            'font.family': 'arial',
+            'font.size': 10,
+            })
+        n_row, n_col = 2, 3
+        multiplier = 7.1 / n_col
+        figsize = (n_col * multiplier, n_row * multiplier)
+        fig, axes = plt.subplots(n_row, n_col, figsize=figsize)
 
+        ax_dict = {
+                'SiO2': {
+                    'CF$_3$': axes[0, 0],
+                    'CF$_2$': axes[1, 0],
+                    'CF': axes[0, 1],
+                    'CHF$_2$/CH$_2$F': axes[1, 1],
+                },
+                'Si3N4': {
+                    'CF$_2$': axes[0, 2],
+                    'CHF$_2$/CH$_2$F': axes[1, 2],
+                },
+            }
+        for _, axes in ax_dict.items():
+            for key, ax in axes.items():
+                ax.set_xlabel(r'$\sqrt{E}$')
+                ax.set_ylabel('Etch yield (Si/ion)')
+        return fig, ax_dict
 
     def plot_points(self, ax, data):
         key = 'sim'
@@ -140,7 +170,7 @@ class DataPlotter:
             x = np.sqrt(x)
             plot_marker = PlotInfo.marker_list[ion_type]
             plot_color = PlotInfo.color_list[data['system']]
-            label = f'{PlotInfo.label_map[ion_type]}'
+            label = PlotInfo.label_map[data['system']][key][ion_type]
             ax.scatter(x, y,
                        color=plot_color,
                        marker=plot_marker,
@@ -155,67 +185,82 @@ class DataPlotter:
             y_hat = np.poly1d(z)(x)
             ax.plot(x, y_hat, color=plot_color, **PlotInfo.fit_props)
 
-            # cutoff_E = np.square(z[1] / z[0])
-            # textbox = f"$y={z[0]:0.3f}\;x{z[1]:+0.3f}$\n"
-            # textbox += f"$R^2$ ={r2_score(y, y_hat):0.3f}\n"
-            # textbox += f"cutoff_E = {cutoff_E:.2f} eV"
-
-            # props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
-            # ax.text(
-            #     0.05, 0.95, textbox,
-            #     horizontalalignment='left',
-            #     verticalalignment='top',
-            #     transform=ax.transAxes, bbox=props)
-
     def plot_ref(self, ax, data):
         key = 'exp'
         if len([i for i in data[key].keys()]) > 2:
             raise ValueError('Too many data in the reference data')
 
-        count = 0
         for ion_type in data[key].keys():
             x = np.array([i for i in data[key][ion_type].keys()])
             y = np.array([i for i in data[key][ion_type].values()])
             marker = PlotInfo.marker_list[ion_type.split()[0]]
 
-            my_ion, label = ion_type.split()[0], ""
-            if my_ion in PlotInfo.label_map.keys():
-                label = ion_type.replace(my_ion, PlotInfo.label_map[my_ion])
+            label = PlotInfo.label_map[data['system']][key].get(ion_type)
             if len(y) > 1:
                 ax.plot(x, y, color='k', linestyle='--')
-            if count == 0:
-                ax.scatter(x, y,
-                           label=f"{label} (Exp)",
-                           marker=marker,
-                           facecolor='none',
-                           **PlotInfo.scatter_props_ref)
-                count += 1
-            else:
-                ax.scatter(x, y,
-                           label=f"{label} (Exp)",
-                           marker=marker,
-                           facecolor='black',
-                           **PlotInfo.scatter_props_ref)
+
+            ax.scatter(x, y,
+                       label=label,
+                       marker=marker,
+                       facecolor=PlotInfo.facecolor_map.get(label),
+                       **PlotInfo.scatter_props_ref)
 
     def decorate(self, ax):
-        ax.legend(**PlotInfo.legend_props)
-
         ax.set_xlim(0, 50)
         ax.set_ylim(0, 2.0)
         ax.set_xlabel(r'$\sqrt{E_{\text{ion}}/\text{eV}}$')
         ax.set_ylabel('Etch yield (Si/ion)')
+
+    def set_global_legend(self, fig, ax_dict):
+        ax_list = []
+        for _, axes in ax_dict.items():
+            for key, ax in axes.items():
+                ax_list.append(ax)
+
+        handles, labels = [], []
+        for ax in ax_list:
+            handle, label = ax.get_legend_handles_labels()
+            handles.extend(handle)
+            labels.extend(label)
+
+        # Remove duplicates
+        unique_labels = []
+        unique_handles = []
+        for h, l in zip(handles, labels):
+            if l not in unique_labels:
+                unique_labels.append(l)
+                unique_handles.append(h)
+
+        pop_idx = unique_labels.index('This study')
+        label_this_study = unique_labels.pop(pop_idx)
+        handle_this_study = unique_handles.pop(pop_idx)
+        unique_labels.insert(0, label_this_study)
+        unique_handles.insert(0, handle_this_study)
+        handles = unique_handles
+        labels = unique_labels
+
+        fig.legend(handles, labels, ncol=len(labels), **PlotInfo.legend_props)
 
     @staticmethod
     def flip(items, ncol):
         from itertools import chain
         return chain(*[items[i::ncol] for i in range(ncol)])
 
+    def save(self, fig):
+        # line = plt.Line2D([2/3, 2/3], [0.02, 0.98], color='grey', linestyle='--')
+        # fig.add_artist(line)
+        fig.tight_layout()
+        fig.subplots_adjust(bottom=0.2)
+        name = '3_1_2_valid_etchyield'
+        fig.savefig(f'{name}.png')
+        fig.savefig(f'{name}.pdf')
+        fig.savefig(f'{name}.eps')
 
 def main():
-    plotter = DataPlotter()
+    pl = DataPlotter()
     with open('dat.yaml', 'r') as f:
         data_total = yaml.safe_load(f)
-    plotter.plot_separate(data_total)
+    pl.run(data_total)
 
 
 if __name__ == '__main__':

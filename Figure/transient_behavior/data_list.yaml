@@ -1,0 +1,11 @@
+CF_300:
+  path: "/data_etch/figure_HM/Results/02_TransientBehavior/01_original/height_shift.dat"
+  color: 'red'
+
+# case_1:
+#   path: "/data_etch/figure_HM/Results/06_Thickness/02_remove_SiF4_CO2_only/height_shift.dat"
+#   color: 'red'
+
+CF_300 (removal height 2nm):
+  path: "/data_etch/figure_HM/Results/02_TransientBehavior/03_removal_region/CF_300_shifted_height.txt"
+  color: 'orange'

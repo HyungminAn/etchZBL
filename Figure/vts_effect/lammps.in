@@ -1,0 +1,53 @@
+##########################################################
+# Simple cell relaxation CUBIC CELL
+##########################################################
+units           metal
+newton          on
+dimension       3
+boundary        p p p   # periodic boundary conditions (f ? aperiodic/ p - periodic)
+
+read_data       input.data
+
+variable        element_list   string   "Si O C H F"
+pair_style      hybrid/overlay  nn/intel   zbl/pair
+pair_coeff      * * nn/intel ${path_potential} ${element_list}
+
+pair_coeff  1 1  zbl/pair    14 14     1.598 2.054
+pair_coeff  1 2  zbl/pair    14  8     1.070 1.376
+pair_coeff  1 3  zbl/pair    14  6     1.208 1.553
+pair_coeff  1 4  zbl/pair    14  1     1.079 1.388
+pair_coeff  1 5  zbl/pair    14  9     1.145 1.472
+pair_coeff  2 2  zbl/pair     8  8     0.863 1.110
+pair_coeff  2 3  zbl/pair     8  6     0.800 1.029
+pair_coeff  2 4  zbl/pair     8  1     0.691 0.888
+pair_coeff  2 5  zbl/pair     8  9     0.961 1.235
+pair_coeff  3 3  zbl/pair     6  6     0.920 1.183
+pair_coeff  3 4  zbl/pair     6  1     0.797 1.024
+pair_coeff  3 5  zbl/pair     6  9     0.908 1.168
+pair_coeff  4 4  zbl/pair     1  1     0.525 0.675
+pair_coeff  4 5  zbl/pair     1  9     0.657 0.844
+pair_coeff  5 5  zbl/pair     9  9     0.997 1.282
+
+variable        MASS_Si        equal   28.0855
+variable        MASS_O         equal   15.999
+variable        MASS_C         equal   12.011
+variable        MASS_H         equal   1.00784
+variable        MASS_F         equal   18.998
+
+mass    1   ${MASS_Si}
+mass    2   ${MASS_O}
+mass    3   ${MASS_C}
+mass    4   ${MASS_H}
+mass    5   ${MASS_F}
+
+neighbor 2 bin
+# When the neighbours list will be updated http://lammps.sandia.gov/doc/neigh_modify.html
+neigh_modify    every 10 delay 0 check yes
+dump traj all custom 5 dump.lammps id type x y z fx fy fz
+# dump_modify traj sort id
+
+balance  1.15 shift z 20 1.05 weight time 1
+
+run 0
+variable pe equal pe
+print "free  energy ${pe}"

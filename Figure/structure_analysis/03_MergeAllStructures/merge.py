@@ -378,8 +378,8 @@ def main():
 
     m = MergedCellGenerator()
     m.run(src, idx_list)
-    p = HeightPlotter()
-    p.run(m.write_poscars_with_merged_cells)
+    # p = HeightPlotter()
+    # p.run(m.write_poscars_with_merged_cells)
 
 
 if __name__ == "__main__":
