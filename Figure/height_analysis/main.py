@@ -4,18 +4,24 @@ import yaml
 
 # from imageloader import ImageLoader
 from imageloader import ImageLoaderExtended
-from processor import HeightChangeProcessor, CarbonChangeProcessor, FilmAnalyzer, CarbonNeighborProcessor
+from processor import HeightChangeProcessor, MixedFilmRegionIdentifier, CarbonNeighborProcessor
+from processor import AverageDensityProcessor, FCratioProcessor, SpxRatioProcessor
 from plotter import DataPlotter
 from plotter import DataPlotterSelected
 
 class DataProcessor:
-    def __init__(self, name):
+    def __init__(self, name, system=None):
         self.name = name
+        self.system = system
         self.processors = {
-            'height_change': HeightChangeProcessor(name),
-            'carbon_thickness': CarbonChangeProcessor(name),
-            'film_data': FilmAnalyzer(name),
-            'neighbor_classification': CarbonNeighborProcessor(name),
+            'height_change': HeightChangeProcessor(name, 'shifted_height.txt'),
+            'z_data': MixedFilmRegionIdentifier(name, 'thickness.txt', system=system),
+            'neighbor_classification': CarbonNeighborProcessor(name, 'carbon_neighbors.txt', system=system),
+        }
+        self.dependent_processors = {
+            'density': AverageDensityProcessor(name, 'density.txt'),
+            'fc_ratio': FCratioProcessor(name, 'fc_ratio.txt'),
+            'spx_ratio': SpxRatioProcessor(name, 'spx_ratio.txt', system=system),
         }
 
     def run(self, src_list):
@@ -24,7 +30,7 @@ class DataProcessor:
             images = {}
         else:
             # images = ImageLoader().run(src_list)
-            images = ImageLoaderExtended().run(src_list)
+            images = ImageLoaderExtended(self.system).run(src_list)
 
         result = {}
         for k, p in self.processors.items():
@@ -33,21 +39,28 @@ class DataProcessor:
             else:
                 x, y, labels = p.run(images)
             result[k] = (x, y, labels)
+
+        height_dict = result['height_change'][2]
+        for k, p in self.dependent_processors.items():
+            x, y, labels = p.run(images)
+            result[k] = (x, y, labels)
+
         return result
 
 def main():
-    if len(sys.argv) != 2:
-        print('Usage: python get_height.py input.yaml')
+    if len(sys.argv) != 3:
+        print('Usage: python get_height.py input.yaml <system:SiO2/Si3N4>')
         sys.exit(1)
 
     path_yaml = sys.argv[1]
+    system = sys.argv[2]
     with open(path_yaml, 'r') as f:
         inputs = yaml.safe_load(f)
     data = {}
     for ion in inputs.keys():
         for energy, src_list in inputs[ion].items():
             key = f'{ion}_{energy}'
-            dp = DataProcessor(key)
+            dp = DataProcessor(key, system=system)
             data[key] = dp.run(src_list)
     # dplot = DataPlotter()
     # dplot.run(data)

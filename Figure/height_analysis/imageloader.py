@@ -6,13 +6,21 @@ from params import PARAMS
 
 
 class ImageLoader:
+    def __init__(self, system):
+        if system == 'SiO2':
+            self.read_opts = PARAMS.LAMMPS.SiO2.READ_OPTS
+        elif system == 'Si3N4':
+            self.read_opts = PARAMS.LAMMPS.Si3N4.READ_OPTS
+        else:
+            raise ValueError(f'Unknown system {system}')
+
     def run(self, src_list, PATTERN='rm_byproduct_str_shoot_', INTERVAL=PARAMS.PLOT.HEIGHT.READ_INTERVAL):
         file_dict = self.get_file_list(src_list, PATTERN)
         keys = sorted(file_dict.keys())
         result = {}
         for key in keys[::INTERVAL]:
             file = file_dict[key]
-            atoms = read(file, **PARAMS.LAMMPS.READ_OPTS)
+            atoms = read(file, **self.read_opts)
             result[key] = atoms
         return result
 
@@ -67,9 +75,4 @@ class ImageLoaderExtended(ImageLoader):
 
             result[image_idx] = image
 
-        # for image_idx, image in result.items():
-        #     write(f'test_{image_idx}.extxyz', image, format='extxyz')
-        #     print(f'{image_idx} written')
-
         return result
-
