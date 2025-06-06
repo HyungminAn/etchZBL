@@ -138,117 +138,6 @@ class FCratioProcessor(BaseProcessor):
         fc_ratio = len(mask_F) / len(mask_C)
         return fc_ratio
 
-class SpxRatioProcessor(BaseProcessor):
-    def __init__(self, name, suffix, system=None):
-        self.name = name
-        self.filename_suffix = suffix
-
-        if system == 'SiO2':
-            self.symbol_map = {'Si': 0, 'O': 1, 'C': 2, 'H': 3, 'F': 4}
-        elif system == 'Si3N4':
-            self.symbol_map = {'Si': 0, 'N': 1, 'C': 2, 'H': 3, 'F': 4}
-        else:
-            raise ValueError(f"Unknown system: {system}")
-
-        self.cutoff_mat = np.loadtxt(PARAMS.PLOT.ATOMDENSITY.path_cutoff_matrix)
-
-    @pklSaver.run(lambda self: f'{self.name}_{self.filename_suffix}')
-    def run(self, images, height_dict):
-        x, y = [], []
-        for key, image in images.items():
-            z_min, z_max, _ = height_dict.get(key, (None, None, None))
-            spx_ratio = self.run_single(image, z_min, z_max)
-            x.append(key)
-            y.append([
-                spx_ratio['sp3'],
-                spx_ratio['sp2'],
-                spx_ratio['sp'],
-                spx_ratio['others'],
-                ])
-            print(f'{key}: sp3={spx_ratio["sp3"]}, sp2={spx_ratio["sp2"]}, '
-                  f'sp={spx_ratio["sp"]}, others={spx_ratio["others"]}')
-        x = np.array(x, dtype=int)
-        y = np.array(y, dtype=float)
-        labels = ['key', 'sp3', 'sp2', 'sp', 'others']
-        return x, y, labels
-
-    def run_single(self, atoms, z_min, z_max):
-        """
-        Compute spx hybridization counts for carbon atoms within a specified z-range,
-        accounting for periodic boundary conditions and per-pair cutoffs.
-
-        Returns:
-            dict: {'sp3': int, 'sp2': int, 'sp': int, 'others': int}
-        """
-        result = {'sp3': 0, 'sp2': 0, 'sp': 0, 'others': 0}
-        if z_min is None or z_max is None:
-            return result
-
-        # Positions and cell dimensions for PBC
-        positions = atoms.get_positions()
-        # Assumes orthorhombic cell: use diagonal entries
-        box = atoms.get_cell().diagonal()
-        tree = cKDTree(positions, boxsize=box)
-
-        # Filter atoms by z-range
-        z_coords = positions[:, 2]
-        z_mask = (z_coords >= z_min) & (z_coords <= z_max)
-        if not np.any(z_mask):
-            return result
-
-        symbols = atoms.get_chemical_symbols()
-        # Map element to cutoff-matrix index
-        symbol_map = self.symbol_map
-        # Load pairwise cutoff distances
-        cutoff_mat = self.cutoff_mat
-
-        # Identify carbon atoms in region
-        region_idx = np.where(z_mask)[0]
-        is_carbon = np.array([symbols[i] == 'C' for i in region_idx])
-        carbon_idx = region_idx[is_carbon]
-        if carbon_idx.size == 0:
-            return result
-
-        # Build a tree for carbon atoms
-        carbon_pos = positions[carbon_idx]
-        carbon_tree = cKDTree(carbon_pos, boxsize=box)
-
-        # Use sparse distance matrix to get all pairs within max cutoff
-        max_cut = cutoff_mat.max()
-        # sparse_distance_matrix returns dict {(i_local, j_global): distance}
-        dist_dict = carbon_tree.sparse_distance_matrix(tree, max_cut)
-
-        # Convert to arrays for vectorized filtering
-        pairs = np.array(list(dist_dict.keys()), dtype=int)
-        dists = np.array(list(dist_dict.values()))
-        i_local, j_global = pairs[:, 0], pairs[:, 1]
-
-        # Remove self-pairs
-        global_i = carbon_idx[i_local]
-        self_mask = (global_i == j_global)
-        i_local = i_local[~self_mask]
-        j_global = j_global[~self_mask]
-        dists = dists[~self_mask]
-
-        # Determine neighbor types and corresponding cutoffs
-        j_types = np.array([symbol_map[symbols[j]] for j in j_global])
-        c_type = symbol_map['C']
-        valid_cut = cutoff_mat[c_type, j_types]
-        valid = dists <= valid_cut
-
-        # Count neighbors per carbon atom
-        counts = np.bincount(i_local[valid], minlength=carbon_idx.size)
-
-        # Classify hybridization
-        result = {
-            'sp3': int(np.count_nonzero(counts == 4)),
-            'sp2': int(np.count_nonzero(counts == 3)),
-            'sp': int(np.count_nonzero(counts == 2)),
-            'others': int(np.count_nonzero(~np.isin(counts, [2, 3, 4])))
-        }
-
-        return result
-
 class ProfileProcessor(BaseProcessor):
     def __init__(self, name, suffix, system=None):
         self.system = system
@@ -414,20 +303,331 @@ class FilmRegionIdentifier(RegionIdentifier):
 
         return z_film_min, z_film_max, h_film
 
-class CarbonNeighborProcessor(BaseProcessor):
-    """
-    Classify carbon atoms based on neighbor atom types using a cutoff matrix.
+# class CarbonNeighborProcessor(BaseProcessor):
+#     """
+#     Classify carbon atoms based on neighbor atom types using a cutoff matrix.
 
-    Attributes:
-        atoms: ASE Atoms object
-        cutoff_matrix: 2D numpy array of pairwise cutoffs (element_type x element_type)
-        element_order: list of element symbols defining indices in cutoff_matrix
-    """
+#     Attributes:
+#         atoms: ASE Atoms object
+#         cutoff_matrix: 2D numpy array of pairwise cutoffs (element_type x element_type)
+#         element_order: list of element symbols defining indices in cutoff_matrix
+#     """
+#     def __init__(self, name, suffix, system=None):
+#         self.name = name
+#         self.cutoff_matrix = np.loadtxt(PARAMS.PLOT.ATOMDENSITY.path_cutoff_matrix)
+#         self.system = system
+#         # Default element order if not provided
+#         if system == 'SiO2':
+#             self.element_order = PARAMS.PLOT.ATOMDENSITY.ELEM_LIST_SiO2
+#         elif system == 'Si3N4':
+#             self.element_order = PARAMS.PLOT.ATOMDENSITY.ELEM_LIST_Si3N4
+#         else:
+#             raise ValueError(f"Unknown system: {system}")
+
+#         self.symbol_to_index = {sym: i for i, sym in enumerate(self.element_order)}
+#         self.filename_suffix = suffix
+
+#     @pklSaver.run(lambda self: f'{self.name}_{self.filename_suffix}')
+#     def run(self, images):
+#         carbons = {}
+#         for key, image in images.items():
+#             carbons[key] = self.run_single(image)
+
+#         result = {}
+#         for key, data in carbons.items():
+#             for bondtype in data.keys():
+#                 if result.get(bondtype) is None:
+#                     result[bondtype] = []
+
+#         labels = [i for i in result.keys()]
+#         for key, data in carbons.items():
+#             for bondtype in labels:
+#                 count = data.get(bondtype, 0)
+#                 result[bondtype].append(count)
+#         x = np.array([i for i in carbons.keys()])
+#         y = np.array([i for i in result.values()]).T
+#         labels = ['x'] + labels
+#         return x, y, labels
+
+#     def run_single(self, atoms):
+#         """
+#         Classify each carbon atom based on its neighbors.
+#         Returns:
+#             dict: mapping carbon atom index -> classification string
+#         """
+#         adjacency = self.build_adjacency(atoms)
+#         symbols = atoms.get_chemical_symbols()
+#         classification = {}
+#         # Iterate over all atoms, pick carbons
+#         for idx, sym in enumerate(symbols):
+#             if sym != 'C':
+#                 continue
+#             # Get neighbor symbols
+#             nbr_syms = [symbols[j] for j in adjacency[idx]]
+#             # Determine bond type
+#             bondtype = self.get_bondtype(nbr_syms)
+#             classification[idx] = bondtype
+
+#         result = {}
+#         for idx, bondtype in classification.items():
+#             if result.get(bondtype) is None:
+#                 result[bondtype] = []
+#             result[bondtype].append(idx)
+#         result = {k: len(v) for k, v in result.items()}
+#         return result
+
+#     def build_adjacency(self, atoms):
+#         """
+#         Build adjacency list based on cutoff distances with periodic boundary conditions.
+#         Returns:
+#             adjacency: list of sets, adjacency[i] is the set of neighbor indices of atom i
+#         """
+#         # Ensure wrapped within cell
+#         atoms.wrap()
+#         positions = atoms.get_positions()
+#         # Clean tiny negative values
+#         positions[positions < -1e-10] = 0.0
+#         # PBC box lengths
+#         cell_lengths = atoms.get_cell().lengths()
+#         # Build k-d tree
+#         tree = cKDTree(positions, boxsize=cell_lengths)
+#         max_cutoff = np.max(self.cutoff_matrix)
+#         # Sparse distance in COO
+#         pairs = tree.sparse_distance_matrix(tree, max_cutoff, output_type='coo_matrix')
+#         num_atoms = len(atoms)
+#         adjacency = [set() for _ in range(num_atoms)]
+#         row, col, dist = pairs.row, pairs.col, pairs.data
+#         atom_types = np.array([self.symbol_to_index[s] for s in atoms.get_chemical_symbols()])
+#         # Filter by element-specific cutoff
+#         valid = dist <= self.cutoff_matrix[atom_types[row], atom_types[col]]
+#         for i, j in zip(row[valid], col[valid]):
+#             if i != j:
+#                 adjacency[i].add(j)
+#                 adjacency[j].add(i)
+#         return adjacency
+
+#     def get_bondtype(self, symbols):
+#         """
+#         Classify based on the multiset of neighbor symbols.
+#         Input:
+#             symbols: list or space-separated string of neighbor element symbols
+#         Returns:
+#             classification string
+#         """
+#         if self.system == 'SiO2':
+#             case_dict = PARAMS.PLOT.ATOMDENSITY.case_dict_SiO2
+#         elif self.system == 'Si3N4':
+#             case_dict = PARAMS.PLOT.ATOMDENSITY.case_dict_Si3N4
+#         else:
+#             raise ValueError(f"Unknown system: {self.system}")
+
+#         if symbols is None:
+#             return 'etc'
+#         if isinstance(symbols, str):
+#             symbols = symbols.split()
+#         key = tuple(sorted(set(symbols)))
+#         out = case_dict.get(key)
+#         if out == 'CX':
+#             # Count number of C bonds
+#             count_C = symbols.count('C')
+#             return f"C{count_C}"
+#         return out if out is not None else 'etc'
+
+# class SpxRatioProcessor(BaseProcessor):
+#     def __init__(self, name, suffix, system=None):
+#         self.name = name
+#         self.filename_suffix = suffix
+
+#         if system == 'SiO2':
+#             self.symbol_map = {'Si': 0, 'O': 1, 'C': 2, 'H': 3, 'F': 4}
+#         elif system == 'Si3N4':
+#             self.symbol_map = {'Si': 0, 'N': 1, 'C': 2, 'H': 3, 'F': 4}
+#         else:
+#             raise ValueError(f"Unknown system: {system}")
+
+#         self.cutoff_mat = np.loadtxt(PARAMS.PLOT.ATOMDENSITY.path_cutoff_matrix)
+
+#     @pklSaver.run(lambda self: f'{self.name}_{self.filename_suffix}')
+#     def run(self, images, height_dict):
+#         x, y = [], []
+#         for key, image in images.items():
+#             z_min, z_max, _ = height_dict.get(key, (None, None, None))
+#             spx_ratio = self.run_single(image, z_min, z_max)
+#             x.append(key)
+#             y.append([
+#                 spx_ratio['sp3'],
+#                 spx_ratio['sp2'],
+#                 spx_ratio['sp'],
+#                 spx_ratio['others'],
+#                 ])
+#             print(f'{key}: sp3={spx_ratio["sp3"]}, sp2={spx_ratio["sp2"]}, '
+#                   f'sp={spx_ratio["sp"]}, others={spx_ratio["others"]}')
+#         x = np.array(x, dtype=int)
+#         y = np.array(y, dtype=float)
+#         labels = ['key', 'sp3', 'sp2', 'sp', 'others']
+#         return x, y, labels
+
+#     def run_single(self, atoms, z_min, z_max):
+#         """
+#         Compute spx hybridization counts for carbon atoms within a specified z-range,
+#         accounting for periodic boundary conditions and per-pair cutoffs.
+
+#         Returns:
+#             dict: {'sp3': int, 'sp2': int, 'sp': int, 'others': int}
+#         """
+#         result = {'sp3': 0, 'sp2': 0, 'sp': 0, 'others': 0}
+#         if z_min is None or z_max is None:
+#             return result
+
+#         # Positions and cell dimensions for PBC
+#         positions = atoms.get_positions()
+#         # Filter atoms by z-range
+#         z_coords = positions[:, 2]
+#         z_mask = (z_coords >= z_min) & (z_coords <= z_max)
+#         if not np.any(z_mask):
+#             return result
+
+#         # Identify carbon atoms in region
+#         region_idx = np.where(z_mask)[0]
+#         symbols = atoms.get_chemical_symbols()
+#         is_carbon = np.array([symbols[i] == 'C' for i in region_idx])
+#         carbon_idx = region_idx[is_carbon]
+#         if carbon_idx.size == 0:
+#             return result
+
+#         # Assumes orthorhombic cell: use diagonal entries
+#         box = atoms.get_cell().diagonal()
+#         tree = cKDTree(positions, boxsize=box)
+
+#         # Map element to cutoff-matrix index
+#         symbol_map = self.symbol_map
+
+#         # Load pairwise cutoff distances
+#         cutoff_mat = self.cutoff_mat
+
+#         # Build a tree for carbon atoms
+#         carbon_pos = positions[carbon_idx]
+#         carbon_tree = cKDTree(carbon_pos, boxsize=box)
+
+#         # Use sparse distance matrix to get all pairs within max cutoff
+#         max_cut = cutoff_mat.max()
+#         # sparse_distance_matrix returns dict {(i_local, j_global): distance}
+#         dist_dict = carbon_tree.sparse_distance_matrix(tree, max_cut)
+
+#         # Convert to arrays for vectorized filtering
+#         pairs = np.array(list(dist_dict.keys()), dtype=int)
+#         dists = np.array(list(dist_dict.values()))
+#         i_local, j_global = pairs[:, 0], pairs[:, 1]
+
+#         # Remove self-pairs
+#         global_i = carbon_idx[i_local]
+#         self_mask = (global_i == j_global)
+#         i_local = i_local[~self_mask]
+#         j_global = j_global[~self_mask]
+#         dists = dists[~self_mask]
+
+#         # Determine neighbor types and corresponding cutoffs
+#         j_types = np.array([symbol_map[symbols[j]] for j in j_global])
+#         c_type = symbol_map['C']
+#         valid_cut = cutoff_mat[c_type, j_types]
+#         valid = dists <= valid_cut
+
+#         # Count neighbors per carbon atom
+#         counts = np.bincount(i_local[valid], minlength=carbon_idx.size)
+
+#         # Classify hybridization
+#         result = {
+#             'sp3': int(np.count_nonzero(counts == 4)),
+#             'sp2': int(np.count_nonzero(counts == 3)),
+#             'sp': int(np.count_nonzero(counts == 2)),
+#             'others': int(np.count_nonzero(~np.isin(counts, [2, 3, 4])))
+#         }
+
+#         return result
+
+class SpxRatioProcessor(BaseProcessor):
+    def __init__(self, name, suffix, system=None):
+        self.name = name
+        self.filename_suffix = suffix
+
+        # 1) 시스템별 symbol_map 정의
+        if system == 'SiO2':
+            self.symbol_map = {'Si': 0, 'O': 1, 'C': 2, 'H': 3, 'F': 4}
+        elif system == 'Si3N4':
+            self.symbol_map = {'Si': 0, 'N': 1, 'C': 2, 'H': 3, 'F': 4}
+        else:
+            raise ValueError(f"Unknown system: {system}")
+
+        # 2) 컷오프 행렬 로드
+        self.cutoff_mat = np.loadtxt(PARAMS.PLOT.ATOMDENSITY.path_cutoff_matrix)
+
+        # 3) 공통 추출기 인스턴스 생성
+        self.neighbor_extractor = NeighborInfoExtractor(
+            cutoff_matrix=self.cutoff_mat,
+            symbol_to_index=self.symbol_map
+        )
+
+    @pklSaver.run(lambda self: f'{self.name}_{self.filename_suffix}')
+    def run(self, images, height_dict):
+        x, y = [], []
+        for key, image in images.items():
+            z_min, z_max, _ = height_dict.get(key, (None, None, None))
+            spx_ratio = self.run_single(image, z_min, z_max)
+            x.append(key)
+            y.append([
+                spx_ratio['sp3'],
+                spx_ratio['sp2'],
+                spx_ratio['sp'],
+                spx_ratio['others'],
+            ])
+            print(f'{key}: sp3={spx_ratio["sp3"]}, sp2={spx_ratio["sp2"]}, '
+                  f'sp={spx_ratio["sp"]}, others={spx_ratio["others"]}')
+        x = np.array(x, dtype=int)
+        y = np.array(y, dtype=float)
+        labels = ['key', 'sp3', 'sp2', 'sp', 'others']
+        return x, y, labels
+
+    def run_single(self, atoms, z_min, z_max):
+        result = {'sp3': 0, 'sp2': 0, 'sp': 0, 'others': 0}
+        if z_min is None or z_max is None:
+            return result
+
+        positions = atoms.get_positions()
+        z_coords = positions[:, 2]
+        z_mask = (z_coords >= z_min) & (z_coords <= z_max)
+        if not np.any(z_mask):
+            return result
+
+        symbols = atoms.get_chemical_symbols()
+        region_idx = np.where(z_mask)[0]
+        carbon_idx = [i for i in region_idx if symbols[i] == 'C']
+        if len(carbon_idx) == 0:
+            return result
+
+        nbrs_dict = self.neighbor_extractor.get_neighbors_of_type(
+            atoms=atoms,
+            center_idxs=carbon_idx,
+            target_symbols=None
+        )
+
+        # 4) 각 carbon마다 neighbor 리스트 길이(count) 구하기
+        neighbor_counts = [len(nbrs_dict[i]) for i in carbon_idx]
+
+        # 5) hybridization 분류: 이웃 개수가 4->sp3, 3->sp2, 2->sp, 그 외->others
+        counts = np.array(neighbor_counts)
+        result['sp3'] = int(np.count_nonzero(counts == 4))
+        result['sp2'] = int(np.count_nonzero(counts == 3))
+        result['sp']  = int(np.count_nonzero(counts == 2))
+        result['others'] = int(np.count_nonzero(~np.isin(counts, [2, 3, 4])))
+
+        return result
+
+class CarbonNeighborProcessor(BaseProcessor):
     def __init__(self, name, suffix, system=None):
         self.name = name
         self.cutoff_matrix = np.loadtxt(PARAMS.PLOT.ATOMDENSITY.path_cutoff_matrix)
         self.system = system
-        # Default element order if not provided
+
         if system == 'SiO2':
             self.element_order = PARAMS.PLOT.ATOMDENSITY.ELEM_LIST_SiO2
         elif system == 'Si3N4':
@@ -436,95 +636,60 @@ class CarbonNeighborProcessor(BaseProcessor):
             raise ValueError(f"Unknown system: {system}")
 
         self.symbol_to_index = {sym: i for i, sym in enumerate(self.element_order)}
+        self.neighbor_extractor = NeighborInfoExtractor(
+            cutoff_matrix=self.cutoff_matrix,
+            symbol_to_index=self.symbol_to_index
+        )
         self.filename_suffix = suffix
 
     @pklSaver.run(lambda self: f'{self.name}_{self.filename_suffix}')
     def run(self, images):
-        carbons = {}
-        for key, image in images.items():
-            carbons[key] = self.run_single(image)
+        carbons_per_snapshot = {}
+        for key, atoms in images.items():
+            carbons_per_snapshot[key] = self.run_single(atoms)
+            print(f'Carbon classification for snapshot {key} done')
 
-        result = {}
-        for key, data in carbons.items():
-            for bondtype in data.keys():
-                if result.get(bondtype) is None:
-                    result[bondtype] = []
+        all_bondtypes = set()
+        for data in carbons_per_snapshot.values():
+            all_bondtypes.update(data.keys())
+        labels = sorted(all_bondtypes)
 
-        labels = [i for i in result.keys()]
-        for key, data in carbons.items():
-            for bondtype in labels:
-                count = data.get(bondtype, 0)
-                result[bondtype].append(count)
-        x = np.array([i for i in carbons.keys()])
-        y = np.array([i for i in result.values()]).T
-        labels = ['x'] + labels
-        return x, y, labels
+        result = {bt: [] for bt in labels}
+        for key, data in carbons_per_snapshot.items():
+            for bt in labels:
+                result[bt].append(data.get(bt, 0))
+
+        x = np.array(list(carbons_per_snapshot.keys()), dtype=int)
+        y = np.array([result[bt] for bt in labels]).T  # shape=(n_snapshots, n_bondtypes)
+        return x, y, ['x'] + labels
 
     def run_single(self, atoms):
-        """
-        Classify each carbon atom based on its neighbors.
-        Returns:
-            dict: mapping carbon atom index -> classification string
-        """
-        adjacency = self.build_adjacency(atoms)
         symbols = atoms.get_chemical_symbols()
+        N = len(atoms)
+
+        carbon_idxs = [i for i, s in enumerate(symbols) if s == 'C']
+        if len(carbon_idxs) == 0:
+            return {}
+
+        nbrs_dict = self.neighbor_extractor.get_neighbors_of_type(
+            atoms=atoms,
+            center_idxs=carbon_idxs,
+            target_symbols=None
+        )
+
         classification = {}
-        # Iterate over all atoms, pick carbons
-        for idx, sym in enumerate(symbols):
-            if sym != 'C':
-                continue
-            # Get neighbor symbols
-            nbr_syms = [symbols[j] for j in adjacency[idx]]
-            # Determine bond type
+        for ci in carbon_idxs:
+            nbr_idxs = nbrs_dict.get(ci, [])
+            nbr_syms = [symbols[j] for j in nbr_idxs]
+
             bondtype = self.get_bondtype(nbr_syms)
-            classification[idx] = bondtype
+            if bondtype not in classification:
+                classification[bondtype] = []
+            classification[bondtype].append(ci)
 
-        result = {}
-        for idx, bondtype in classification.items():
-            if result.get(bondtype) is None:
-                result[bondtype] = []
-            result[bondtype].append(idx)
-        result = {k: len(v) for k, v in result.items()}
-        return result
+        return {bt: len(idxs) for bt, idxs in classification.items()}
 
-    def build_adjacency(self, atoms):
-        """
-        Build adjacency list based on cutoff distances with periodic boundary conditions.
-        Returns:
-            adjacency: list of sets, adjacency[i] is the set of neighbor indices of atom i
-        """
-        # Ensure wrapped within cell
-        atoms.wrap()
-        positions = atoms.get_positions()
-        # Clean tiny negative values
-        positions[positions < -1e-10] = 0.0
-        # PBC box lengths
-        cell_lengths = atoms.get_cell().lengths()
-        # Build k-d tree
-        tree = cKDTree(positions, boxsize=cell_lengths)
-        max_cutoff = np.max(self.cutoff_matrix)
-        # Sparse distance in COO
-        pairs = tree.sparse_distance_matrix(tree, max_cutoff, output_type='coo_matrix')
-        num_atoms = len(atoms)
-        adjacency = [set() for _ in range(num_atoms)]
-        row, col, dist = pairs.row, pairs.col, pairs.data
-        atom_types = np.array([self.symbol_to_index[s] for s in atoms.get_chemical_symbols()])
-        # Filter by element-specific cutoff
-        valid = dist <= self.cutoff_matrix[atom_types[row], atom_types[col]]
-        for i, j in zip(row[valid], col[valid]):
-            if i != j:
-                adjacency[i].add(j)
-                adjacency[j].add(i)
-        return adjacency
-
-    def get_bondtype(self, symbols):
-        """
-        Classify based on the multiset of neighbor symbols.
-        Input:
-            symbols: list or space-separated string of neighbor element symbols
-        Returns:
-            classification string
-        """
+    def get_bondtype(self, symbols) -> str:
         if self.system == 'SiO2':
             case_dict = PARAMS.PLOT.ATOMDENSITY.case_dict_SiO2
         elif self.system == 'Si3N4':
@@ -536,10 +701,67 @@ class CarbonNeighborProcessor(BaseProcessor):
             return 'etc'
         if isinstance(symbols, str):
             symbols = symbols.split()
+
         key = tuple(sorted(set(symbols)))
         out = case_dict.get(key)
         if out == 'CX':
-            # Count number of C bonds
             count_C = symbols.count('C')
             return f"C{count_C}"
         return out if out is not None else 'etc'
+
+class NeighborInfoExtractor:
+    def __init__(self, cutoff_matrix, symbol_to_index):
+        self.cutoff = cutoff_matrix
+        self.sym2idx = symbol_to_index
+
+    def get_all_neighbors(self, atoms):
+        """
+        Returns:
+            adjacency: {i: [j1, j2, ...], ...}
+        """
+        atoms.wrap()
+
+        positions = atoms.get_positions()                     # shape=(N,3)
+        symbols = atoms.get_chemical_symbols()               # length=N
+        atom_types = np.array([self.sym2idx[s] for s in symbols])  # shape=(N,)
+
+        box_lengths = atoms.get_cell().lengths()             # array([Lx, Ly, Lz])
+        tree = cKDTree(positions, boxsize=box_lengths)
+
+        max_cutoff = np.max(self.cutoff)
+        pairs_coo = tree.sparse_distance_matrix(tree, max_cutoff, output_type='coo_matrix')
+        row = pairs_coo.row    # i
+        col = pairs_coo.col    # j
+        dist = pairs_coo.data  # distance
+
+        N = len(atoms)
+        adjacency = {i: [] for i in range(N)}
+
+        for i, j, d in zip(row, col, dist):
+            if i == j:
+                continue
+            ti = atom_types[i]
+            tj = atom_types[j]
+            if d <= self.cutoff[ti, tj]:
+                adjacency[i].append(j)
+        for i in adjacency:
+            adjacency[i] = list(set(adjacency[i]))
+        return adjacency
+
+    def get_neighbors_of_type(self, atoms, center_idxs, target_symbols):
+        """
+        Returns:
+            neighbors_of_interest: {center_idx: [neighbor_idx, ...], ...}
+        """
+        adjacency = self.get_all_neighbors(atoms)
+        symbols = atoms.get_chemical_symbols()
+
+        neighbors_of_interest = {}
+        for ci in center_idxs:
+            nbrs = adjacency.get(ci, [])
+            if target_symbols is None:
+                neighbors_of_interest[ci] = nbrs.copy()
+            else:
+                filtered = [j for j in nbrs if symbols[j] in target_symbols]
+                neighbors_of_interest[ci] = filtered
+        return neighbors_of_interest
