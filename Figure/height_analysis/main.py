@@ -6,6 +6,7 @@ import yaml
 from imageloader import ImageLoaderExtended
 from processor import HeightChangeProcessor, MixedRegionIdentifier, FilmRegionIdentifier, CarbonNeighborProcessor, ProfileProcessor
 from processor import AverageDensityProcessor, FCratioProcessor, SpxRatioProcessor
+from processor import HydrogenEffectProcessor
 from plotter import DataPlotter
 from plotter import DataPlotterSelected
 
@@ -29,6 +30,7 @@ class DataProcessor:
             'fc_ratio_film': FCratioProcessor(name, 'fc_ratio_film.txt'),
             'spx_ratio_mixed': SpxRatioProcessor(name, 'spx_ratio_mixed.txt', system=system),
             'spx_ratio_film': SpxRatioProcessor(name, 'spx_ratio_film.txt', system=system),
+            'h_effect_mixed': HydrogenEffectProcessor(name, 'h_effect_mixed.txt', system=system),
         }
 
     def run(self, src_list):
@@ -94,8 +96,8 @@ def main():
             data[key] = dp.run(src_list)
     # dplot = DataPlotter()
     # dplot.run(data)
-    dplot = DataPlotterSelected()
-    dplot.run(data)
+    # dplot = DataPlotterSelected()
+    # dplot.run(data)
 
 if __name__ == '__main__':
     main()

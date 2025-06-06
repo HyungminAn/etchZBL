@@ -28,7 +28,7 @@ class PARAMS:
         @dataclass
         class Si3N4:
             ATOM_IDX_Si, ATOM_NUM_Si = 1, 14
-            ATOM_IDX_N, ATOM_NUM_N = 2, 8
+            ATOM_IDX_N, ATOM_NUM_N = 2, 7
             ATOM_IDX_C, ATOM_NUM_C = 3, 6
             ATOM_IDX_H, ATOM_NUM_H = 4, 1
             ATOM_IDX_F, ATOM_NUM_F = 5, 9

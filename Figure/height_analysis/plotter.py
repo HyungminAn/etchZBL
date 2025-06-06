@@ -158,7 +158,8 @@ class DataPlotterSelected(DataPlotter):
         self.axis_config = [
             ('fc_ratio_mixed', AxisProcessorFCRatioMixed),
             ('spx_ratio_mixed', AxisProcessorSPXRatio),
-            ('neighbor_classification', AxisProcessorNeighbor),
+            ('h_effect_mixed', AxisProcessorFCRatioMixed),
+            # ('neighbor_classification', AxisProcessorNeighbor),
 
             # ('Density', AxisProcessorDensity),
             # ('Mixed layer thickness', AxisProcessorMixedFilmStacked),

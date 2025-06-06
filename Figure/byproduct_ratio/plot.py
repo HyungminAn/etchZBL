@@ -85,7 +85,7 @@ class DataPlotter:
         plotLines = []
         keys = [key for key in data_exp.keys()]
 
-        group_label = Line2D([], [], color='none', label='Ishikawa et al.', linewidth=0)
+        group_label = Line2D([], [], color='none', label='Toyoda et al.', linewidth=0)
         plotLines.append(group_label)
 
         for key in keys:
@@ -154,7 +154,7 @@ class DataPlotter:
         y_sim = np.array([result_sim[k] for k in keys])
         x = np.arange(len(keys))
 
-        ax_bar.bar(x - 0.2, y_exp, width=0.4, label='Ishikawa et al.',
+        ax_bar.bar(x - 0.2, y_exp, width=0.4, label='Toyoda et al.',
                    facecolor='white', edgecolor='black', alpha=0.6, )
         ax_bar.bar(x + 0.2, y_sim, width=0.4, label='This study',
                    facecolor='black', edgecolor='black', alpha=0.6)
