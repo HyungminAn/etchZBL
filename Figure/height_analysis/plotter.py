@@ -9,9 +9,8 @@ from axisprocessor import AxisProcessorHeight
 from axisprocessor import AxisProcessorCarbonThickness
 # from axisprocessor import AxisProcessorMixedFilmStacked
 # from axisprocessor import AxisProcessorDensity
-from axisprocessor import AxisProcessorFCRatio
-from axisprocessor import AxisProcessorSPXRatioMixedLayer
-# from axisprocessor import AxisProcessorSPXRatioFilmLayer
+from axisprocessor import AxisProcessorFCRatioMixed
+from axisprocessor import AxisProcessorSPXRatio
 from axisprocessor import AxisProcessorNeighbor
 
 class FigureGenerator:
@@ -157,9 +156,9 @@ class FigureGeneratorSelected(FigureGenerator):
 class DataPlotterSelected(DataPlotter):
     def __init__(self):
         self.axis_config = [
-            ('FC ratio', AxisProcessorFCRatio),
-            ('spx ratio (mixed)', AxisProcessorSPXRatioMixedLayer),
-            ('Carbon neighbor classification', AxisProcessorNeighbor),
+            ('fc_ratio_mixed', AxisProcessorFCRatioMixed),
+            ('spx_ratio_mixed', AxisProcessorSPXRatio),
+            ('neighbor_classification', AxisProcessorNeighbor),
 
             # ('Density', AxisProcessorDensity),
             # ('Mixed layer thickness', AxisProcessorMixedFilmStacked),
@@ -178,19 +177,16 @@ class DataPlotterSelected(DataPlotter):
         result = {}
         for idx, (key, processorClass) in enumerate(self.axis_config):
             data_selected = {system: {} for system in data.keys()}
-            if key == 'Carbon neighbor classification':
-                for system in data.keys():
-                    data_selected[system] = data[system]['neighbor_classification']
-            else:
-                for system in data.keys():
-                    data_selected[system] = data[system]['film_data']
+            for system in data.keys():
+                data_selected[system] = data[system][key]
             print(f'Plotting {key} for {len(data_selected)} systems')
 
-            ylim = None
-            if key == 'FC ratio':
+            if key == 'fc_ratio_mixed':
                 ylim = (0, 3)
-            elif key == 'spx ratio (mixed)' or key == 'spx ratio (film)':
+            elif key == 'spx_ratio_mixed':
                 ylim = (0, 1)
+            else:
+                ylim = None
 
             ax_dict_selected = {system: ax_dict[system][idx] for system in data.keys()}
             result[key] = BatchAxisProcessor(data_selected,
@@ -244,6 +240,7 @@ class DataPlotterSelected(DataPlotter):
             1: (0.6, 0.38),
             2: (0.5, 0.05),
         }
+
         for row in range(n_row):
             h, l = handles[row], labels[row]
             ncol = len(l) if len(l) < 4 else 4

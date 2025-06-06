@@ -1,4 +1,5 @@
 import os
+import pickle
 
 from ase.io import read
 
@@ -6,7 +7,8 @@ from params import PARAMS
 
 
 class ImageLoader:
-    def __init__(self, system):
+    def __init__(self, name, system):
+        self.name = name
         if system == 'SiO2':
             self.read_opts = PARAMS.LAMMPS.SiO2.READ_OPTS
         elif system == 'Si3N4':
@@ -44,11 +46,20 @@ class ImageLoader:
 
 class ImageLoaderExtended(ImageLoader):
     def run(self, src_list, PATTERN=None, INTERVAL=None):
+        path_save = f'{self.name}_images.pkl'
+        if os.path.exists(path_save):
+            print(f'Loading images from {path_save}')
+            with open(path_save, 'rb') as f:
+                return pickle.load(f)
+
         result = {}
         images = super().run(src_list, PATTERN='rm_byproduct_str_shoot_')
         images_sub = super().run(src_list, PATTERN='save_str_shoot_', INTERVAL=1)
         if not images_sub:
             print('No slab subtract data found')
+            print(f'Saving images to {path_save}')
+            with open(path_save, 'wb') as f:
+                pickle.dump(images, f)
             return images
 
         sub_keys = sorted(images_sub.keys(), reverse=True)
@@ -75,4 +86,7 @@ class ImageLoaderExtended(ImageLoader):
 
             result[image_idx] = image
 
+        print(f'Saving images to {path_save}')
+        with open(path_save, 'wb') as f:
+            pickle.dump(result, f)
         return result

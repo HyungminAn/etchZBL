@@ -1,5 +1,6 @@
 import os
 from abc import ABC, abstractmethod
+import pickle
 
 import numpy as np
 from scipy.stats import gaussian_kde
@@ -63,10 +64,11 @@ class AverageDensityProcessor(BaseProcessor):
     def run(self, images, height_dict):
         x, y = [], []
         for key, image in images.items():
-            z_min, z_max = height_dict.get(key, (None, None))
+            z_min, z_max, _ = height_dict.get(key, (None, None, None))
             density = self.run_single(image, z_min, z_max)
             x.append(key)
             y.append(density)
+            print(f'{key}: {density} g/cm^3')
         x = np.array(x, dtype=int)
         y = np.array(y, dtype=float)
         labels = ['key', 'density(g/cm^3)']
@@ -103,13 +105,15 @@ class FCratioProcessor(BaseProcessor):
         self.name = name
         self.filename_suffix = suffix
 
+    @pklSaver.run(lambda self: f'{self.name}_{self.filename_suffix}')
     def run(self, images, height_dict):
         x, y = [], []
         for key, image in images.items():
-            z_min, z_max = height_dict.get(key, (None, None))
+            z_min, z_max, _ = height_dict.get(key, (None, None, None))
             fc_ratio = self.run_single(image, z_min, z_max)
             x.append(key)
             y.append(fc_ratio)
+            print(f'{key}: {fc_ratio} F/C ratio')
         x = np.array(x, dtype=int)
         y = np.array(y, dtype=float)
         labels = ['key', 'FC_ratio']
@@ -148,10 +152,11 @@ class SpxRatioProcessor(BaseProcessor):
 
         self.cutoff_mat = np.loadtxt(PARAMS.PLOT.ATOMDENSITY.path_cutoff_matrix)
 
+    @pklSaver.run(lambda self: f'{self.name}_{self.filename_suffix}')
     def run(self, images, height_dict):
         x, y = [], []
         for key, image in images.items():
-            z_min, z_max = height_dict.get(key, (None, None))
+            z_min, z_max, _ = height_dict.get(key, (None, None, None))
             spx_ratio = self.run_single(image, z_min, z_max)
             x.append(key)
             y.append([
@@ -160,6 +165,8 @@ class SpxRatioProcessor(BaseProcessor):
                 spx_ratio['sp'],
                 spx_ratio['others'],
                 ])
+            print(f'{key}: sp3={spx_ratio["sp3"]}, sp2={spx_ratio["sp2"]}, '
+                  f'sp={spx_ratio["sp"]}, others={spx_ratio["others"]}')
         x = np.array(x, dtype=int)
         y = np.array(y, dtype=float)
         labels = ['key', 'sp3', 'sp2', 'sp', 'others']
@@ -243,8 +250,10 @@ class SpxRatioProcessor(BaseProcessor):
         return result
 
 class ProfileProcessor(BaseProcessor):
-    def __init__(self, system=None):
+    def __init__(self, name, suffix, system=None):
         self.system = system
+        self.name = name
+        self.filename_suffix = suffix
         if self.system == 'SiO2':
             self.elem_list = PARAMS.PLOT.ATOMDENSITY.ELEM_LIST_SiO2
         elif self.system == 'Si3N4':
@@ -253,9 +262,21 @@ class ProfileProcessor(BaseProcessor):
             raise ValueError(f"Unknown system: {self.system}")
 
     def run(self, images):
+        path_save = f'{self.name}_{self.filename_suffix}'
+        if os.path.exists(path_save):
+            print(f'Loading existing profile data from {path_save}')
+            with open(path_save, 'rb') as f:
+                result = pickle.load(f)
+            return result
+
         result = {}
         for key, image in images.items():
             result[key] = self.run_single(image)
+            print(f'Profile {key} Done')
+
+        print(f'Saving profile data to {path_save}')
+        with open(path_save, 'wb') as f:
+            pickle.dump(result, f)
         return result
 
     def run_single(self, atoms):
@@ -347,6 +368,7 @@ class MixedRegionIdentifier(RegionIdentifier):
 
 class FilmRegionIdentifier(RegionIdentifier):
     def __init__(self, name, suffix):
+        super().__init__()
         self.name = name
         self.filename_suffix = suffix
         self.mri = MixedRegionIdentifier(name, suffix)
@@ -391,153 +413,6 @@ class FilmRegionIdentifier(RegionIdentifier):
         h_film = z_film_max - z_film_min
 
         return z_film_min, z_film_max, h_film
-
-# class MixedFilmRegionIdentifier(BaseProcessor):
-#     def __init__(self, name, suffix, system=None):
-#         self.name = name
-#         self.filename_suffix = suffix
-#         self.system = system
-
-#     @pklSaver.run(lambda self: f'{self.name}_{self.filename_suffix}')
-#     def run(self, images):
-#         x, y = [], []
-#         save_list = ['z_min_mixed',
-#                      'z_max_mixed',
-#                      'h_mixed',
-#                      'z_min_film',
-#                      'z_max_film',
-#                      'h_film']
-#         profiles = ProfileProcessor(self.system).run(images)
-#         for key, profile in profiles.items():
-#             result = self.run_single(profile)
-#             value = [result[i] for i in save_list]
-#             x.append(key)
-#             y.append(value)
-#         x, y = np.array(x, dtype=int), np.array(y, dtype=float)
-#         labels = ['key',
-#                   'z_min_mixed(A)',
-#                   'z_max_mixed(A)',
-#                   'h_mixed(A)',
-#                   'z_min_film(A)',
-#                   'z_max_film(A)',
-#                   'h_film(A)']
-#         return x, y, labels
-
-#     def run_single(self, profile):
-#         profile = self.get_density_profile(atoms)
-#         data = self.get_thickness(profile,
-#                                   PARAMS.PLOT.ATOMDENSITY.CUTOFF_RATIO_FILM,
-#                                   PARAMS.PLOT.ATOMDENSITY.CUTOFF_RATIO_MIXED,
-#                                   )
-#         return data
-
-#     def get_thickness(self,
-#                       profile,
-#                       cutoff_ratio_film,
-#                       cutoff_ratio_mixed):
-#         """
-#         profile: dict with keys 'z', 'Si', 'O/N', 'C', 'H', 'F'
-#         x1: peak threshold to define existence of film
-#         x2: cutoff for film thickness
-#         x3: cutoff for mixed layer thickness
-#         """
-#         z = profile['z']
-#         eps = 1e-8  # avoid divide by zero
-#         CHFs = profile.get('C', 0) + profile.get('H', 0) + profile.get('F', 0)
-#         SiOs = profile.get('Si', 0) + profile.get('O', 0) + profile.get('N', 0) + eps
-#         total = CHFs + SiOs
-#         ratio = CHFs / total
-#         normalized_ratio = total / np.max(total)
-
-#         peak_val, flag_calculate_mixed, flag_calulate_film = \
-#             self.check_layer_status(ratio, cutoff_ratio_mixed, cutoff_ratio_film)
-
-#         z_mixed_min, z_mixed_max, h_mixed = \
-#             self.calculate_mixed_layer_thickness(flag_calculate_mixed,
-#                                                  z,
-#                                                  ratio,
-#                                                  cutoff_ratio_mixed,
-#                                                  cutoff_ratio_film)
-
-#         z_film_min, z_film_max, h_film = \
-#             self.calculate_film_thickness(flag_calulate_film,
-#                                           z,
-#                                           z_mixed_max,
-#                                           ratio,
-#                                           normalized_ratio,
-#                                           cutoff_ratio_film)
-
-#         result = {
-#                 'z_mixed_min': z_mixed_min,
-#                 'z_mixed_max': z_mixed_max,
-#                 'h_mixed': h_mixed,
-#                 'z_film_min': z_film_min,
-#                 'z_film_max': z_film_max,
-#                 'h_film': h_film,
-#                 'z_max': np.max(ratio),
-#                 'ratio_max': peak_val,
-#                 }
-
-#         return result
-
-#     def check_layer_status(self, ratio, cutoff_ratio_mixed, cutoff_ratio_film):
-#         # Step 1: film exists?
-#         peak_val = np.max(ratio)
-#         if peak_val < cutoff_ratio_mixed:
-#             return peak_val, False, False
-#         elif cutoff_ratio_mixed < peak_val < cutoff_ratio_film:
-#             return peak_val, True, False
-#         elif cutoff_ratio_film < peak_val:
-#             return peak_val, True, True
-#         else:
-#             raise ValueError("Invalid cutoff values")
-
-#     def calculate_mixed_layer_thickness(self,
-#                                         flag_calculate_mixed,
-#                                         z,
-#                                         ratio,
-#                                         cutoff_ratio_mixed,
-#                                         cutoff_ratio_film):
-#         if not flag_calculate_mixed:
-#             return None, None, 0.0
-
-#         z_max = z[np.argmax(ratio)]
-#         mask_mixed = (z <= z_max) \
-#                      & (ratio >= cutoff_ratio_mixed) \
-#                      & (ratio < cutoff_ratio_film)
-#         if np.sum(mask_mixed) == 0:
-#             return None, None, 0.0
-
-#         z_mixed = z[mask_mixed]
-#         z_mixed_min = np.min(z_mixed)
-#         z_mixed_max = np.max(z_mixed)
-#         h_mixed = z_mixed_max - z_mixed_min  # mixed layer thickness
-#         return z_mixed_min, z_mixed_max, h_mixed
-
-#     def calculate_film_thickness(self,
-#                                  flag_calulate_film,
-#                                  z,
-#                                  z_mixed_max,
-#                                  ratio,
-#                                  normalized_ratio,
-#                                  cutoff_ratio_film):
-#         if not flag_calulate_film:
-#             return None, None, 0.0
-
-#         if z_mixed_max is None:
-#             z_mixed_max = 0.0
-#         mask_film = (z > z_mixed_max) \
-#                     & (ratio >= cutoff_ratio_film) \
-#                     & (normalized_ratio >= cutoff_ratio_film)
-#         if np.sum(mask_film) == 0:
-#             return None, None, 0.0
-
-#         z_film = z[mask_film]
-#         z_film_min = np.min(z_film)
-#         z_film_max = np.max(z_film)
-#         h_film = z_film_max - z_film_min
-
-#         return z_film_min, z_film_max, h_film
 
 class CarbonNeighborProcessor(BaseProcessor):
     """

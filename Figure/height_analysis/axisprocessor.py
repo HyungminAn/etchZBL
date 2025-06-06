@@ -121,56 +121,65 @@ class AxisProcessorMixedFilmStacked(BaseAxisProcessor):
         ax.set_ylabel('Mixed layer thickness (nm)')
         ax.axhline(0, color='grey', linestyle='--', linewidth=1, alpha=0.3)
 
-
 @register_processor('density')
 class AxisProcessorDensity(BaseAxisProcessor):
     def plot(self):
         x, y, _ = self.data
-        y_mixed, y_film = y[:, 2], y[:, 3]
-        self.ax.plot(x, y_mixed,
-                color= PARAMS.PLOT.COLORS.COLOR_LIST['density']['mixed'],
-                label='Mixed layer')
-        self.ax.plot(x, y_film,
-                color= PARAMS.PLOT.COLORS.COLOR_LIST['density']['film'],
-                label='Film layer')
+        self.ax.plot(x, y)
 
     def decorate(self):
         ax = self.ax
         ax.set_ylabel('Density (g/cm$^3$)')
-        ax.set_xlabel(r'Ion dose ($\times$ 10$^{17}$ cm$^{-2}$)')
+
+class AxisProcessorDensityMixed(AxisProcessorDensity):
+    def plot(self):
+        x, y, _ = self.data
+        label = 'Mixed layer'
+        color = PARAMS.PLOT.COLORS.COLOR_LIST['layer']['mixed']
+        self.ax.plot(x, y, label=label, color=color)
+
+class AxisProcessorDensityFilm(AxisProcessorDensity):
+    def plot(self):
+        x, y, _ = self.data
+        label = 'Film layer'
+        color = PARAMS.PLOT.COLORS.COLOR_LIST['layer']['film']
+        self.ax.plot(x, y, label=label, color=color)
 
 @register_processor('fc_ratio')
 class AxisProcessorFCRatio(BaseAxisProcessor):
     def plot(self):
         x, y, _ = self.data
-        y_mixed, y_film = y[:, 4], y[:, 5]
-        self.ax.plot(x, y_mixed,
-                color=PARAMS.PLOT.COLORS.COLOR_LIST['fc_ratio']['mixed'],
-                label='Mixed layer')
-        self.ax.plot(x, y_film,
-                color=PARAMS.PLOT.COLORS.COLOR_LIST['fc_ratio']['film'],
-                label='Film layer')
+        self.ax.plot(x, y)
 
     def decorate(self):
         ax = self.ax
         ax.set_ylabel('FC ratio')
 
-@register_processor('spx_ratio_mixed')
-class AxisProcessorSPXRatioMixedLayer(BaseAxisProcessor):
+class AxisProcessorFCRatioMixed(AxisProcessorFCRatio):
     def plot(self):
         x, y, _ = self.data
-        y_sp3, y_sp2, y_sp, y_others = y[:, 6:10].T
+        label = 'Mixed layer'
+        color = PARAMS.PLOT.COLORS.COLOR_LIST['layer']['mixed']
+        self.ax.plot(x, y, label=label, color=color)
+
+class AxisProcessorFCRatioFilm(AxisProcessorFCRatio):
+    def plot(self):
+        x, y, _ = self.data
+        label = 'Film layer'
+        color = PARAMS.PLOT.COLORS.COLOR_LIST['layer']['film']
+        self.ax.plot(x, y, label=label, color=color)
+
+@register_processor('spx_ratio')
+class AxisProcessorSPXRatio(BaseAxisProcessor):
+    def plot(self):
+        x, y, _ = self.data
+        y_sp3, y_sp2, y_sp, _ = y.T
         ax = self.ax
         color_dict = PARAMS.PLOT.COLORS.COLOR_LIST['spx_ratio']
 
-        ax.plot(x, y_sp3,
-                color=color_dict['sp3'], label='sp$^3$')
-        ax.plot(x, y_sp2,
-                color=color_dict['sp2'], label='sp$^2$')
-        ax.plot(x, y_sp,
-                color=color_dict['sp'], label='sp')
-        # ax.plot(x, y_others,
-        #         color=color_dict['others'], label='others')
+        ax.plot(x, y_sp3, color=color_dict['sp3'], label='sp$^3$')
+        ax.plot(x, y_sp2, color=color_dict['sp2'], label='sp$^2$')
+        ax.plot(x, y_sp, color=color_dict['sp'], label='sp')
 
     def normalize(self):
         self.normalize_x()
@@ -180,58 +189,19 @@ class AxisProcessorSPXRatioMixedLayer(BaseAxisProcessor):
         x, y, labels = self.data
         y = y.copy()
 
-        y_sp3, y_sp2, y_sp, y_others = y[:, 6:10].T
+        y_sp3, y_sp2, y_sp, y_others = y.T
         y_total = y_sp3 + y_sp2 + y_sp + y_others
         y_sp3 /= y_total
         y_sp2 /= y_total
         y_sp /= y_total
         y_others /= y_total
-        y[:, 6:10] = np.column_stack((y_sp3, y_sp2, y_sp, y_others))
+        y_new = np.column_stack((y_sp3, y_sp2, y_sp, y_others))
 
-        self.data = (x, y, labels)
-
-    def decorate(self):
-        ax = self.ax
-        ax.set_ylabel('Ratio (mixed layer)')
-
-@register_processor('spx_ratio_film')
-class AxisProcessorSPXRatioFilmLayer(BaseAxisProcessor):
-    def plot(self):
-        x, y, _ = self.data
-        y_sp3, y_sp2, y_sp, y_others = y[:, 10:14].T
-        ax = self.ax
-        color_dict = PARAMS.PLOT.COLORS.COLOR_LIST['spx_ratio']
-
-        ax.plot(x, y_sp3, linestyle='--',
-                color=color_dict['sp3'], label='sp3 (film)')
-        ax.plot(x, y_sp2, linestyle='--',
-                color=color_dict['sp2'], label='sp2 (film)')
-        ax.plot(x, y_sp, linestyle='--',
-                color=color_dict['sp'], label='sp (film)')
-        ax.plot(x, y_others, linestyle='--',
-                color=color_dict['others'], label='others (film)')
-
-    def normalize(self):
-        self.normalize_x()
-        self.normalize_y()
-
-    def normalize_y(self):
-        x, y, labels = self.data
-        y = y.copy()
-
-        y_sp3, y_sp2, y_sp, y_others = y[:, 10:14].T
-        y_total = y_sp3 + y_sp2 + y_sp + y_others
-        y_sp3 /= y_total
-        y_sp2 /= y_total
-        y_sp /= y_total
-        y_others /= y_total
-        y[:, 10:14] = np.column_stack((y_sp3, y_sp2, y_sp, y_others))
-
-        self.data = (x, y, labels)
+        self.data = (x, y_new, labels)
 
     def decorate(self):
         ax = self.ax
-        ax.set_ylabel('Ratio (film layer)')
+        ax.set_ylabel('Ratio')
 
 @register_processor('neighbor')
 class AxisProcessorNeighbor(BaseAxisProcessor):

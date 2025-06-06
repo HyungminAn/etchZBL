@@ -4,7 +4,7 @@ import yaml
 
 # from imageloader import ImageLoader
 from imageloader import ImageLoaderExtended
-from processor import HeightChangeProcessor, MixedFilmRegionIdentifier, CarbonNeighborProcessor
+from processor import HeightChangeProcessor, MixedRegionIdentifier, FilmRegionIdentifier, CarbonNeighborProcessor, ProfileProcessor
 from processor import AverageDensityProcessor, FCratioProcessor, SpxRatioProcessor
 from plotter import DataPlotter
 from plotter import DataPlotterSelected
@@ -13,36 +13,66 @@ class DataProcessor:
     def __init__(self, name, system=None):
         self.name = name
         self.system = system
-        self.processors = {
+        self.processors_1st = {
             'height_change': HeightChangeProcessor(name, 'shifted_height.txt'),
-            'z_data': MixedFilmRegionIdentifier(name, 'thickness.txt', system=system),
             'neighbor_classification': CarbonNeighborProcessor(name, 'carbon_neighbors.txt', system=system),
+            'profile': ProfileProcessor(name, 'atom_density.pkl', system=system),
         }
-        self.dependent_processors = {
-            'density': AverageDensityProcessor(name, 'density.txt'),
-            'fc_ratio': FCratioProcessor(name, 'fc_ratio.txt'),
-            'spx_ratio': SpxRatioProcessor(name, 'spx_ratio.txt', system=system),
+        self.processors_2nd = {
+            'z_mixed': MixedRegionIdentifier(name, 'z_mixed.txt'),
+            'z_film': FilmRegionIdentifier(name, 'z_film.txt'),
+        }
+        self.processors_3rd = {
+            'density_mixed': AverageDensityProcessor(name, 'density_mixed.txt'),
+            'density_film': AverageDensityProcessor(name, 'density_film.txt'),
+            'fc_ratio_mixed': FCratioProcessor(name, 'fc_ratio_mixed.txt'),
+            'fc_ratio_film': FCratioProcessor(name, 'fc_ratio_film.txt'),
+            'spx_ratio_mixed': SpxRatioProcessor(name, 'spx_ratio_mixed.txt', system=system),
+            'spx_ratio_film': SpxRatioProcessor(name, 'spx_ratio_film.txt', system=system),
         }
 
     def run(self, src_list):
-        all_exists = all([p.check_exists() for p in self.processors.values()])
+        all_exists = all([p.check_exists() for p in self.processors_1st.values()] +
+                         [p.check_exists() for p in self.processors_2nd.values()] +
+                         [p.check_exists() for p in self.processors_3rd.values()])
         if all_exists:
             images = {}
         else:
             # images = ImageLoader().run(src_list)
-            images = ImageLoaderExtended(self.system).run(src_list)
+            images = ImageLoaderExtended(self.name, self.system).run(src_list)
+            print('Loading images Done')
 
         result = {}
-        for k, p in self.processors.items():
+        # Run first-level processors (independent of images)
+        for k, p in self.processors_1st.items():
+            print(f'Running processor: {k}')
             if k == 'height_change':
                 x, y, labels = p.run(images, src_list)
+            elif k == 'profile':
+                x, y, labels = p.run(images), None, None
             else:
                 x, y, labels = p.run(images)
             result[k] = (x, y, labels)
+            print(f'processor {k} Done')
 
-        height_dict = result['height_change'][2]
-        for k, p in self.dependent_processors.items():
-            x, y, labels = p.run(images)
+        # Run second-level processors (dependent on profile)
+        profile, _, _ = result['profile']
+        for k, p in self.processors_2nd.items():
+            print(f'Running processor: {k}')
+            x, y, labels = p.run(profile)
+            result[k] = (x, y, labels)
+            print(f'processor {k} Done')
+
+        # Run third-level processors (dependent on mixed/film regions)
+        z_mix_dict = {xx: yy for xx, yy in zip(result['z_mixed'][0], result['z_mixed'][1])}
+        z_film_dict = {xx: yy for xx, yy in zip(result['z_film'][0], result['z_film'][1])}
+        for k, p in self.processors_3rd.items():
+            if 'mixed' in k:
+                x, y, labels = p.run(images, z_mix_dict)
+            elif 'film' in k:
+                x, y, labels = p.run(images, z_film_dict)
+            else:
+                raise ValueError(f'Unknown processor type: {k}')
             result[k] = (x, y, labels)
 
         return result
