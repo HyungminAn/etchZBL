@@ -84,8 +84,15 @@ class PARAMS:
                     'C3': 'red',
                     'C2': 'blue',
                     'etc': 'purple',
-                    }
+                    },
 
+                'atom_count': {
+                    'Si': '#075c29',
+                    'O': '#609af7',
+                    'C': '#de3535',
+                    'H': '#d1ae4d',
+                    'F': '#3d2e04',
+                    }
             }
 
             COLORS = {

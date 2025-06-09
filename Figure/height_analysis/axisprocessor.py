@@ -64,7 +64,7 @@ class AxisProcessorHeight(BaseAxisProcessor):
         x, y, _ = self.data
         color = PARAMS.PLOT.COLORS.COLORS.get(self.system, PARAMS.PLOT.COLORS.COLOR_LIST['default'])
         self.ax.plot(x, y, 'o-', markersize=2, color=color, alpha=0.5)
-        self.ax.axhline(0, color='grey', linestyle='--', linewidth=1, alpha=0.5)
+        self.ax.axhline(0, color='grey', linestyle='--', linewidth=0.4, alpha=0.5)
         print(f'{self.system}: Etched thickness {np.min(y):.2f} nm')
 
     def decorate(self):
@@ -86,7 +86,7 @@ class AxisProcessorCarbonThickness(BaseAxisProcessor):
 
     def plot(self):
         x, y, _ = self.data
-        y_film = y[:, 1]
+        y_film = y[:, 2]
         # color = PARAMS.PLOT.COLORS.COLOR_LIST['layer']['film']
         color = 'black'
         # self.ax.plot(x, y_film, color=color)
@@ -96,7 +96,7 @@ class AxisProcessorCarbonThickness(BaseAxisProcessor):
     def normalize_y(self):
         x, y, labels = self.data
         y = y.copy()
-        y[:, 1] *= PARAMS.CONVERT.ANGST_TO_NM
+        y[:, 2] *= PARAMS.CONVERT.ANGST_TO_NM
         self.data = (x, y, labels)
 
     def decorate(self):
@@ -114,11 +114,23 @@ class AxisProcessorMixedFilmStacked(BaseAxisProcessor):
         y_mixed, y_film = y[:, 0], y[:, 1]
         colors = [PARAMS.PLOT.COLORS.COLOR_LIST['layer']['mixed'],
                  PARAMS.PLOT.COLORS.COLOR_LIST['layer']['film']]
-        self.ax.stackplot(x, y_mixed, y_film, colors=colors,)
+        labels = ['Mixed layer', 'Film layer']
+        self.ax.stackplot(x, y_mixed, y_film, colors=colors, labels=labels)
+
+    def normalize(self):
+        self.normalize_x()
+        self.normalize_y()
+
+    def normalize_y(self):
+        x, y, labels = self.data
+        y = y.copy()
+        y[:, 0] *= PARAMS.CONVERT.ANGST_TO_NM
+        y[:, 1] *= PARAMS.CONVERT.ANGST_TO_NM
+        self.data = (x, y, labels)
 
     def decorate(self):
         ax = self.ax
-        ax.set_ylabel('Mixed layer thickness (nm)')
+        ax.set_ylabel('Thickness\n(nm)')
         ax.axhline(0, color='grey', linestyle='--', linewidth=1, alpha=0.3)
 
 @register_processor('density')
@@ -168,6 +180,38 @@ class AxisProcessorFCRatioFilm(AxisProcessorFCRatio):
         label = 'Film layer'
         color = PARAMS.PLOT.COLORS.COLOR_LIST['layer']['film']
         self.ax.plot(x, y, label=label, color=color)
+
+class AxisProcessorSiCcount(BaseAxisProcessor):
+    def plot(self):
+        x, y, _ = self.data
+        label = 'Mixed layer'
+        color = 'purple'
+        self.ax.plot(x, y, label=label, color=color)
+
+    def decorate(self):
+        ax = self.ax
+        ax.set_ylabel('Si + C')
+        ax.set_ylim(2, 4)
+
+class AxisProcessorAtomCount(BaseAxisProcessor):
+    def plot(self):
+        x, y, label = self.data
+        label = label[1:]
+        for y_label, label in zip(y.T, label):
+            color = PARAMS.PLOT.COLORS.COLOR_LIST['atom_count'].get(label, 'grey')
+            self.ax.plot(x, y_label, label=label, color=color, linewidth=1)
+
+class AxisProcessorAtomCountRatio(AxisProcessorAtomCount):
+    def decorate(self):
+        ax = self.ax
+        ax.set_ylabel('Ratio')
+        ax.set_ylim(0, 0.7)
+
+class AxisProcessorAtomCountNumberDensity(AxisProcessorAtomCount):
+    def decorate(self):
+        ax = self.ax
+        ax.set_ylabel('Number density\n(nm $^{-3}$)')
+        ax.set_ylim(0, None)
 
 @register_processor('spx_ratio')
 class AxisProcessorSPXRatio(BaseAxisProcessor):

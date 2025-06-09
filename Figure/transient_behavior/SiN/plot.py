@@ -25,14 +25,24 @@ class PARAMS:
     MEAN_STEP = 10
     DOSE_STEP = 10
 
+    ion_name_dict = {
+        'CF+': 'CF$^+$',
+        'CH2F+': 'CH$_2$F$^+$',
+    }
+
+    label_dict = {
+        'CF+/500eV': 'This study (500 eV)',
+        'CF+/1000eV': 'This study (1000 eV)',
+        'CH2F+/1000eV': 'This study (1000 eV)',
+        'CF+ (exp)': 'Ito et al.',
+        'CH2F+ (exp)': 'Ito et al.',
+    }
+
 class FigureGenerator:
     def run(self, ncols=1, nrows=1):
         figsize = (3.5 * ncols, 3.5 * nrows)
         plt.rcParams.update({'font.family': 'arial', 'font.size': 10})
-        fig, axs = plt.subplots(
-            nrows, ncols,
-            figsize=(figsize[0] * ncols, figsize[1] * nrows)
-        )
+        fig, axs = plt.subplots(nrows, ncols, figsize=figsize)
         return fig, axs
 
 class SimValuePlotter:
@@ -65,8 +75,10 @@ class SimValuePlotter:
                 kw['color'] = self.cols[label]
             if label in self.lts:
                 kw['ls'] = self.lts[label]
-            ax.plot(x, y, label=label, **kw)
-        ax.axhline(0, linestyle='--', linewidth=1, color='gray')
+            ax.plot(x, y, label=PARAMS.label_dict[label], **kw)
+        ax.set_ylabel('Thickness change (nm)')
+        ax.set_xlabel(r'Ion Dose ($\times$ 10$^{17}$ cm$^{-2}$)')
+        ax.set_ylim(-1.5, 6.0)
 
 class ExpValuePlotter:
     def __init__(self, ptype, draw_fit=False, adjust_xlim=False):
@@ -94,21 +106,20 @@ class ExpValuePlotter:
             ax.scatter(x, y,
                        marker=PARAMS.EXP_MARKERS[ion],
                        color=PARAMS.EXP_COLORS[ion],
-                       label=f'{ion} (exp)',
+                       label=PARAMS.label_dict[f'{ion} (exp)'],
                        s=60, linewidths=1,
                        edgecolors='black', zorder=2)
         if self.adjust_xlim:
             ax.set_xlim(0, 2)
-        ax.axhline(0, linestyle='--', linewidth=1, color='gray')
 
 class Plotter:
     def __init__(self):
         self.p = PARAMS
 
-    def run(self):
-        fg = FigureGenerator()
+    def run_calc_only(self, fg):
         # single simulation
         fig1, ax1 = fg.run(1, 1)
+        ax1.axhline(0, linestyle='--', linewidth=1, color='gray')
         files = {f'{ion}/{e}eV': path
                  for ion, d in self.p.SIM_FILES.items()
                  for e, path in d.items()}
@@ -116,31 +127,43 @@ class Plotter:
         for k, (c, lt) in self.p.SIM_OVERLAY.items():
             cols[k] = c
             lts[k] = lt
+        line_dict = {}
         SimValuePlotter(files, cols, lts).run(ax1)
-        fig1.tight_layout()
-        fig1.savefig('transient_calc.png', dpi=300, bbox_inches='tight')
+        self.save_figure(fig1, '3_1_3_valid_transient_Si3N4_calc_only')
+        ax1.legend( loc='upper left', bbox_to_anchor=(0.01, 0.99))
 
+    def run_calc_with_exp(self, fg):
         # multi-panel simulation + experiment
-        fig2, axs = fg.run(2, 1)
+        fig2, axs = fg.run(1, 2)
         axs = axs.flatten()
-        for i, ion in enumerate(['CH2F+', 'CF+']):
-            colors = self.interp_colors(
-                *self.p.BASE_COLORS[ion], len(self.p.ENERGIES)
-            )
+        alphabet_dict = {0: '(a) CF$^+$', 1: '(b) CH$_2$F$^+$'}
+        for i, ion in enumerate(['CF+', 'CH2F+']):
+            ax = axs[i]
+            ax.axhline(0, linestyle='--', linewidth=1, color='gray')
+            colors = self.interp_colors(*self.p.BASE_COLORS[ion], len(self.p.ENERGIES))
             lts = self.p.LINTYPES
-            files = {f'{ion}/{e}eV': self.p.SIM_FILES[ion][e]
-                     for e in self.p.ENERGIES}
+            files = {f'{ion}/{e}eV': self.p.SIM_FILES[ion][e] for e in self.p.ENERGIES}
             SimValuePlotter(
                 files,
                 dict(zip(files, colors)),
                 dict(zip(files, lts))
-            ).run(axs[i])
-            ExpValuePlotter(ion, draw_fit=False,
-                            adjust_xlim=True).run(axs[i])
-            axs[i].set_title(f'{ion} ion')
-        fig2.tight_layout()
-        fig2.savefig('transient_main.png', dpi=300,
-                     bbox_inches='tight')
+            ).run(ax)
+            ExpValuePlotter(ion, draw_fit=False, adjust_xlim=True).run(ax)
+            # ax.set_title(f'{PARAMS.ion_name_dict[ion]}')
+            ax.legend(loc='upper left', bbox_to_anchor=(0.01, 0.99), frameon=False)
+            ax.text(-0.2, 1.1, alphabet_dict[i], transform=ax.transAxes, fontsize=10)
+        self.save_figure(fig2, '3_1_3_valid_transient_Si3N4')
+
+    def save_figure(self, fig, filename):
+        fig.tight_layout()
+        fig.savefig(f'{filename}.png', dpi=200)
+        fig.savefig(f'{filename}.pdf')
+        fig.savefig(f'{filename}.eps')
+
+    def run(self):
+        fg = FigureGenerator()
+        self.run_calc_only(fg)
+        self.run_calc_with_exp(fg)
 
     def interp_colors(self, c1, c2, n):
         r1, g1, b1 = mcolors.to_rgb(c1)

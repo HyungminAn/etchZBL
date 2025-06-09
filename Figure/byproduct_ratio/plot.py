@@ -94,8 +94,8 @@ class DataPlotter:
             label = PARAMS.CONVERT_DICT[key]
             color = PARAMS.COLOR_DICT[key]
             line, = ax_exp.plot(x, y,
-                        linestyle='-',
-                        alpha=0.5,
+                        linestyle='--',
+                        # alpha=0.5,
                         marker='o',
                         label=label,
                         color=color)
@@ -110,7 +110,7 @@ class DataPlotter:
             label = PARAMS.CONVERT_DICT[key]
             color = PARAMS.COLOR_DICT[key]
             line, = ax_sim.plot(x, y,
-                        linestyle='--',
+                        linestyle='-',
                         marker='o',
                         label=label,
                         color=color)
@@ -155,15 +155,15 @@ class DataPlotter:
         x = np.arange(len(keys))
 
         ax_bar.bar(x - 0.2, y_exp, width=0.4, label='Toyoda et al.',
-                   facecolor='white', edgecolor='black', alpha=0.6, )
+                   facecolor='white', edgecolor='black')
         ax_bar.bar(x + 0.2, y_sim, width=0.4, label='This study',
-                   facecolor='black', edgecolor='black', alpha=0.6)
+                   facecolor='black', edgecolor='black')
 
         ax_bar.set_xticks(x)
         ax_bar.set_xticklabels([PARAMS.CONVERT_DICT[k] for k in keys])
         ax_bar.set_ylabel('Relative desorption intensity')
 
-        ax_bar.set_title('CF$_3$, 200 eV on SiO$_2$', fontsize=10)
+        ax_bar.set_title('CF${}_{3}^{+}$, 200 eV on SiO$_2$', fontsize=10)
         ax_bar.legend(loc='lower center',
                       frameon=False,
                       bbox_to_anchor=(0.5, -0.3),

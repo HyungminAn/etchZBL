@@ -7,11 +7,14 @@ from axisprocessor import BatchAxisProcessor
 from axisprocessor import CombinedAxisProcessor
 from axisprocessor import AxisProcessorHeight
 from axisprocessor import AxisProcessorCarbonThickness
-# from axisprocessor import AxisProcessorMixedFilmStacked
+from axisprocessor import AxisProcessorMixedFilmStacked
 # from axisprocessor import AxisProcessorDensity
 from axisprocessor import AxisProcessorFCRatioMixed
 from axisprocessor import AxisProcessorSPXRatio
-from axisprocessor import AxisProcessorNeighbor
+# from axisprocessor import AxisProcessorNeighbor
+# from axisprocessor import AxisProcessorSiCcount
+from axisprocessor import AxisProcessorAtomCountRatio
+from axisprocessor import AxisProcessorAtomCountNumberDensity
 
 class FigureGenerator:
     def __init__(self):
@@ -33,6 +36,7 @@ class FigureGenerator:
 
         n_row, n_col = self.get_figure_size(data, squeeze=squeeze)
         fig, axes = plt.subplots(n_row, n_col, figsize=(7.1, 7.1 * 0.9),)
+
         ax_dict = self.build_ax_dict(data, fig, axes, squeeze=squeeze)
 
         return fig, ax_dict
@@ -101,34 +105,43 @@ class FigureGenerator:
         return ax_dict
 
 class DataPlotter:
-    def run(self, data):
+    def run(self, data, system, ylim):
         fig, ax_dict = FigureGenerator().run(data, squeeze=True)
-        data = self.reconfigure_data(data, ax_dict)
+        data = self.reconfigure_data(data)
         batch_processor = BatchAxisProcessor(data, ax_dict,
-                                             CombinedAxisProcessor, ylim=(-15, 15))
+                                             CombinedAxisProcessor, ylim=ylim)
         batch_processor.run()
-        self.save_figure(fig)
+        self.decorate(fig)
+        self.save_figure(fig, system)
 
-    def save_figure(self, fig):
-        '''
-        Save the figure in different formats.
-        '''
+    def decorate(self, fig):
+
+        # def xticks_formatter(x, _):
+        #     return str(int(x)) if x == int(x) else str(x)
+        # for ax in axes:
+        #     ax.xaxis.set_major_formatter(FuncFormatter(xticks_formatter))
+
         fig.tight_layout()
         fig.subplots_adjust(bottom=0.1, left=0.1, right=0.95, wspace=0.15)
         fig.text(0.5, 0.02, r'Ion dose ($\times$ 10$^{17}$ cm$^{-2}$)', ha='center')
         fig.text(0.02, 0.5, r'Surface height change (nm)', rotation='vertical', va='center')
         fig.text(0.98, 0.5, r'Carbon film thickness (nm)', rotation='vertical', va='center')
-        name = '3_2_1_height_total_SiO2'
+
+    def save_figure(self, fig, system):
+        '''
+        Save the figure in different formats.
+        '''
+        name = f'3_2_1_height_total_{system}'
         fig.savefig(f'{name}.png')
         fig.savefig(f'{name}.pdf')
         fig.savefig(f'{name}.eps')
 
-    def reconfigure_data(self, data, ax_dict):
+    def reconfigure_data(self, data):
         result = {}
         for system, data_system in data.items():
             result[system] = (
                 (data_system['height_change'], AxisProcessorHeight, False),
-                (data_system['film_data'], AxisProcessorCarbonThickness, True),
+                (data_system['z_film'], AxisProcessorCarbonThickness, True),
                 )
         return result
 
@@ -139,7 +152,9 @@ class FigureGeneratorSelected(FigureGenerator):
 
     def run(self, data, squeeze=False):
         n_row, n_col = self.get_figure_size(data)
-        fig, axes = plt.subplots(n_row, n_col, figsize=(3.5, 3.5 * n_row/n_col),)
+        n_multi = 1
+        figsize = (3.5 * n_multi, 3.5 * n_multi * n_row / n_col)
+        fig, axes = plt.subplots(n_row, n_col, figsize=figsize,)
         ax_dict = self.build_ax_dict(data, fig, axes)
         return fig, ax_dict
 
@@ -156,13 +171,17 @@ class FigureGeneratorSelected(FigureGenerator):
 class DataPlotterSelected(DataPlotter):
     def __init__(self):
         self.axis_config = [
-            ('fc_ratio_mixed', AxisProcessorFCRatioMixed),
-            ('spx_ratio_mixed', AxisProcessorSPXRatio),
-            ('h_effect_mixed', AxisProcessorFCRatioMixed),
+            # ('fc_ratio_mixed', AxisProcessorFCRatioMixed),
+            # ('spx_ratio_mixed', AxisProcessorSPXRatio),
+            ('stacked', AxisProcessorMixedFilmStacked),
+            ('atomcount_mixed', AxisProcessorAtomCountNumberDensity),
+            # ('atomcount_mixed_norm', AxisProcessorAtomCountRatio),
+            # ('atomcount_film', AxisProcessorAtomCount),
+            # ('atomcount_film_norm', AxisProcessorAtomCount),
+            # ('h_effect_mixed', AxisProcessorSiCcount),
             # ('neighbor_classification', AxisProcessorNeighbor),
 
             # ('Density', AxisProcessorDensity),
-            # ('Mixed layer thickness', AxisProcessorMixedFilmStacked),
             # ('spx ratio (film)', AxisProcessorSPXRatioFilmLayer),
         ]
 
@@ -183,7 +202,7 @@ class DataPlotterSelected(DataPlotter):
             print(f'Plotting {key} for {len(data_selected)} systems')
 
             if key == 'fc_ratio_mixed':
-                ylim = (0, 3)
+                ylim = (1, 4)
             elif key == 'spx_ratio_mixed':
                 ylim = (0, 1)
             else:
@@ -237,14 +256,17 @@ class DataPlotterSelected(DataPlotter):
                         labels[row].append(l)
 
         pos_dict = {
-            0: (0.6, 0.65),
-            1: (0.6, 0.38),
-            2: (0.5, 0.05),
+            0: (0.6, 0.53),
+            1: (0.6, 0.0),
+            # 2: (0.5, 0.05),
+            # 2: None,
         }
 
         for row in range(n_row):
             h, l = handles[row], labels[row]
-            ncol = len(l) if len(l) < 4 else 4
+            ncol = len(l) if len(l) < 3 else 3
+            if pos_dict[row] is None:
+                continue
             fig.legend(h, l,
                        loc='lower center',
                        ncol=ncol,
@@ -252,12 +274,12 @@ class DataPlotterSelected(DataPlotter):
                        frameon=False,
                        )
 
-        fig.text(0.5, 0.02, r'Ion dose ($\times$ 10$^{17}$ cm$^{-2}$)', ha='center')
+        fig.text(0.6, 0.16, r'Ion dose ($\times$ 10$^{17}$ cm$^{-2}$)', ha='center')
 
     def save_figure(self, fig):
         name = '3_2_1_CF_CH2F_compare_plot'
         fig.tight_layout()
-        fig.subplots_adjust(bottom=0.2, wspace=0.1, hspace=0.4)
-        fig.savefig(f'{name}.png')
+        fig.subplots_adjust(bottom=0.3, wspace=0.2, hspace=0.3)
+        fig.savefig(f'{name}.png', dpi=200)
         fig.savefig(f'{name}.pdf')
         fig.savefig(f'{name}.eps')

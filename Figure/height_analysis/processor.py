@@ -138,6 +138,54 @@ class FCratioProcessor(BaseProcessor):
         fc_ratio = len(mask_F) / len(mask_C)
         return fc_ratio
 
+class AtomCountProcessor(BaseProcessor):
+    def __init__(self, name, suffix, system=None):
+        self.name = name
+        self.filename_suffix = suffix
+        self.system = system
+
+        if system == 'SiO2':
+            self.symbol_list = ['Si', 'O', 'C', 'H', 'F']
+        elif system == 'Si3N4':
+            self.symbol_list = ['Si', 'N', 'C', 'H', 'F']
+        else:
+            raise ValueError(f"Unknown system: {system}")
+
+    @pklSaver.run(lambda self: f'{self.name}_{self.filename_suffix}')
+    def run(self, images, height_dict):
+        x, y = [], []
+        for key, image in images.items():
+            z_min, z_max, _ = height_dict.get(key, (None, None, None))
+            atomcount = self.run_single(image, z_min, z_max)
+            x.append(key)
+            y.append(atomcount)
+            print(f'AtomCount Done for {key}')
+        x = np.array(x, dtype=int)
+        y = np.array(y, dtype=float)
+        labels = ['key'] + self.symbol_list + [f'r({elem})' for elem in self.symbol_list]
+        return x, y, labels
+
+    def run_single(self, atoms, z_min, z_max):
+        if z_min is None or z_max is None:
+            return [None for _ in self.symbol_list] * 2
+
+        pos_z = atoms.get_positions()[:, 2]
+        mask = (np.logical_and(pos_z >= z_min, pos_z <= z_max))
+
+        if np.sum(mask) == 0:
+            return [None for _ in self.symbol_list] * 2
+
+        symbols = atoms.get_chemical_symbols()
+        symbols = [symbols[idx] for idx in range(len(symbols)) if mask[idx]]
+        result = []
+        for elem in self.symbol_list:
+            mask = np.array([idx for idx, symbol in enumerate(symbols) if symbol == elem])
+            result.append(len(mask))
+        n_atoms = sum(result)
+        result_norm = [i / n_atoms for i in result]  # add normalized counts
+        result_numdensity = [n / ((z_max-z_min)/10 * 9 )  for n in result]  # add number density
+        return result_numdensity + result_norm
+
 class ProfileProcessor(BaseProcessor):
     def __init__(self, name, suffix, system=None):
         self.system = system
@@ -483,6 +531,9 @@ class HydrogenEffectProcessor(NeighborBasedProcessor):
             nbr_idxs = nbrs_dict.get(ci, [])
             nbr_syms = [symbols[j] for j in nbr_idxs]
 
+            if len(nbr_syms) != 4:
+                continue
+
             n_Si = nbr_syms.count('Si')
             n_C = nbr_syms.count('C')
             result[ci] = n_Si + n_C
@@ -490,6 +541,25 @@ class HydrogenEffectProcessor(NeighborBasedProcessor):
         average_count = np.mean(list(result.values()))
 
         return average_count
+
+class MixedFilmStackedProcessor(BaseProcessor):
+    def __init__(self, name, suffix):
+        self.name = name
+        self.filename_suffix = suffix
+
+    @pklSaver.run(lambda self: f'{self.name}_{self.filename_suffix}')
+    def run(self, images, height_dict_mixed, height_dict_film):
+        x, y = [], []
+        for key, atoms in images.items():
+            _, _, h_mixed = height_dict_mixed.get(key, (None, None, None))
+            _, _, h_film = height_dict_film.get(key, (None, None, None))
+            x.append(key)
+            y.append((h_mixed, h_film))
+            print(f'MixedFilmStacked for snapshot {key} done')
+        x = np.array(x, dtype=int)
+        y = np.array(y, dtype=float)
+        labels = ['key', 'h_mixed', 'h_film']
+        return x, y, ['x'] + labels
 
 class NeighborInfoExtractor:
     def __init__(self, cutoff_matrix, symbol_to_index):

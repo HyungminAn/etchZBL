@@ -5,6 +5,7 @@ from dataclasses import dataclass
 
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
 from ase.io import read
 
 def timeit(func):
@@ -133,6 +134,7 @@ class DataLoader:
 class Plotter:
     def run(self, data):
         fig, axes = self.generate_figure(data)
+        line_dict = {}
 
         for (ax, (label, data_dict)) in zip(axes, data.items()):
             data = data_dict['data']
@@ -144,12 +146,14 @@ class Plotter:
                 x = np.array([k/9000 for k in keys])
                 y = np.array([data[k][elem] for k in keys])
                 color = PARAMS.color_dict[elem]
-                ax.plot(x, y, label=elem, color=color)
-                ax.plot(x_exp, y_exp, label=f"{elem} (exp)", color=color, marker='o', linestyle='--')
+                line, = ax.plot(x, y, label=elem, color=color)
+                line_exp, = ax.plot(x_exp, y_exp, label=f"{elem} (exp)", color=color, marker='o', linestyle='--')
                 self.decorate(ax, label)
+                line_dict[elem] = line
+                line_dict[f"{elem}_exp"] = line_exp
 
-        # self.set_legends(axes)
-        self.set_global_legend(fig, axes)
+        self.set_global_legend(fig, axes, line_dict)
+        self.add_figure_numbers(axes)
         self.save(fig)
 
     def generate_figure(self, data):
@@ -158,31 +162,44 @@ class Plotter:
             'font.size': 10,
             })
         n_data = len(data)
-        fig, axes = plt.subplots(n_data, 1, figsize=(3.5, n_data * 3.5))
+        fig, axes = plt.subplots(n_data, 1, figsize=(3.5, n_data * 3))
         # fig, axes = plt.subplots(n_data, 1, figsize=(4.5, n_data * 3))
         return fig, axes
 
+    def add_figure_numbers(self, axes):
+        ax_top, ax_bottom = axes[0], axes[-1]
+        ax_top.text(-0.2, 1.2, "(a)", transform=ax_top.transAxes, fontsize=10)
+        ax_bottom.text(-0.2, 1.2, "(b)", transform=ax_bottom.transAxes, fontsize=10)
+
     def decorate(self, ax, label):
-        ax.set_xlabel("Ion dose (" + r"$\times$ " + "10$^{17}$cm$^{-2}$)")
+        ax.set_xlabel("Ion dose (" + r"$\times$ " + "10$^{17}$ cm$^{-2}$)")
         ax.set_ylabel("Atomic composition")
         ax.set_title(label.replace("CF3_", "CF${}_{3}^{+}$, ") + ' on SiO$_2$',
                      fontsize=10)
         ax.set_xlim(0, 0.2)
         ax.set_ylim(0, 0.8)
-        # ax.legend(loc='upper right', ncol=2)
 
-    def set_global_legend(self, fig, axes):
-        handles, labels = axes[0].get_legend_handles_labels()
-        fig.legend(handles, labels, loc='lower center', ncol=2,
-                   bbox_to_anchor=(0.5, 0), frameon=False)
+    def set_global_legend(self, fig, axes, line_dict):
+        elem_list = ['Si', 'O', 'C', 'F']
+        plotLines = []
 
-    # def set_legends(self, axes):
-    #     for ax in axes:
-    #         ax.legend(loc='upper right', ncol=4, frameon=False)
+        group_label = Line2D([], [], color='none', label='Ishikawa et al.', linewidth=0)
+        plotLines.append(group_label)
+        for i in elem_list:
+            plotLines.append(line_dict[f'{i}_exp'])
+        group_label = Line2D([], [], color='none', label='This study', linewidth=0)
+        plotLines.append(group_label)
+        for i in elem_list:
+            plotLines.append(line_dict[i])
+
+        labels = [line.get_label() for line in plotLines]
+        labels = [i.replace(' (exp)', '') for i in labels]
+        # axes[1].legend(plotLines, labels, loc='upper center', ncol=2, bbox_to_anchor=(0.5, -0.3), frameon=False)
+        fig.legend(plotLines, labels, loc='lower center', ncol=2, bbox_to_anchor=(0.5, 0.0), frameon=False)
 
     def save(self, fig):
         fig.tight_layout()
-        fig.subplots_adjust(bottom=0.2)
+        fig.subplots_adjust(bottom=0.3)
         name = '3_1_4_valid_surface_composition_SiO2'
         fig.savefig(f"{name}.png")
         fig.savefig(f"{name}.pdf")
