@@ -1,201 +1,32 @@
-import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.ticker import FuncFormatter
 
 from params import PARAMS
+from figuregenerator import FigureGenerator
+from figuregenerator import FigureGeneratorSelected
 from axisprocessor import BatchAxisProcessor
 from axisprocessor import CombinedAxisProcessor
-from axisprocessor import AxisProcessorHeight
-from axisprocessor import AxisProcessorCarbonThickness
 from axisprocessor import AxisProcessorMixedFilmStacked
-# from axisprocessor import AxisProcessorDensity
-from axisprocessor import AxisProcessorFCRatioMixed
-from axisprocessor import AxisProcessorSPXRatio
-# from axisprocessor import AxisProcessorNeighbor
-# from axisprocessor import AxisProcessorSiCcount
-from axisprocessor import AxisProcessorAtomCountRatio
 from axisprocessor import AxisProcessorAtomCountNumberDensity
+from axisprocessor import AxisProcessorEtchedAmount
 
-class FigureGenerator:
-    def __init__(self):
-        plt.rcParams.update({
-            'font.family': 'Arial',
-            'font.size': 10,
-            'axes.labelsize': 10,
-            'axes.titlesize': 10,
-            'xtick.labelsize': 10,
-            'ytick.labelsize': 10,
-            'legend.fontsize': 10,
-            'figure.titlesize': 10,
-        })
-
-    def run(self, data, squeeze=False):
-        '''
-        Generate the figure and axes for the plot.
-        '''
-
-        n_row, n_col = self.get_figure_size(data, squeeze=squeeze)
-        fig, axes = plt.subplots(n_row, n_col, figsize=(7.1, 7.1 * 0.9),)
-
-        ax_dict = self.build_ax_dict(data, fig, axes, squeeze=squeeze)
-
-        return fig, ax_dict
-
-    def get_figure_size(self, data, squeeze=False):
-        if squeeze:
-            count_dict = self.split_ion_energy(data)
-            n_ion = len(count_dict)
-            n_energy = max(len(energies) for energies in count_dict.values())
-            return n_ion, n_energy
-        else:
-            set_ion, set_energy = self.get_ion_energy_set(data)
-            n_ion = len(set_ion)
-            n_energy = len(set_energy)
-            return n_ion, n_energy
-
-    def split_ion_energy(self, data):
-        result = {}
-        for key in data.keys():
-            ion, energy = key.split('_')
-            if ion not in result:
-                result[ion] = []
-            result[ion].append(energy)
-        return result
-
-    def get_ion_energy_set(self, data):
-        set_ion, set_energy = set(), set()
-        for system in data.keys():
-            ion, energy = system.split('_')
-            set_ion.add(ion)
-            set_energy.add(energy)
-        set_ion = sorted(list(set_ion))
-        set_energy = sorted(list(set_energy), key=lambda x: int(x))
-        return set_ion, set_energy
-
-    def build_ax_dict(self, data, fig, axes, squeeze=False):
-        if squeeze:
-            count_dict = self.split_ion_energy(data)
-            ax_dict = {}
-            for idx, (ion, energies) in enumerate(count_dict.items()):
-                for jdx, energy in enumerate(energies):
-                    system = f'{ion}_{energy}'
-                    ax_dict[system] = axes[idx, jdx]
-
-                    if jdx != 0:
-                        axes[idx, jdx].set_yticklabels([])
-
-                    if idx != len(count_dict) - 1:
-                        axes[idx, jdx].set_xticklabels([])
-                    axes[idx, jdx].margins(x=0.05)
-
-        else:
-            set_ion, set_energy = self.get_ion_energy_set(data)
-            ax_dict = {}
-            for system in data.keys():
-                ion, energy = system.split('_')
-                idx, jdx = set_ion.index(ion), set_energy.index(energy)
-                ax_dict[system] = axes[idx, jdx]
-
-            for ion in set_ion:
-                for energy in set_energy:
-                    key = f'{ion}_{energy}'
-                    if key not in ax_dict:
-                        fig.delaxes(axes[set_ion.index(ion), set_energy.index(energy)])
-
-        return ax_dict
-
-class DataPlotter:
-    def run(self, data, system, ylim):
-        fig, ax_dict = FigureGenerator().run(data, squeeze=True)
-        data = self.reconfigure_data(data)
-        batch_processor = BatchAxisProcessor(data, ax_dict,
-                                             CombinedAxisProcessor, ylim=ylim)
-        batch_processor.run()
-        self.decorate(fig)
-        self.save_figure(fig, system)
-
-    def decorate(self, fig):
-
-        # def xticks_formatter(x, _):
-        #     return str(int(x)) if x == int(x) else str(x)
-        # for ax in axes:
-        #     ax.xaxis.set_major_formatter(FuncFormatter(xticks_formatter))
-
-        fig.tight_layout()
-        fig.subplots_adjust(bottom=0.1, left=0.1, right=0.95, wspace=0.15)
-        fig.text(0.5, 0.02, r'Ion dose ($\times$ 10$^{17}$ cm$^{-2}$)', ha='center')
-        fig.text(0.02, 0.5, r'Surface height change (nm)', rotation='vertical', va='center')
-        fig.text(0.98, 0.5, r'Carbon film thickness (nm)', rotation='vertical', va='center')
-
-    def save_figure(self, fig, system):
-        '''
-        Save the figure in different formats.
-        '''
-        name = f'3_2_1_height_total_{system}'
-        fig.savefig(f'{name}.png')
-        fig.savefig(f'{name}.pdf')
-        fig.savefig(f'{name}.eps')
-
-    def reconfigure_data(self, data):
+class DataReconfigurer:
+    def run(self, data):
         result = {}
         for system, data_system in data.items():
+            # result[system] = (
+            #     (data_system['height_change'], AxisProcessorHeight, False),
+            #     (data_system['z_film'], AxisProcessorCarbonThickness, True),
+            #     )
             result[system] = (
-                (data_system['height_change'], AxisProcessorHeight, False),
-                (data_system['z_film'], AxisProcessorCarbonThickness, True),
+                (data_system['etchedamount'], AxisProcessorEtchedAmount, False),
                 )
         return result
 
-class FigureGeneratorSelected(FigureGenerator):
-    def __init__(self, axis_config):
-        super().__init__()
-        self.axis_config = axis_config
-
-    def run(self, data, squeeze=False):
-        n_row, n_col = self.get_figure_size(data)
-        n_multi = 1
-        figsize = (3.5 * n_multi, 3.5 * n_multi * n_row / n_col)
-        fig, axes = plt.subplots(n_row, n_col, figsize=figsize,)
-        ax_dict = self.build_ax_dict(data, fig, axes)
-        return fig, ax_dict
-
-    def get_figure_size(self, data, squeeze=False):
-        n_row, n_col = len(self.axis_config), len(data)
-        return n_row, n_col
-
-    def build_ax_dict(self, data, fig, axes, squeeze=False):
-        ax_dict = {}
-        for idx, system in enumerate(data.keys()):
-            ax_dict[system] = axes[:, idx]
-        return ax_dict
-
-class DataPlotterSelected(DataPlotter):
-    def __init__(self):
-        self.axis_config = [
-            # ('fc_ratio_mixed', AxisProcessorFCRatioMixed),
-            # ('spx_ratio_mixed', AxisProcessorSPXRatio),
-            ('stacked', AxisProcessorMixedFilmStacked),
-            ('atomcount_mixed', AxisProcessorAtomCountNumberDensity),
-            # ('atomcount_mixed_norm', AxisProcessorAtomCountRatio),
-            # ('atomcount_film', AxisProcessorAtomCount),
-            # ('atomcount_film_norm', AxisProcessorAtomCount),
-            # ('h_effect_mixed', AxisProcessorSiCcount),
-            # ('neighbor_classification', AxisProcessorNeighbor),
-
-            # ('Density', AxisProcessorDensity),
-            # ('spx ratio (film)', AxisProcessorSPXRatioFilmLayer),
-        ]
-
-    def run(self, data):
-        fig, ax_dict = FigureGeneratorSelected(self.axis_config).run(data)
-        batch_processor_dict = self.reconfigure_data(data, ax_dict)
-        for bp in batch_processor_dict.values():
-            bp.run()
-        self.decorate(fig, ax_dict)
-        self.save_figure(fig)
-
-    def reconfigure_data(self, data, ax_dict):
+class DataReconfigurerSelected:
+    def run(self, data, ax_dict, axis_config):
         result = {}
-        for idx, (key, processorClass) in enumerate(self.axis_config):
+        for idx, (key, processorClass) in enumerate(axis_config):
             data_selected = {system: {} for system in data.keys()}
             for system in data.keys():
                 data_selected[system] = data[system][key]
@@ -215,8 +46,64 @@ class DataPlotterSelected(DataPlotter):
                                              ylim=ylim)
         return result
 
-    def decorate(self, fig, ax_dict):
+class DataPlotter:
+    def __init__(self, system, ylim):
+        self.system = system
+        self.ylim = ylim
 
+    def run(self, data):
+        fig, ax_dict = FigureGenerator().run(data, squeeze=True)
+        drc = DataReconfigurer()
+        data = drc.run(data)
+        batch_processor = BatchAxisProcessor(data,
+                                             ax_dict,
+                                             CombinedAxisProcessor,
+                                             ylim=self.ylim)
+        batch_processor.run()
+        self.decorate(fig, ax_dict)
+        save_name = f'3_2_1_height_total_{self.system}'
+        self.save_figure(fig, save_name)
+
+    def decorate(self, fig, ax_dict):
+        fig.tight_layout()
+        fig.subplots_adjust(bottom=0.1, left=0.1, right=0.95, wspace=0.15)
+        fig.text(0.5, 0.02, r'Ion dose ($\times$ 10$^{17}$ cm$^{-2}$)', ha='center')
+        fig.text(0.02, 0.5, r'Surface height change (nm)', rotation='vertical', va='center')
+        fig.text(0.98, 0.5, r'Carbon film thickness (nm)', rotation='vertical', va='center')
+
+    def save_figure(self, fig, name):
+        '''
+        Save the figure in different formats.
+        '''
+        fig.savefig(f'{name}.png')
+        fig.savefig(f'{name}.pdf')
+        fig.savefig(f'{name}.eps')
+
+class DataPlotterSelected(DataPlotter):
+    def __init__(self, system, ylim):
+        super().__init__(system, ylim)
+        self.axis_config = [
+            ('stacked', AxisProcessorMixedFilmStacked),
+            ('atomcount_mixed', AxisProcessorAtomCountNumberDensity),
+        ]
+
+    def run(self, data):
+        fig, ax_dict = FigureGeneratorSelected(data, self.axis_config).run(data)
+        drc = DataReconfigurerSelected()
+        batch_processor_dict = drc.run(data, ax_dict, self.axis_config)
+        for bp in batch_processor_dict.values():
+            bp.run()
+        self.decorate(fig, ax_dict)
+        save_name = f'3_2_1_{self.system}_selected'
+        self.save_figure(fig, save_name)
+
+    def decorate(self, fig, ax_dict):
+        self.adjust_xyticks(ax_dict)
+        self.add_legend(fig, ax_dict)
+        fig.tight_layout()
+        fig.subplots_adjust(bottom=0.3, wspace=0.2, hspace=0.3)
+
+    def adjust_xyticks(self, ax_dict):
         def xticks_formatter(x, _):
             return str(int(x)) if x == int(x) else str(x)
 
@@ -240,6 +127,7 @@ class DataPlotterSelected(DataPlotter):
                     title = f'{PARAMS.CONVERT.ION_CONVERT_DICT[ion]}, {energy} eV'
                     ax.set_title(title, fontsize=10)
 
+    def add_legend(self, fig, ax_dict):
         axes = [ax for ax in ax_dict.values()]
         axes = np.array(axes, dtype=object).T
 
@@ -275,11 +163,3 @@ class DataPlotterSelected(DataPlotter):
                        )
 
         fig.text(0.6, 0.16, r'Ion dose ($\times$ 10$^{17}$ cm$^{-2}$)', ha='center')
-
-    def save_figure(self, fig):
-        name = '3_2_1_CF_CH2F_compare_plot'
-        fig.tight_layout()
-        fig.subplots_adjust(bottom=0.3, wspace=0.2, hspace=0.3)
-        fig.savefig(f'{name}.png', dpi=200)
-        fig.savefig(f'{name}.pdf')
-        fig.savefig(f'{name}.eps')

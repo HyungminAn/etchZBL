@@ -87,11 +87,11 @@ class PARAMS:
                     },
 
                 'atom_count': {
-                    'Si': '#075c29',
-                    'O': '#609af7',
-                    'C': '#de3535',
-                    'H': '#d1ae4d',
-                    'F': '#3d2e04',
+                    'Si': '#F0C8A0',
+                    'O': '#FF0D0D',
+                    'C': '#909090',
+                    'H': '#FF00FF',
+                    'F': '#90E050',
                     }
             }
 
@@ -126,6 +126,33 @@ class PARAMS:
                 'CF3_10': COLOR_LIST['3'],
                 'CF2_25': COLOR_LIST['3'],
                 'CH2F_100': COLOR_LIST['3'],
+                }
+
+            COLORS_Si3N4 = {
+                'CF_250': COLOR_LIST['3'],
+                'CF_500': COLOR_LIST['3'],
+                'CF_750': COLOR_LIST['3'],
+                'CF_1000': COLOR_LIST['2'],
+
+                'CF2_250': COLOR_LIST['3'],
+                'CF2_500': COLOR_LIST['2'],
+                'CF2_750': COLOR_LIST['2'],
+                'CF2_1000': COLOR_LIST['2'],
+
+                'CF3_250': COLOR_LIST['1'],
+                'CF3_500': COLOR_LIST['1'],
+                'CF3_750': COLOR_LIST['1'],
+                'CF3_1000': COLOR_LIST['1'],
+
+                'CH2F_250': COLOR_LIST['3'],
+                'CH2F_500': COLOR_LIST['3'],
+                'CH2F_750': COLOR_LIST['3'],
+                'CH2F_1000': COLOR_LIST['2'],
+
+                'CHF2_250': COLOR_LIST['3'],
+                'CHF2_500': COLOR_LIST['3'],
+                'CHF2_750': COLOR_LIST['2'],
+                'CHF2_1000': COLOR_LIST['2'],
                 }
 
         @dataclass

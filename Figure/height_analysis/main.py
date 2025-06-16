@@ -2,13 +2,11 @@ import sys
 
 import yaml
 
-# from imageloader import ImageLoader
 from imageloader import ImageLoaderExtended
 from processor import HeightChangeProcessor, MixedRegionIdentifier, FilmRegionIdentifier, CarbonNeighborProcessor, ProfileProcessor
-# from processor import AverageDensityProcessor, FCratioProcessor, SpxRatioProcessor
-# from processor import HydrogenEffectProcessor
 from processor import AtomCountProcessor
 from processor import MixedFilmStackedProcessor
+from processor import EtchedAmountProcessor
 from plotter import DataPlotter
 from plotter import DataPlotterSelected
 
@@ -17,7 +15,7 @@ class DataProcessor:
         self.name = name
         self.system = system
         self.processors_1st = {
-            'height_change': HeightChangeProcessor(name, 'shifted_height.txt'),
+            'height_change': HeightChangeProcessor(name, 'shifted_height.txt', system=system),
             'neighbor_classification': CarbonNeighborProcessor(name, 'carbon_neighbors.txt', system=system),
             'profile': ProfileProcessor(name, 'atom_density.pkl', system=system),
         }
@@ -26,18 +24,12 @@ class DataProcessor:
             'z_film': FilmRegionIdentifier(name, 'z_film.txt'),
         }
         self.processors_3rd = {
-            # 'density_mixed': AverageDensityProcessor(name, 'density_mixed.txt'),
-            # 'density_film': AverageDensityProcessor(name, 'density_film.txt'),
-            # 'fc_ratio_mixed': FCratioProcessor(name, 'fc_ratio_mixed.txt'),
-            # 'fc_ratio_film': FCratioProcessor(name, 'fc_ratio_film.txt'),
-            # 'spx_ratio_mixed': SpxRatioProcessor(name, 'spx_ratio_mixed.txt', system=system),
-            # 'spx_ratio_film': SpxRatioProcessor(name, 'spx_ratio_film.txt', system=system),
-            # 'h_effect_mixed': HydrogenEffectProcessor(name, 'h_effect_mixed.txt', system=system),
             'atomcount_mixed': AtomCountProcessor(name, 'atomcount_mixed.txt', system=system),
             'atomcount_film': AtomCountProcessor(name, 'atomcount_film.txt', system=system),
             'atomcount_mixed_norm': AtomCountProcessor(name, 'atomcount_mixed.txt', system=system),
             'atomcount_film_norm': AtomCountProcessor(name, 'atomcount_film.txt', system=system),
             'stacked': MixedFilmStackedProcessor(name, 'mixed_film_stacked.txt'),
+            'etchedamount': EtchedAmountProcessor(name, 'etched_amount.txt', system=system),
         }
 
     def run(self, src_list):
@@ -75,6 +67,8 @@ class DataProcessor:
         # Run third-level processors (dependent on mixed/film regions)
         z_mix_dict = {xx: yy for xx, yy in zip(result['z_mixed'][0], result['z_mixed'][1])}
         z_film_dict = {xx: yy for xx, yy in zip(result['z_film'][0], result['z_film'][1])}
+        z_height_dict = {xx: yy for xx, yy in zip(result['height_change'][0],
+                                                  result['height_change'][1])}
         for k, p in self.processors_3rd.items():
             if 'mixed' in k:
                 x, y, labels = p.run(images, z_mix_dict)
@@ -82,6 +76,8 @@ class DataProcessor:
                 x, y, labels = p.run(images, z_film_dict)
             elif 'stacked' in k:
                 x, y, labels = p.run(images, z_mix_dict, z_film_dict)
+            elif 'etchedamount' in k:
+                x, y, labels = p.run(z_height_dict, z_film_dict)
             else:
                 raise ValueError(f'Unknown processor type: {k}')
 
@@ -110,9 +106,10 @@ def main():
             key = f'{ion}_{energy}'
             dp = DataProcessor(key, system=system)
             data[key] = dp.run(src_list)
-    # dplot = DataPlotter()
-    # dplot.run(data, system, ylim=(0, 15))
-    dplot = DataPlotterSelected()
+    ylim = (-15, 15)
+    # dplot = DataPlotter(system, ylim=ylim)
+    # dplot.run(data)
+    dplot = DataPlotterSelected(system, ylim=ylim)
     dplot.run(data)
 
 if __name__ == '__main__':

@@ -28,9 +28,10 @@ class BaseProcessor(ABC):
         return os.path.exists(path_save)
 
 class HeightChangeProcessor(BaseProcessor):
-    def __init__(self, name, suffix):
+    def __init__(self, name, suffix, system=None):
         self.name = name
         self.filename_suffix = suffix
+        self.system = system
 
     @pklSaver.run(lambda self: f'{self.name}_{self.filename_suffix}')
     def run(self, images, src_list):
@@ -43,14 +44,14 @@ class HeightChangeProcessor(BaseProcessor):
             y.append(height)
         x = np.array(x, dtype=int)
         y = np.array(y, dtype=float)
-        # imgldr = ImageLoader()
-        # add_dict = imgldr.get_file_list(src_list, pattern='add_str_shoot_')
-        # sub_dict = imgldr.get_file_list(src_list, pattern='sub_str_shoot_')
+        imgldr = ImageLoader(self.name, system=self.system)
+        add_dict = imgldr.get_file_list(src_list, pattern='add_str_shoot_')
+        sub_dict = imgldr.get_file_list(src_list, pattern='sub_str_shoot_')
 
-        # for key in add_dict.keys():
-        #     y[x > key] -= PARAMS.PLOT.HEIGHT.SHIFT
-        # for key in sub_dict.keys():
-        #     y[x > key] += PARAMS.PLOT.HEIGHT.SHIFT
+        for key in add_dict.keys():
+            y[x > key] -= PARAMS.PLOT.HEIGHT.SHIFT
+        for key in sub_dict.keys():
+            y[x > key] += PARAMS.PLOT.HEIGHT.SHIFT
 
         labels = ['key', 'height(A)']
         return x, y, labels
@@ -622,3 +623,23 @@ class NeighborInfoExtractor:
                 neighbors_of_interest[ci] = filtered
         return neighbors_of_interest
 
+class EtchedAmountProcessor(BaseProcessor):
+    def __init__(self, name, suffix, system=None):
+        self.name = name
+        self.filename_suffix = suffix
+        self.system = system
+
+    @pklSaver.run(lambda self: f'{self.name}_{self.filename_suffix}')
+    def run(self, z_shifted_heights, z_film_heights):
+        x, y = [], []
+        z_init = z_shifted_heights.get(min(z_shifted_heights.keys()), 0.0)
+        for key, z_shifted_height in z_shifted_heights.items():
+            _, _, h_film = z_film_heights.get(key, (None, None, None))
+            etched_amount = (z_shifted_height - z_init) - h_film
+            x.append(key)
+            y.append(etched_amount)
+            print(f'{key}: {etched_amount} A')
+        x = np.array(x, dtype=int)
+        y = np.array(y, dtype=float)
+        labels = ['key', 'etched_amount(A)']
+        return x, y, labels

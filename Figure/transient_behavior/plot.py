@@ -21,7 +21,7 @@ class PARAMS:
     }
     label_convert_dict = {
         'CF_300': 'This study',
-        'CF_300 (removal height 2nm)': 'Limited removal height',
+        'CF_300 (removal height 2nm)': r'h$_{\mathrm{removal}}$ = 2 nm',
     }
 
 
@@ -61,8 +61,8 @@ class Plotter:
 
     def decorate(self, ax):
         ax.set_title('CF$^{+}$, 300 eV on SiO$_2$', fontsize=10)
-        ax.set_xlabel('CF$^{+}$ Ion dose (' + r'$\times$ ' + r'$10^{17}$ cm$^{-2}$)')
-        ax.set_ylabel('Film thickness change (nm)')
+        ax.set_xlabel('Ion dose (' + r'$\times$ ' + r'$10^{17}$ cm$^{-2}$)')
+        ax.set_ylabel('Surface height change (nm)')
         ax.set_xlim(-0.05, 3.2)
         ax.set_ylim(-15, 45)
         ax.legend(loc='upper left', bbox_to_anchor=(0.01, 0.99), frameon=False)

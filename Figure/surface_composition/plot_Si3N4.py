@@ -21,7 +21,8 @@ def timeit(func):
 
 @dataclass
 class PARAMS:
-    elements = ['Si', 'O', 'C', 'F']
+    elements = ['Si', 'N', 'C', 'H', 'F']
+    elements_selected = ['Si', 'C', 'F']
     color_dict = {
         'Si': '#F0C8A0',
         'O': '#FF0D0D',
@@ -34,23 +35,28 @@ class PARAMS:
         'format': "lammps-data",
         'Z_of_type': {
             1: 14,
-            2: 8,
+            2: 7,
             3: 6,
             4: 1,
             5: 9
         }
     }
 
+    ion_convert_dict = {
+        'CF': 'CF$^{+}$',
+        'CH2F': 'CH$_{2}$F$^{+}$',
+    }
+
 class DataLoader:
     def run(self):
         data_dict = {
-            'CF3_50eV': {
-                'path_exp': "exp/50eV",
-                'src': "/data_etch/data_HM/nurion/set_2/CF3_50_coo/CF3/50eV",
+            'CF': {
+                'path_exp': "exp/CF",
+                'src': "/data_etch/gasplant63/chf_etch/chf_etch/CF_1000eV",
                 },
-            'CF3_400eV': {
-                'path_exp': "exp/400eV",
-                'src': "/data2/andynn/ZBL_modify/250331_ContinueRun/NewRun/CF3_400/",
+            'CH2F': {
+                'path_exp': "exp/CH2F",
+                'src': "/data_etch/gasplant63/chf_etch/chf_etch/CH2F_1000eV",
                 },
             }
         step = 100
@@ -117,18 +123,20 @@ class DataLoader:
     @timeit
     def post_process(self, data):
         keys = sorted(data.keys())
+        normalize_factor = data[0]['Si']
         total_dict = {}
         for key in keys:
-            total = sum(data[key].values())
-            total_dict[key] = {elem: data[key][elem] / total for elem in data[key].keys()}
+            total_dict[key] = {elem: data[key][elem] / normalize_factor for elem in data[key].keys()}
         return total_dict
 
     @timeit
     def get_data_exp(self, path_exp):
         total_dict = {}
         for elem in PARAMS.elements:
+            if not os.path.exists(os.path.join(path_exp, f"{elem}.csv")):
+                print(f"Warning: {elem}.csv not found in {path_exp}")
+                continue
             data = np.loadtxt(os.path.join(path_exp, f"{elem}.csv"), delimiter=",")
-            data[:, 0] = data[:, 0] / 10   # convert to 10^17
             total_dict[elem] = data
         return total_dict
 
@@ -142,10 +150,11 @@ class Plotter:
             data_exp = data_dict['data_exp']
 
             keys = sorted(data.keys())
-            for elem in PARAMS.elements:
+
+            for elem in PARAMS.elements_selected:
                 x_exp, y_exp = data_exp[elem][:, 0], data_exp[elem][:, 1]
                 x = np.array([k/9000 for k in keys])
-                y = np.array([data[k][elem] for k in keys])
+                y = np.array([data[k].get(elem, 0) for k in keys])
                 color = PARAMS.color_dict[elem]
                 line, = ax.plot(x, y, label=elem, color=color)
                 line_exp, = ax.plot(x_exp, y_exp, label=f"{elem} (exp)", color=color, marker='o', linestyle='--')
@@ -163,7 +172,7 @@ class Plotter:
             'font.size': 10,
             })
         n_data = len(data)
-        fig, axes = plt.subplots(n_data, 1, figsize=(3.5, n_data * 3))
+        fig, axes = plt.subplots(n_data, 1, figsize=(3.5, n_data * 2.5))
         # fig, axes = plt.subplots(n_data, 1, figsize=(4.5, n_data * 3))
         return fig, axes
 
@@ -174,17 +183,16 @@ class Plotter:
 
     def decorate(self, ax, label):
         ax.set_xlabel("Ion dose (" + r"$\times$ " + "10$^{17}$ cm$^{-2}$)")
-        ax.set_ylabel("Atomic composition")
-        ax.set_title(label.replace("CF3_", "CF${}_{3}^{+}$, ") + ' on SiO$_2$',
-                     fontsize=10)
-        ax.set_xlim(0, 0.2)
-        ax.set_ylim(0, 0.8)
+        ax.set_ylabel("Intensity (a.u.)")
+        ax.set_title(PARAMS.ion_convert_dict[label] + ', 1000 eV on Si$_3$N$_4$', fontsize=10)
+        ax.set_xlim(0, 1)
+        ax.set_ylim(0, 2.0)
 
     def set_global_legend(self, fig, axes, line_dict):
-        elem_list = ['Si', 'O', 'C', 'F']
+        elem_list = PARAMS.elements_selected
         plotLines = []
 
-        group_label = Line2D([], [], color='none', label='Ishikawa et al.', linewidth=0)
+        group_label = Line2D([], [], color='none', label='Ito et al.', linewidth=0)
         plotLines.append(group_label)
         for i in elem_list:
             plotLines.append(line_dict[f'{i}_exp'])
@@ -201,7 +209,7 @@ class Plotter:
     def save(self, fig):
         fig.tight_layout()
         fig.subplots_adjust(bottom=0.3)
-        name = '3_1_4_valid_surface_composition_SiO2'
+        name = '3_1_4_valid_surface_composition_Si3N4'
         fig.savefig(f"{name}.png")
         fig.savefig(f"{name}.pdf")
         fig.savefig(f"{name}.eps")

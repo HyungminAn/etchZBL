@@ -12,10 +12,17 @@ class PlotInfo:
         'Si3N4': 'red',
     }
     marker_list = {
+        'CF3': '^',
+        'CF2': '^',
+        'CF': '^',
+        'CH2F': '^',
+        'CHF2': '^',
+    }
+    marker_list_exp = {
         'CF3': 'o',
         'CF2': 'o',
         'CF': 'o',
-        'CH2F': '^',
+        'CH2F': 'o',
         'CHF2': 'o',
     }
     species_list = [
@@ -193,7 +200,7 @@ class DataPlotter:
         for ion_type in data[key].keys():
             x = np.array([i for i in data[key][ion_type].keys()])
             y = np.array([i for i in data[key][ion_type].values()])
-            marker = PlotInfo.marker_list[ion_type.split()[0]]
+            marker = PlotInfo.marker_list_exp[ion_type.split()[0]]
 
             label = PlotInfo.label_map[data['system']][key].get(ion_type)
             if len(y) > 1:

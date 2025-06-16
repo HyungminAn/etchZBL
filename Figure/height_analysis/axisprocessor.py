@@ -44,6 +44,14 @@ class BaseAxisProcessor(ABC):
         if not self.skip_decorate:
             self.ax.set_xlabel(r'Ion dose ($\times$ 10$^{17}$ cm$^{-2}$)')
 
+    def smooth_array(self, arr, window_size=9):
+        if window_size < 1:
+            raise ValueError("Window size must be at least 1.")
+        padded = np.pad(arr, pad_width=window_size, mode='edge')
+        kernel = np.ones(2 * window_size + 1) / (2 * window_size + 1)
+        smoothed = np.convolve(padded, kernel, mode='valid')
+        return smoothed
+
 @register_processor('height')
 class AxisProcessorHeight(BaseAxisProcessor):
     def normalize(self):
@@ -62,7 +70,8 @@ class AxisProcessorHeight(BaseAxisProcessor):
         Plot the height change.
         '''
         x, y, _ = self.data
-        color = PARAMS.PLOT.COLORS.COLORS.get(self.system, PARAMS.PLOT.COLORS.COLOR_LIST['default'])
+        # color = PARAMS.PLOT.COLORS.COLORS.get(self.system, PARAMS.PLOT.COLORS.COLOR_LIST['default'])
+        color = PARAMS.PLOT.COLORS.COLORS_Si3N4.get(self.system, PARAMS.PLOT.COLORS.COLOR_LIST['default'])
         self.ax.plot(x, y, 'o-', markersize=2, color=color, alpha=0.5)
         self.ax.axhline(0, color='grey', linestyle='--', linewidth=0.4, alpha=0.5)
         print(f'{self.system}: Etched thickness {np.min(y):.2f} nm')
@@ -104,6 +113,27 @@ class AxisProcessorCarbonThickness(BaseAxisProcessor):
         ax.set_ylabel('Carbon film thickness (nm)')
         ax.axhline(0, color='grey', linestyle='--', linewidth=1, alpha=0.5)
 
+class AxisProcessorEtchedAmount(BaseAxisProcessor):
+    def normalize(self):
+        self.normalize_x()
+        self.normalize_y()
+
+    def plot(self):
+        x, y, _ = self.data
+        color = 'black'
+        self.ax.plot(x, y, color=color)
+
+    def normalize_y(self):
+        x, y, labels = self.data
+        y = y.copy()
+        y *= PARAMS.CONVERT.ANGST_TO_NM
+        self.data = (x, y, labels)
+
+    def decorate(self):
+        ax = self.ax
+        ax.set_ylabel('Etched amount (nm)')
+        ax.axhline(0, color='grey', linestyle='--', linewidth=1, alpha=0.5)
+
 @register_processor('mixedfilmstacked')
 class AxisProcessorMixedFilmStacked(BaseAxisProcessor):
     def plot(self):
@@ -112,6 +142,8 @@ class AxisProcessorMixedFilmStacked(BaseAxisProcessor):
         '''
         x, y, _ = self.data
         y_mixed, y_film = y[:, 0], y[:, 1]
+        y_mixed = self.smooth_array(y_mixed, window_size=3)
+        y_film = self.smooth_array(y_film, window_size=3)
         colors = [PARAMS.PLOT.COLORS.COLOR_LIST['layer']['mixed'],
                  PARAMS.PLOT.COLORS.COLOR_LIST['layer']['film']]
         labels = ['Mixed layer', 'Film layer']
@@ -198,6 +230,7 @@ class AxisProcessorAtomCount(BaseAxisProcessor):
         x, y, label = self.data
         label = label[1:]
         for y_label, label in zip(y.T, label):
+            y_label = self.smooth_array(y_label)
             color = PARAMS.PLOT.COLORS.COLOR_LIST['atom_count'].get(label, 'grey')
             self.ax.plot(x, y_label, label=label, color=color, linewidth=1)
 
