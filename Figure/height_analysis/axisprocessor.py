@@ -70,8 +70,8 @@ class AxisProcessorHeight(BaseAxisProcessor):
         Plot the height change.
         '''
         x, y, _ = self.data
-        # color = PARAMS.PLOT.COLORS.COLORS.get(self.system, PARAMS.PLOT.COLORS.COLOR_LIST['default'])
-        color = PARAMS.PLOT.COLORS.COLORS_Si3N4.get(self.system, PARAMS.PLOT.COLORS.COLOR_LIST['default'])
+        color = PARAMS.PLOT.COLORS.COLORS.get(self.system, PARAMS.PLOT.COLORS.COLOR_LIST['default'])
+        # color = PARAMS.PLOT.COLORS.COLORS_Si3N4.get(self.system, PARAMS.PLOT.COLORS.COLOR_LIST['default'])
         self.ax.plot(x, y, 'o-', markersize=2, color=color, alpha=0.5)
         self.ax.axhline(0, color='grey', linestyle='--', linewidth=0.4, alpha=0.5)
         print(f'{self.system}: Etched thickness {np.min(y):.2f} nm')
@@ -122,17 +122,13 @@ class AxisProcessorEtchedAmount(BaseAxisProcessor):
         x, y, _ = self.data
         color = 'black'
         self.ax.plot(x, y, color=color)
+        self.ax.axhline(0, color='grey', linestyle='--', linewidth=1, alpha=0.5)
 
     def normalize_y(self):
         x, y, labels = self.data
         y = y.copy()
         y *= PARAMS.CONVERT.ANGST_TO_NM
         self.data = (x, y, labels)
-
-    def decorate(self):
-        ax = self.ax
-        ax.set_ylabel('Etched amount (nm)')
-        ax.axhline(0, color='grey', linestyle='--', linewidth=1, alpha=0.5)
 
 @register_processor('mixedfilmstacked')
 class AxisProcessorMixedFilmStacked(BaseAxisProcessor):
@@ -298,17 +294,19 @@ class AxisProcessorNeighbor(BaseAxisProcessor):
         ax.axhline(0, color='grey', linestyle='--', linewidth=1, alpha=0.5)
 
 class BatchAxisProcessor:
-    def __init__(self, data, ax_dict, processorClass, ylim=None):
+    def __init__(self, data, ax_dict, processorClass, ylim=None, skip_decorate=False):
         self.data = data
         self.ax_dict = ax_dict
         self.processorClass = processorClass
         self.ylim = ylim
+        self.skip_decorate = skip_decorate
 
     def run(self):
         processors = {}
         for system, ax in self.ax_dict.items():
             plot_data = self.data[system]
-            ps = self.processorClass(system, plot_data, ax)
+            ps = self.processorClass(system, plot_data, ax,
+                                     skip_decorate=self.skip_decorate)
             processors[system] = ps
             ps.run()
         self.set_ylim(processors)
@@ -356,10 +354,11 @@ class CombinedAxisProcessor(BaseAxisProcessor):
             ...
             )
     '''
-    def __init__(self, system, data_class_pair, ax):
+    def __init__(self, system, data_class_pair, ax, skip_decorate=False):
         self.system = system
         self.data_class_pair = data_class_pair
         self.ax = (ax, ax.twinx())
+        self.skip_decorate = skip_decorate
 
     def run(self):
         ax_left, ax_right = self.ax

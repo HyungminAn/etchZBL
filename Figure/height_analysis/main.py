@@ -108,7 +108,7 @@ def main():
             data[key] = dp.run(src_list)
     ylim = (-15, 15)
     # dplot = DataPlotter(system, ylim=ylim)
-    # dplot.run(data)
+    # dplot.run(data, twin_axis=True)
     dplot = DataPlotterSelected(system, ylim=ylim)
     dplot.run(data)
 

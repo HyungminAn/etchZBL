@@ -9,22 +9,28 @@ from axisprocessor import CombinedAxisProcessor
 from axisprocessor import AxisProcessorMixedFilmStacked
 from axisprocessor import AxisProcessorAtomCountNumberDensity
 from axisprocessor import AxisProcessorEtchedAmount
+from axisprocessor import AxisProcessorHeight
+from axisprocessor import AxisProcessorCarbonThickness
 
 class DataReconfigurer:
+    def __init__(self, twin_axis=False):
+        self.twin_axis = twin_axis
+
     def run(self, data):
         result = {}
-        for system, data_system in data.items():
-            # result[system] = (
-            #     (data_system['height_change'], AxisProcessorHeight, False),
-            #     (data_system['z_film'], AxisProcessorCarbonThickness, True),
-            #     )
-            result[system] = (
-                (data_system['etchedamount'], AxisProcessorEtchedAmount, False),
-                )
+        if self.twin_axis:
+            for system, data_system in data.items():
+                result[system] = (
+                    (data_system['height_change'], AxisProcessorHeight, False),
+                    (data_system['z_film'], AxisProcessorCarbonThickness, True),
+                    )
+        else:
+            for system, data_system in data.items():
+                result[system] = data_system['etchedamount']
         return result
 
 class DataReconfigurerSelected:
-    def run(self, data, ax_dict, axis_config):
+    def run(self, data, ax_dict, axis_config, skip_decorate=True):
         result = {}
         for idx, (key, processorClass) in enumerate(axis_config):
             data_selected = {system: {} for system in data.keys()}
@@ -43,7 +49,9 @@ class DataReconfigurerSelected:
             result[key] = BatchAxisProcessor(data_selected,
                                              ax_dict_selected,
                                              processorClass,
-                                             ylim=ylim)
+                                             ylim=ylim,
+                                             skip_decorate=skip_decorate,
+                                             )
         return result
 
 class DataPlotter:
@@ -51,14 +59,20 @@ class DataPlotter:
         self.system = system
         self.ylim = ylim
 
-    def run(self, data):
+    def run(self, data, twin_axis=False):
         fig, ax_dict = FigureGenerator().run(data, squeeze=True)
-        drc = DataReconfigurer()
-        data = drc.run(data)
-        batch_processor = BatchAxisProcessor(data,
+        drc = DataReconfigurer(twin_axis=twin_axis)
+        data_reconfig = drc.run(data)
+        if twin_axis:
+            axis_type = CombinedAxisProcessor
+        else:
+            axis_type = AxisProcessorEtchedAmount
+        batch_processor = BatchAxisProcessor(data_reconfig,
                                              ax_dict,
-                                             CombinedAxisProcessor,
-                                             ylim=self.ylim)
+                                             axis_type,
+                                             ylim=self.ylim,
+                                             skip_decorate=True,
+                                             )
         batch_processor.run()
         self.decorate(fig, ax_dict)
         save_name = f'3_2_1_height_total_{self.system}'
@@ -90,7 +104,7 @@ class DataPlotterSelected(DataPlotter):
     def run(self, data):
         fig, ax_dict = FigureGeneratorSelected(data, self.axis_config).run(data)
         drc = DataReconfigurerSelected()
-        batch_processor_dict = drc.run(data, ax_dict, self.axis_config)
+        batch_processor_dict = drc.run(data, ax_dict, self.axis_config, skip_decorate=False)
         for bp in batch_processor_dict.values():
             bp.run()
         self.decorate(fig, ax_dict)
@@ -105,7 +119,7 @@ class DataPlotterSelected(DataPlotter):
 
     def adjust_xyticks(self, ax_dict):
         def xticks_formatter(x, _):
-            return str(int(x)) if x == int(x) else str(x)
+            return str(int(x)) if x == int(x) else round(x, 1)
 
         for idx, (system, axes) in enumerate(ax_dict.items()):
             # turn off y-tick labels for all but the first column

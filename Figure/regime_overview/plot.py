@@ -98,8 +98,8 @@ class Plotter:
                   ncol=1,
                   frameon=False,
                   )
-        # ax.set_ylim(0, 550)  # SiO2
-        ax.set_ylim(0, 1050)  # Si3N4
+        ax.set_ylim(0, 550)  # SiO2
+        # ax.set_ylim(0, 1050)  # Si3N4
 
         fig.tight_layout()
         name = '3_2_1_regime_overview'

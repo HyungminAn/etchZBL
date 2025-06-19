@@ -1,3 +1,4 @@
+import numpy as np
 import matplotlib.pyplot as plt
 
 class FigureGenerator:
@@ -106,7 +107,11 @@ class AxisDictBuilderSelected:
     def run(self, data, fig, axes, squeeze=False):
         ax_dict = {}
         for idx, system in enumerate(data.keys()):
-            ax_dict[system] = axes[:, idx]
+            if axes.ndim == 1:
+                ax_dict[system] = axes
+            else:
+                ax_dict[system] = axes[:, idx]
+
         return ax_dict
 
 class FigureGeneratorSelected(FigureGenerator):

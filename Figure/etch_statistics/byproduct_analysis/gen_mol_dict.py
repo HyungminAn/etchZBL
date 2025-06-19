@@ -1,3 +1,4 @@
+import os
 import sys
 from collections import defaultdict
 from dataclasses import dataclass
@@ -56,20 +57,22 @@ class Si3N4ConvDict:
             'F2': (0, 0, 0, 0, 2),
             'C1N1': (0, 1, 1, 0, 0),
             'F1H1': (0, 0, 0, 1, 1),
-            'H3N1': (0, 1, 0, 2, 0),
             'C1F1N1': (0, 1, 1, 0, 1),
             'C1H1N1': (0, 1, 1, 1, 0),
 
-            'C1F4': (0, 0, 1, 0, 4),
-            'C1HF3': (0, 0, 1, 1, 3),
-            'C1H2F2': (0, 0, 1, 2, 2),
-            'C1H3F1': (0, 0, 1, 3, 1),
             'C1H4': (0, 0, 1, 4, 0),
+            'C1F1H3': (0, 0, 1, 3, 1),
+            'C1F2H2': (0, 0, 1, 2, 2),
+            'C1F3H1': (0, 0, 1, 1, 3),
+            'C1F4': (0, 0, 1, 0, 4),
 
             'C1F2': (0, 0, 1, 0, 2),
+
+            'H3N1': (0, 1, 0, 3, 0),
+            'F1H2N1': (0, 1, 0, 2, 1),
+            'F2H1N1': (0, 1, 0, 1, 2),
+            'F3N1': (0, 1, 0, 0, 3),
             }
-
-
 
 def read_files(src, mol_dict):
     with open(src, "r") as f:
@@ -96,6 +99,32 @@ def read_files(src, mol_dict):
                 read_cluster = False
                 continue
 
+def read_files_Si3N4(src, mol_dict):
+    with open(src, "r") as f:
+        lines = f.readlines()
+
+    read_cluster = False
+    incidence_count = 0
+
+    for line in lines:
+        if 'iteration simulation at' in line:
+            read_cluster = True
+            incidence_count = line.split()[1]
+            if incidence_count == 'done':
+                continue
+            incidence_count = int(incidence_count)
+            continue
+
+        if read_cluster:
+            if line.startswith('Cluster'):
+                mol_type = line.split()[3]
+                is_in_list = line.split()[-1] == 'True'
+                if is_in_list:
+                    try:
+                        mol_dict[mol_type].append(incidence_count)
+                    except:
+                        breakpoint()
+                continue
 
 def main():
     if len(sys.argv) < 3:
@@ -103,10 +132,15 @@ def main():
         sys.exit(1)
     dst = sys.argv[1]
     src_files = sys.argv[2:]
+    path_save = f'{dst}_mol_dict.pkl'
+    if os.path.exists(path_save):
+        print(f"File {path_save} already exists. Please remove it before running the script.")
+        sys.exit(1)
 
     mol_dict = defaultdict(list)
     for src in src_files:
         read_files(src, mol_dict)
+        # read_files_Si3N4(src, mol_dict)
 
     conv_dict = SiO2ConvDict().conv_dict
     # conv_dict = Si3N4ConvDict().conv_dict
