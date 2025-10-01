@@ -1,0 +1,72 @@
+bulk:
+  crystalline:
+    alpha_quartz: /data2/andynn/Etch/01_dft_trset/oneshot/01_bulk/01_elastic_deformation/01_alpha_quartz/POSCAR_0/POSCAR
+    beta_quartz: /data2/andynn/Etch/01_dft_trset/oneshot/01_bulk/01_elastic_deformation/02_beta_quartz/POSCAR_0/POSCAR
+    alpha_tridymite: /data2/andynn/Etch/01_dft_trset/oneshot/01_bulk/01_elastic_deformation/03_alpha_tridymite/POSCAR_0/POSCAR
+    beta_cristobalite: /data2/andynn/Etch/01_dft_trset/oneshot/01_bulk/01_elastic_deformation/04_beta_crystobalite/POSCAR_0/POSCAR
+  supercellMD:
+    alpha_quartz: /data2/andynn/Etch/01_dft_trset/oneshot/01_bulk/02_supercell_MD/01_alpha_quartz/POSCAR_1000/POSCAR
+    beta_quartz: /data2/andynn/Etch/01_dft_trset/oneshot/01_bulk/02_supercell_MD/02_beta_quartz/POSCAR_1000/POSCAR
+  melt_quench_anneal: /data2/andynn/Etch/01_dft_trset/oneshot/02_bulkmqa/01_SiO2/anneal/POSCAR_1000/POSCAR
+slab:
+  crystalline: /data2/andynn/Etch/01_dft_trset/oneshot/07_slab/01_SiO2/01_SlabMD/02_O_terminated/01_300K/POSCAR_500/POSCAR
+  amorphous: /data2/andynn/Etch/01_dft_trset/oneshot/07_slab/01_SiO2/02_SlabMelt/md/anneal/POSCAR_1000/POSCAR
+  interstitial: /data2/andynn/Etch/01_dft_trset/oneshot/04_interstitial/01_Si_terminated/03_C/POSCAR_1000/POSCAR
+  vacancy: /data2/andynn/Etch/01_dft_trset/oneshot/05_vacancy/01_Si_terminated/01_Si_vacancy/01_case1/POSCAR_1000/POSCAR
+  channeling: /data2/andynn/Etch/01_dft_trset/oneshot/08_channeling/01_Si_terminated/POSCAR_30/POSCAR
+gas:
+  dimer:
+    gas_1: /data2/andynn/Etch/01_dft_trset/oneshot/03_gas/01_diatomic/OC/POSCAR__10/POSCAR
+    gas_2: /data2/andynn/Etch/01_dft_trset/oneshot/03_gas/01_diatomic/OC/POSCAR_0/POSCAR
+    gas_3: /data2/andynn/Etch/01_dft_trset/oneshot/03_gas/01_diatomic/OC/POSCAR_30/POSCAR
+  polyatomic_gas:
+    gas_1: /data2/andynn/Etch/01_dft_trset/oneshot/03_gas/02_polyatomic/02_oneshot/CF4/oneshot/POSCAR_500/POSCAR
+    gas_2: /data2/andynn/Etch/01_dft_trset/oneshot/03_gas/02_polyatomic/02_oneshot/CO2/oneshot/POSCAR_500/POSCAR
+    gas_3: /data2/andynn/Etch/01_dft_trset/oneshot/03_gas/02_polyatomic/02_oneshot/F4Si/oneshot/POSCAR_500/POSCAR
+vts:
+  normal:
+    comp_1: /data2/andynn/Etch/01_dft_trset/oneshot/06_vts/01_d_normal/01_12816/anneal/POSCAR_7400/POSCAR
+    comp_2: /data2/andynn/Etch/01_dft_trset/oneshot/06_vts/01_d_normal/02_36313/anneal/POSCAR_7400/POSCAR
+    comp_3: /data2/andynn/Etch/01_dft_trset/oneshot/06_vts/01_d_normal/03_36211/anneal/POSCAR_7400/POSCAR
+    comp_4: /data2/andynn/Etch/01_dft_trset/oneshot/06_vts/01_d_normal/04_36050505/anneal/POSCAR_7400/POSCAR
+    comp_5: /data2/andynn/Etch/01_dft_trset/oneshot/06_vts/01_d_normal/05_33111/anneal/POSCAR_7440/OUTCAR
+    comp_6: /data2/andynn/Etch/01_dft_trset/oneshot/06_vts/01_d_normal/06_050505605/anneal/POSCAR_7440/OUTCAR
+    comp_7: /data2/andynn/Etch/01_dft_trset/oneshot/06_vts/01_d_normal/07_054050505/anneal/POSCAR_7440/OUTCAR
+    comp_8: /data2/andynn/Etch/01_dft_trset/oneshot/06_vts/01_d_normal/08_11003/anneal/POSCAR_7440/OUTCAR
+  low:
+    comp_1: /data2/andynn/Etch/01_dft_trset/oneshot/06_vts/02_d_low/01_12816/anneal/POSCAR_7400/POSCAR
+    comp_2: /data2/andynn/Etch/01_dft_trset/oneshot/06_vts/02_d_low/02_36313/anneal/POSCAR_7400/POSCAR
+    comp_3: /data2/andynn/Etch/01_dft_trset/oneshot/06_vts/02_d_low/03_36211/anneal/POSCAR_7400/POSCAR
+    comp_4: /data2/andynn/Etch/01_dft_trset/oneshot/06_vts/02_d_low/04_36050505/anneal/POSCAR_7400/POSCAR
+    comp_5: /data2/andynn/Etch/01_dft_trset/oneshot/06_vts/02_d_low/05_33111/anneal/POSCAR_7440/OUTCAR
+    comp_6: /data2/andynn/Etch/01_dft_trset/oneshot/06_vts/02_d_low/06_050505605/anneal/POSCAR_7440/OUTCAR
+    comp_7: /data2/andynn/Etch/01_dft_trset/oneshot/06_vts/02_d_low/07_054050505/anneal/POSCAR_7440/OUTCAR
+    comp_8: /data2/andynn/Etch/01_dft_trset/oneshot/06_vts/02_d_low/08_11003/anneal/POSCAR_7440/OUTCAR
+chf_bulk:
+  normal:
+    comp_1: /data2/andynn/Etch/01_dft_trset/oneshot/09_chf_bulk/00_dft_oneshot/density_3.2/CF0.2/anneal/POSCAR_7440/OUTCAR
+    comp_2: /data2/andynn/Etch/01_dft_trset/oneshot/09_chf_bulk/00_dft_oneshot/density_3.2/CF0.4/anneal/POSCAR_7440/OUTCAR
+    comp_3: /data2/andynn/Etch/01_dft_trset/oneshot/09_chf_bulk/00_dft_oneshot/density_3.2/CH0.05F1/anneal/POSCAR_7440/OUTCAR
+    comp_4: /data2/andynn/Etch/01_dft_trset/oneshot/09_chf_bulk/00_dft_oneshot/density_3.2/CH0.15F1/anneal/POSCAR_7440/OUTCAR
+    comp_5: /data2/andynn/Etch/01_dft_trset/oneshot/09_chf_bulk/00_dft_oneshot/density_3.2/CH0.1F0.1/anneal/POSCAR_7440/OUTCAR
+    comp_6: /data2/andynn/Etch/01_dft_trset/oneshot/09_chf_bulk/00_dft_oneshot/density_3.2/CH0.1F0.4/anneal/POSCAR_7440/OUTCAR
+    comp_7: /data2/andynn/Etch/01_dft_trset/oneshot/09_chf_bulk/00_dft_oneshot/density_3.2/CH0.1F0.6/anneal/POSCAR_7440/OUTCAR
+    comp_8: /data2/andynn/Etch/01_dft_trset/oneshot/09_chf_bulk/00_dft_oneshot/density_3.2/CH0.1F0.8/anneal/POSCAR_7440/OUTCAR
+  low:
+    comp_1: /data2/andynn/Etch/01_dft_trset/oneshot/09_chf_bulk/00_dft_oneshot/density_2.3/CF0.2/anneal/POSCAR_7440/OUTCAR
+    comp_2: /data2/andynn/Etch/01_dft_trset/oneshot/09_chf_bulk/00_dft_oneshot/density_2.3/CF0.4/anneal/POSCAR_7440/OUTCAR
+    comp_3: /data2/andynn/Etch/01_dft_trset/oneshot/09_chf_bulk/00_dft_oneshot/density_2.3/CH0.05F1/anneal/POSCAR_7440/OUTCAR
+    comp_4: /data2/andynn/Etch/01_dft_trset/oneshot/09_chf_bulk/00_dft_oneshot/density_2.3/CH0.15F1/anneal/POSCAR_7440/OUTCAR
+    comp_5: /data2/andynn/Etch/01_dft_trset/oneshot/09_chf_bulk/00_dft_oneshot/density_2.3/CH0.1F0.1/anneal/POSCAR_7440/OUTCAR
+    comp_6: /data2/andynn/Etch/01_dft_trset/oneshot/09_chf_bulk/00_dft_oneshot/density_2.3/CH0.1F0.4/anneal/POSCAR_7440/OUTCAR
+    comp_7: /data2/andynn/Etch/01_dft_trset/oneshot/09_chf_bulk/00_dft_oneshot/density_2.3/CH0.1F0.6/anneal/POSCAR_7440/OUTCAR
+    comp_8: /data2/andynn/Etch/01_dft_trset/oneshot/09_chf_bulk/00_dft_oneshot/density_2.3/CH0.1F0.8/anneal/POSCAR_7440/OUTCAR
+chf_slab:
+    comp_1: /data_etch/OUTCAR_trainingset/training_set_oneshot/CHF_slab/POSCAR_100/POSCAR
+    comp_2: /data_etch/OUTCAR_trainingset/training_set_oneshot/CHF_slab/POSCAR_300/POSCAR
+    comp_3: /data_etch/OUTCAR_trainingset/training_set_oneshot/CHF_slab/POSCAR_500/POSCAR
+    comp_4: /data_etch/OUTCAR_trainingset/training_set_oneshot/CHF_slab/POSCAR_700/POSCAR
+    comp_5: /data_etch/OUTCAR_trainingset/training_set_oneshot/CHF_slab/POSCAR_900/POSCAR
+    comp_6: /data_etch/OUTCAR_trainingset/training_set_oneshot/CHF_slab/POSCAR_1100/POSCAR
+    comp_7: /data_etch/OUTCAR_trainingset/training_set_oneshot/CHF_slab/POSCAR_1300/POSCAR
+    comp_8: /data_etch/OUTCAR_trainingset/training_set_oneshot/CHF_slab/POSCAR_1500/POSCAR
