@@ -1,0 +1,9 @@
+CF_300:
+  # path: "/data_etch/figure_HM/Results/02_TransientBehavior/SiO2/data/01_original/height_shift.dat"
+  path: "CF_300_original.dat"
+  color: 'red'
+
+CF_300 (removal height 2nm):
+  # path: "/data_etch/figure_HM/Results/02_TransientBehavior/SiO2/data/03_removal_region/CF_300_shifted_height.txt"
+  path: "CF_300_removalregion2nm.dat"
+  color: 'orange'
