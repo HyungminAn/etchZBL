@@ -1,0 +1,6 @@
+src:
+  - "/data_etch/data_HM/nurion/set_3/CF_300_coo/CF/300eV"
+  - "/data2/andynn/ZBL_modify/250331_ContinueRun/ContinueRun/CF_300/"
+n_start: 0
+n_end: 15000
+n_step: 10
