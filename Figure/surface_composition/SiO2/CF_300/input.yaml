@@ -1,0 +1,8 @@
+CF_300eV:
+  path_exp: null
+  src:
+  - "/data_etch/data_HM/nurion/set_3/CF_300_coo/CF/300eV"
+  - "/data2/andynn/ZBL_modify/250331_ContinueRun/ContinueRun/CF_300"
+CF_300eV-WithRemovalHeight:
+  path_exp: null
+  src: "/data2/andynn/ZBL_modify/250331_ContinueRun/NewRun/CF_300_removalRegion20"
