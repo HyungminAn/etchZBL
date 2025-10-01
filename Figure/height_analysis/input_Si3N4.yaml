@@ -1,0 +1,45 @@
+CF:
+  250:
+    - /data_etch/gasplant63/chf_etch/chf_etch/CF_250eV
+  500:
+    - /data_etch/gasplant63/chf_etch/chf_etch/CF_500eV
+  750:
+    - /data_etch/gasplant63/chf_etch/chf_etch/CF_750eV
+  1000:
+    - /data_etch/gasplant63/chf_etch/chf_etch/CF_1000eV
+CF2:
+  250:
+    - /data_etch/gasplant63/chf_etch/chf_etch/CF2_250eV
+  500:
+    - /data_etch/gasplant63/chf_etch/chf_etch/CF2_500eV
+  750:
+    - /data_etch/gasplant63/chf_etch/chf_etch/CF2_750eV
+  1000:
+    - /data_etch/gasplant63/chf_etch/chf_etch/CF2_1000eV
+CF3:
+  250:
+    - /data_etch/gasplant63/chf_etch/chf_etch/CF3_250eV
+  500:
+    - /data_etch/gasplant63/chf_etch/chf_etch/CF3_500eV
+  750:
+    - /data_etch/gasplant63/chf_etch/chf_etch/CF3_750eV
+  1000:
+    - /data_etch/gasplant63/chf_etch/chf_etch/CF3_1000eV
+CH2F:
+  250:
+    - /data_etch/gasplant63/chf_etch/chf_etch/CH2F_250eV
+  500:
+    - /data_etch/gasplant63/chf_etch/chf_etch/CH2F_500eV
+  750:
+    - /data_etch/gasplant63/chf_etch/chf_etch/CH2F_750eV
+  1000:
+    - /data_etch/gasplant63/chf_etch/chf_etch/CH2F_1000eV
+CHF2:
+  250:
+    - /data_etch/gasplant63/chf_etch/chf_etch/CHF2_250eV
+  500:
+    - /data_etch/gasplant63/chf_etch/chf_etch/CHF2_500eV
+  750:
+    - /data_etch/gasplant63/chf_etch/chf_etch/CHF2_750eV
+  1000:
+    - /data_etch/gasplant63/chf_etch/chf_etch/CHF2_1000eV

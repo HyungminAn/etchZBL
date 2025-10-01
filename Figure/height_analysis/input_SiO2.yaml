@@ -1,0 +1,78 @@
+CF:
+  100:
+    - /data_etch/data_HM/nurion/set_1/CF_100_coo/CF/100eV
+  250:
+    - /data_etch/data_HM/nurion/set_2/CF_250_coo/CF/250eV
+  300:
+    - /data_etch/data_HM/nurion/set_3/CF_300_coo/CF/300eV
+    - /data2/andynn/ZBL_modify/250331_ContinueRun/ContinueRun/CF_300
+  500:
+    - /data_etch/data_HM/nurion/set_3/CF_500_coo/CF/500eV
+  # 750:
+  #   - /data2_1/andynn/Etch/data_nurion/set_uncomplete/CF_750_coo/src/CF/750eV
+  #   - /data2/andynn/ZBL_modify/250331_ContinueRun/BoxSize300/CF_750
+  # 1000:
+  #   - /data2_1/andynn/Etch/data_nurion/set_uncomplete/CF_1000_coo/src/CF/1000eV
+  #   - /data2/andynn/ZBL_modify/250331_ContinueRun/BoxSize300/CF_1000
+CF2:
+  25:
+    - /data_etch/data_HM/nurion/set_3/CF2_25_coo/CF2/25eV
+  50:
+    - /data_etch/data_HM/nurion/set_2/CF2_50_coo/CF2/50eV
+  75:
+    - /data2/andynn/ZBL_modify/250331_ContinueRun/NewRun/CF2_75
+  100:
+    - /data_etch/data_HM/nurion/set_2/CF2_100_coo/CF2/100eV
+  # 250:
+  #   - /data_etch/data_HM/nurion/set_1/CF2_250_coo/CF2/250eV
+  # 500:
+  #   - /data_etch/data_HM/nurion/set_1/CF2_500_coo/CF2/500eV
+  # 750:
+  #   - /data_etch/data_HM/nurion/set_3/CF2_750_coo/CF2/750eV
+  # 1000:
+  #   - /data2_1/andynn/Etch/data_nurion/set_uncomplete/CF2_1000_coo/src/CF2/1000eV
+  #   - /data2/andynn/ZBL_modify/250331_ContinueRun/BoxSize300/CF2_1000
+CF3:
+  10:
+    - /data_etch/data_HM/nurion/set_2/CF3_10_coo/CF3/10eV
+  25:
+    - /data_etch/data_HM/nurion/set_2/CF3_25_coo/CF3/25eV
+  50:
+    - /data_etch/data_HM/nurion/set_2/CF3_50_coo/CF3/50eV
+  100:
+    - /data_etch/data_HM/nurion/set_1/CF3_100_coo/CF3/100eV
+  # 250:
+  #   - /data_etch/data_HM/nurion/set_1/CF3_250_coo/CF3/250eV
+  # 500:
+  #   - /data_etch/data_HM/nurion/set_1/CF3_500_coo/CF3/500eV
+  # 750:
+  #   - /data_etch/data_HM/nurion/set_3/CF3_750_coo/CF3/750eV
+  # 1000:
+  #   - /data_etch/data_HM/nurion/set_3/CF3_1000_coo/CF3/1000eV
+CH2F:
+  100:
+    - /data2/andynn/ZBL_modify/250331_ContinueRun/NewRun/CH2F_100
+  250:
+    - /data2_1/andynn/Etch/data_nurion/set_3/CH2F_250_coo/CH2F/250eV
+    - /data2/andynn/ZBL_modify/250331_ContinueRun/ContinueRun/CH2F_250
+  500:
+    - /data2_1/andynn/Etch/data_nurion/set_3/CH2F_500_coo/CH2F/500eV
+    - /data2/andynn/ZBL_modify/250331_ContinueRun/ContinueRun/CH2F_500
+  750:
+    - /data2_1/andynn/Etch/data_nurion/set_uncomplete/CH2F_750_coo/src/CH2F/750eV
+    - /data2/andynn/ZBL_modify/250331_ContinueRun/BoxSize300/CH2F_750
+  # 1000:
+  #   - /data2_1/andynn/Etch/data_nurion/set_uncomplete/CH2F_1000_coo/src/CH2F/1000eV
+  #   - /data2/andynn/ZBL_modify/250331_ContinueRun/BoxSize300/CH2F_1000
+CHF2:
+  100:
+    - /data2/andynn/ZBL_modify/250331_ContinueRun/NewRun/CHF2_100
+  250:
+    - /data_etch/data_HM/nurion/set_2/CHF2_250_coo/CHF2/250eV
+  500:
+    - /data2_1/andynn/Etch/data_nurion/set_3/CHF2_500_coo/CHF2/500eV
+  750:
+    - /data2_1/andynn/Etch/data_nurion/set_3/CHF2_750_coo/CHF2/750eV
+  # 1000:
+  #   - /data2_1/andynn/Etch/data_nurion/set_uncomplete/CHF2_1000_coo/src/CHF2/1000eV
+  #   - /data2/andynn/ZBL_modify/250331_ContinueRun/ContinueRun/CHF2_1000
