@@ -64,7 +64,7 @@
 
 <div align="center">
     <img src="./regime_overview/3_2_1_regime_overview.png"
-    width="350" height="350"
+    width="350" height="400"
     title="Figure 8"/>
 </div>
 
