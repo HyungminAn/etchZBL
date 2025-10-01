@@ -1,5 +1,5 @@
 # Scripts used for drawing figures in the paper
-[##](##) Main figures
+## Main figures
 ### Figure 3
 1. Data generation: `etch_yield/get_data/batch_run.py`, using the binary
    compiled from `etch_yield/get_data/fast_cpp/main.cpp` (use `compile.sh`
@@ -8,7 +8,9 @@
 2. Plot `etch_yield/plot_with_experiments/plot.py`. Etch yield data should be
    written in `etch_yield/plot_with_experiments/dat.yaml`.
 
-<img src="./etch_yield/plot_with_experiments/3_1_2_valid_etchyield.png" width="710" height="350" title="Figure 3"/>
+<div align="center">
+    <img src="./etch_yield/plot_with_experiments/3_1_2_valid_etchyield.png" width="710" height="473" title="Figure 3"/>
+</div>
 
 ### Figure 4
 1. Generate merged structures using `atom_config/merge.py` with
