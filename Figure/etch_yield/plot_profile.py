@@ -191,111 +191,7 @@ class EYCalculatorFromStructureDistributed(EYCalculatorFromStructure):
         return 1 / (lat_x * lat_y)
 
 
-# class EYCalculatorVer1(EtchYieldCalculator):
-#     def run(self):
-#         src = f"{self.dst}.dat"
-#         n_Si_etched = None
-#         if os.path.exists(src):
-#             n_Si_etched = np.loadtxt(src)
-#         else:
-#             n_Si_etched = self._get_deleted_Si()
-#             n_Si_etched = self._get_deleted_Si_by_molecules(n_Si_etched)
-#             np.savetxt(src, n_Si_etched)
-#         etch_yield = self._get_interval_average(n_Si_etched)
-#         norm_factor = self._get_normalize_factor()
-
-#         return norm_factor, n_Si_etched, etch_yield
-
-#     def _get_deleted_Si_by_molecules(self, n_Si_etched):
-#         src = f"{self.src}/delete.log"
-#         if not os.path.isfile(src):
-#             return
-
-#         print("Reading delete.log...")
-#         deleted_Si_list = []
-#         with open(src, "r") as f:
-#             for line in f:
-#                 parts = line.split()
-#                 idx_iter, Si_count = int(parts[1]), int(parts[4].strip(','))
-#                 if Si_count:
-#                     deleted_Si_list.append([idx_iter, Si_count])
-#         deleted_Si_list = np.array(deleted_Si_list)
-#         for i, j in deleted_Si_list:
-#             n_Si_etched[i:] += j
-#         return n_Si_etched
-
-# class EYCalculatorFromThermo(EYCalculatorVer1):
-#     def _get_deleted_Si(self):
-#         n_Si_etched_total = 0
-#         y = [0]
-#         for i in range(1, self.n_traj + 1):
-#             mat = np.loadtxt(f'{self.src}/thermo_{i}.dat', skiprows=2, usecols=(6,))
-#             n_Si_etched = mat[0] - mat[-1]
-#             n_Si_etched_total += n_Si_etched
-#             y.append(n_Si_etched_total)
-#             print(f'thermo_{i}.dat Complete')
-#         return np.array(y)
-
-# class EYCalculatorFromDump(EYCalculatorVer1):
-#     def _get_deleted_Si(self):
-#         path_desorbed = f"desorption_graph.dat"
-#         if not os.path.exists(path_desorbed):
-#             print("desorption_graph.dat not found. Returning zero array.")
-#             y = [0] * (self.n_traj + 1)
-#             return np.array(y)
-
-#         n_Si_etched_dict = {k: 0 for k in range(self.n_traj + 1)}
-
-#         with open(path_desorbed, "r") as f:
-#             for line in f:
-#                 if line.startswith("--"):
-#                     continue
-#                 incidence, composition, *_ = line.split('/')
-#                 incidence = int(incidence)
-#                 composition = [int(i) for i in composition.split()]
-#                 n_Si_etched = composition[0]  # Si is the first element in the composition
-#                 if n_Si_etched:
-#                     n_Si_etched_dict[incidence] += n_Si_etched
-
-#         y = [0]
-#         for i in range(1, self.n_traj + 1):
-#             y.append(y[-1] + n_Si_etched_dict[i])
-#             print(f"dump_{i}.dat Complete")
-
-#         return np.array(y)
-
-# def run_EYplotterFromThermoDat():
-#     src = sys.argv[1]
-#     n_traj = int(sys.argv[2])
-#     interval = int(sys.argv[3])
-#     dst = sys.argv[4]
-#     plotter1 = EYPlotterFromThermoDat(src, n_traj, dst, interval=interval)
-#     plotter1.run()
-
-# def run_EYplotterFromDump():
-#     src = sys.argv[1]
-#     n_traj = int(sys.argv[2])
-#     interval = int(sys.argv[3])
-#     dst = sys.argv[4]
-#     plotter2 = EYPlotterFromDump(src, n_traj, interval=interval)
-#     plotter2.run()
-
-# def run():
-#     if len(sys.argv) != 5:
-#         print("Usage: python etchyield.py [src] [n_traj] [interval] [dst]")
-#         sys.exit(1)
-#     src = sys.argv[1]
-#     n_traj = int(sys.argv[2])
-#     interval = int(sys.argv[3])
-#     dst = sys.argv[4]
-
-#     calculator = EYCalculatorFromStructure(src, n_traj, dst, interval=interval)
-#     norm_factor, n_Si_etched, etch_yield = calculator.run()
-#     plotter = EtchYieldPlotter(dst, norm_factor, n_Si_etched, etch_yield)
-#     plotter.run()
-
-
-def run_distributed():
+def main():
     if len(sys.argv) < 4:
         print("Usage: python etchyield.py [interval] [dst] [src1] [src2] ...")
         sys.exit(1)
@@ -311,4 +207,4 @@ def run_distributed():
 
 
 if __name__ == "__main__":
-    run_distributed()
+    main()
