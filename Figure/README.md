@@ -168,7 +168,7 @@
    (Use data in `surface_composition/SiO2/CF_300/3_1_4_valid_surface_composition_SiO2.png`)
 
 <div align="center">
-    <img src="./removal_height_check/removal_height.png"
+    <img src="./surface_composition/SiO2/CF_300/3_1_4_valid_surface_composition_SiO2.png"
     width="350" height="700"
     title="Figure S8"/>
 </div>
