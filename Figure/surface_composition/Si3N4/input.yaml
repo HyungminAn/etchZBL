@@ -1,0 +1,6 @@
+CF_1000eV:
+  path_exp: "exp/CF"
+  src: "/data_etch/gasplant63/chf_etch/chf_etch/CF_1000eV"
+CH2F_1000eV:
+  path_exp: "exp/CH2F"
+  src: "/data_etch/gasplant63/chf_etch/chf_etch/CH2F_1000eV"

@@ -1,0 +1,6 @@
+CF3_50eV:
+  path_exp: "exp/50eV"
+  src: "/data_etch/data_HM/nurion/set_2/CF3_50_coo/CF3/50eV"
+CF3_400eV:
+  path_exp: "exp/400eV"
+  src: "/data2/andynn/ZBL_modify/250331_ContinueRun/NewRun/CF3_400"
