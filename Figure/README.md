@@ -9,13 +9,23 @@
    written in `etch_yield/plot_with_experiments/dat.yaml`.
 
 <div align="center">
-    <img src="./etch_yield/plot_with_experiments/3_1_2_valid_etchyield.png" width="710" height="473" title="Figure 3"/>
+    <img src="./etch_yield/plot_with_experiments/3_1_2_valid_etchyield.png"
+    width="710" height="473"
+    title="Figure 3"/>
 </div>
 
 ### Figure 4
 1. Generate merged structures using `atom_config/merge.py` with
    `atom_config/input.yaml`.
    (Example structures are in `atom_config/example/`)
+2. Create overlay figure using `atom_config/overlay/plot.py`.
+
+<div align="center">
+    <img src="./atom_config/overlay/result.png"
+    width="1348" height="941"
+    title="Figure 4 (overlay)"
+    style="transform: scale(0.8)"/>
+</div>
 
 ### Figure 5
 1. Data generation: use `height_analysis/main.py` with `height_analysis/input_SiO2.yaml`
