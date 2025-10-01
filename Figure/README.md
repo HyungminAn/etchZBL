@@ -24,7 +24,7 @@
     <img src="./atom_config/overlay/result.png"
     width="1348" height="941"
     title="Figure 4 (overlay)"
-    style="transform: scale(0.8)"/>
+    style="transform: scale(0.5)"/>
 </div>
 
 ### Figure 5
@@ -33,13 +33,31 @@
    The data used in Figure 5 are already in `height_change/SiO2/`.
 2. Plot `height_change/SiO2/plot.py` using `height_change/SiO2/data_list.yaml`
 
+<div align="center">
+    <img src="./height_change/SiO2/3_1_3_valid_transient_SiO2.png"
+    width="350" height="350"
+    title="Figure 5"/>
+</div>
+
 ### Figure 6
 1. Data generation & plot: use `surface_composition/SiO2/plot.py` with
    `surface_composition/SiO2/input.yaml`. The data used in Figure 6 are already
    in `surface_composition/SiO2/`.
 
+<div align="center">
+    <img src="./surface_composition/SiO2/3_1_4_valid_surface_composition_SiO2.png"
+    width="350" height="350"
+    title="Figure 6"/>
+</div>
+
 ### Figure 7
 1. Refer to Figure 6.
+
+<div align="center">
+    <img src="./surface_composition/Si3N4/3_1_4_valid_surface_composition_Si3N4.png"
+    width="350" height="350"
+    title="Figure 7"/>
+</div>
 
 ### Figure 8
 1. Plot with `regime_overview/plot.py` using `regime_overview/data.yaml`.
