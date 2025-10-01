@@ -179,7 +179,7 @@
 
 <div align="center">
     <img src="./height_change/Si3N4/3_1_3_valid_transient_Si3N4.png"
-    width="350" height="700"
+    width="700" height="350"
     title="Figure S9"/>
 </div>
 
