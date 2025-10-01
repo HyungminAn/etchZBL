@@ -477,19 +477,19 @@ def main():
     dpg = DensityProfileGenerator()
     dpa = DensityProfileAnalyzer()
     dpl = DensityProfilePlotter()
-    dpb = CalculatorBondDensity()
+    # dpb = CalculatorBondDensity()
 
     for path_output, path_image in image_list.items():
         atoms = read(path_image, **PARAMS.LAMMPS_READ_OPTS)
         profile = dpg.run(atoms)
         analyze_result = dpa.run(profile)
-        bond_result = dpb.run(atoms, 0, 200)
+        # bond_result = dpb.run(atoms, 0, 200)
 
         axes_config = {
             '(b)': (AxisDrawerAtomwiseDensity(profile), False),
-            # '(c)': (AxisDrawerRatio(profile), True),
-            # '(d)': (AxisDrawerNormalizedRatio(profile), True),
-            '(c)': (AxisDrawerBondDensity(bond_result), False),
+            '(c)': (AxisDrawerRatio(profile), True),
+            '(d)': (AxisDrawerNormalizedRatio(profile), True),
+            # '(c)': (AxisDrawerBondDensity(bond_result), False),
         }
         ad_rbd = AxisDrawerRegionBoundary(analyze_result)
         dpl.run(axes_config, ad_rbd, path_output)
