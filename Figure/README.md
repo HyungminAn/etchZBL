@@ -46,7 +46,7 @@
 
 <div align="center">
     <img src="./surface_composition/SiO2/3_1_4_valid_surface_composition_SiO2.png"
-    width="350" height="350"
+    width="350" height="700"
     title="Figure 6"/>
 </div>
 
@@ -55,20 +55,38 @@
 
 <div align="center">
     <img src="./surface_composition/Si3N4/3_1_4_valid_surface_composition_Si3N4.png"
-    width="350" height="350"
+    width="350" height="700"
     title="Figure 7"/>
 </div>
 
 ### Figure 8
 1. Plot with `regime_overview/plot.py` using `regime_overview/data.yaml`.
 
+<div align="center">
+    <img src="./regime_overview/3_2_1_regime_overview.png"
+    width="350" height="350"
+    title="Figure 8"/>
+</div>
+
 ### Figure 10
 1. Data generation: refer to Figure 5.
 2. Modify `height_analysis/main.py` to run `DataPlotterSelected` instead of
    `DataPlotter`. (`yaml` file should also be modified.)
 
+<div align="center">
+    <img src="./height_analysis/data/SiO2_CF_300/3_2_1_CF_300.png"
+    width="350" height="350"
+    title="Figure 10"/>
+</div>
+
 ### Figure 12
 1. Refer to Figure 10.
+
+<div align="center">
+    <img src="./height_analysis/data/Si3N4_CF_250/3_2_1_Si3N4_selected.png"
+    width="350" height="350"
+    title="Figure 12"/>
+</div>
 
 ## Supplementary figures
 ### Figure S1
