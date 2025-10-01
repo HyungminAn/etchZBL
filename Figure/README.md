@@ -8,8 +8,7 @@
 2. Plot `etch_yield/plot_with_experiments/plot.py`. Etch yield data should be
    written in `etch_yield/plot_with_experiments/dat.yaml`.
 
-<img src="./etch_yield/plot_with_experiments/3_1_2_valid_etchyield.png"
-width="710" height "350" title="Figure 3"/>
+<img src="./etch_yield/plot_with_experiments/3_1_2_valid_etchyield.png" width="710" height="350" title="Figure 3"/>
 
 ### Figure 4
 1. Generate merged structures using `atom_config/merge.py` with
