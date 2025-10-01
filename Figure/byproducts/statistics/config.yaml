@@ -1,0 +1,25 @@
+CF:
+  250: '../CF_250eV_mol_dict.pkl'
+  500: '../CF_500eV_mol_dict.pkl'
+  750: '../CF_750eV_mol_dict.pkl'
+  1000: '../CF_1000eV_mol_dict.pkl'
+CF2:
+  250: '../CF2_250eV_mol_dict.pkl'
+  500: '../CF2_500eV_mol_dict.pkl'
+  750: '../CF2_750eV_mol_dict.pkl'
+  1000: '../CF2_1000eV_mol_dict.pkl'
+CF3:
+  250: '../CF3_250eV_mol_dict.pkl'
+  500: '../CF3_500eV_mol_dict.pkl'
+  750: '../CF3_750eV_mol_dict.pkl'
+  1000: '../CF3_1000eV_mol_dict.pkl'
+CH2F:
+  250: '../CH2F_250eV_mol_dict.pkl'
+  500: '../CH2F_500eV_mol_dict.pkl'
+  750: '../CH2F_750eV_mol_dict.pkl'
+  1000: '../CH2F_1000eV_mol_dict.pkl'
+CHF2:
+  250: '../CHF2_250eV_mol_dict.pkl'
+  500: '../CHF2_500eV_mol_dict.pkl'
+  750: '../CHF2_750eV_mol_dict.pkl'
+  1000: '../CHF2_1000eV_mol_dict.pkl'
