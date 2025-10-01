@@ -1,0 +1,403 @@
+[bulk_crystal]
+/data2/andynn/Etch/01_dft_trset/01_bulk/01_elastic_deformation/01_alpha_quartz/POSCAR_{0..100}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/01_bulk/01_elastic_deformation/02_beta_quartz/POSCAR_{0..90}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/01_bulk/01_elastic_deformation/03_alpha_tridymite/POSCAR_{0..90}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/01_bulk/01_elastic_deformation/04_beta_crystobalite/POSCAR_{0..30}/OUTCAR :
+
+[bulk_MD]
+/data2/andynn/Etch/01_dft_trset/01_bulk/02_supercell_MD/01_alpha_quartz/POSCAR_{0..4960..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/01_bulk/02_supercell_MD/02_beta_quartz/POSCAR_{0..4960..40}/OUTCAR :
+
+[channeling]
+/data2/andynn/Etch/01_dft_trset/08_channeling/01_Si_terminated/POSCAR_{0..59}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/08_channeling/02_O_terminated/POSCAR_{0..59}/OUTCAR :
+
+[CHF_mqa_d2.3_CF0.2_melt]
+/data2/andynn/Etch/01_dft_trset/09_chf_bulk/00_dft_oneshot/density_2.3/CF0.2/melt/POSCAR_{0..4960..160}/OUTCAR :
+[CHF_mqa_d2.3_CF0.2_quench]
+/data2/andynn/Etch/01_dft_trset/09_chf_bulk/00_dft_oneshot/density_2.3/CF0.2/quench/POSCAR_{0..17920..160}/OUTCAR :
+[CHF_mqa_d2.3_CF0.2_anneal]
+/data2/andynn/Etch/01_dft_trset/09_chf_bulk/00_dft_oneshot/density_2.3/CF0.2/anneal/POSCAR_{0..7440..160}/OUTCAR :
+[CHF_mqa_d2.3_CF0.4_melt]
+/data2/andynn/Etch/01_dft_trset/09_chf_bulk/00_dft_oneshot/density_2.3/CF0.4/melt/POSCAR_{0..4960..160}/OUTCAR :
+[CHF_mqa_d2.3_CF0.4_quench]
+/data2/andynn/Etch/01_dft_trset/09_chf_bulk/00_dft_oneshot/density_2.3/CF0.4/quench/POSCAR_{0..8960..160}/OUTCAR :
+[CHF_mqa_d2.3_CF0.4_anneal]
+/data2/andynn/Etch/01_dft_trset/09_chf_bulk/00_dft_oneshot/density_2.3/CF0.4/anneal/POSCAR_{0..7440..160}/OUTCAR :
+[CHF_mqa_d2.3_CH0.05F1_melt]
+/data2/andynn/Etch/01_dft_trset/09_chf_bulk/00_dft_oneshot/density_2.3/CH0.05F1/melt/POSCAR_{0..9920..160}/OUTCAR :
+[CHF_mqa_d2.3_CH0.05F1_quench]
+/data2/andynn/Etch/01_dft_trset/09_chf_bulk/00_dft_oneshot/density_2.3/CH0.05F1/quench/POSCAR_{0..17920..160}/OUTCAR :
+[CHF_mqa_d2.3_CH0.05F1_anneal]
+/data2/andynn/Etch/01_dft_trset/09_chf_bulk/00_dft_oneshot/density_2.3/CH0.05F1/anneal/POSCAR_{0..7440..160}/OUTCAR :
+[CHF_mqa_d2.3_CH0.15F1_melt]
+/data2/andynn/Etch/01_dft_trset/09_chf_bulk/00_dft_oneshot/density_2.3/CH0.15F1/melt/POSCAR_{0..9920..160}/OUTCAR :
+[CHF_mqa_d2.3_CH0.15F1_quench]
+/data2/andynn/Etch/01_dft_trset/09_chf_bulk/00_dft_oneshot/density_2.3/CH0.15F1/quench/POSCAR_{0..17920..160}/OUTCAR :
+[CHF_mqa_d2.3_CH0.15F1_anneal]
+/data2/andynn/Etch/01_dft_trset/09_chf_bulk/00_dft_oneshot/density_2.3/CH0.15F1/anneal/POSCAR_{0..7440..160}/OUTCAR :
+[CHF_mqa_d2.3_CH0.1F0.1_melt]
+/data2/andynn/Etch/01_dft_trset/09_chf_bulk/00_dft_oneshot/density_2.3/CH0.1F0.1/melt/POSCAR_{0..9920..160}/OUTCAR :
+[CHF_mqa_d2.3_CH0.1F0.1_quench]
+/data2/andynn/Etch/01_dft_trset/09_chf_bulk/00_dft_oneshot/density_2.3/CH0.1F0.1/quench/POSCAR_{0..17920..160}/OUTCAR :
+[CHF_mqa_d2.3_CH0.1F0.1_anneal]
+/data2/andynn/Etch/01_dft_trset/09_chf_bulk/00_dft_oneshot/density_2.3/CH0.1F0.1/anneal/POSCAR_{0..7440..160}/OUTCAR :
+[CHF_mqa_d2.3_CH0.1F0.4_melt]
+/data2/andynn/Etch/01_dft_trset/09_chf_bulk/00_dft_oneshot/density_2.3/CH0.1F0.4/melt/POSCAR_{0..9920..160}/OUTCAR :
+[CHF_mqa_d2.3_CH0.1F0.4_quench]
+/data2/andynn/Etch/01_dft_trset/09_chf_bulk/00_dft_oneshot/density_2.3/CH0.1F0.4/quench/POSCAR_{0..17920..160}/OUTCAR :
+[CHF_mqa_d2.3_CH0.1F0.4_anneal]
+/data2/andynn/Etch/01_dft_trset/09_chf_bulk/00_dft_oneshot/density_2.3/CH0.1F0.4/anneal/POSCAR_{0..7440..160}/OUTCAR :
+[CHF_mqa_d2.3_CH0.1F0.6_melt]
+/data2/andynn/Etch/01_dft_trset/09_chf_bulk/00_dft_oneshot/density_2.3/CH0.1F0.6/melt/POSCAR_{0..9920..160}/OUTCAR :
+[CHF_mqa_d2.3_CH0.1F0.6_quench]
+/data2/andynn/Etch/01_dft_trset/09_chf_bulk/00_dft_oneshot/density_2.3/CH0.1F0.6/quench/POSCAR_{0..17920..160}/OUTCAR :
+[CHF_mqa_d2.3_CH0.1F0.6_anneal]
+/data2/andynn/Etch/01_dft_trset/09_chf_bulk/00_dft_oneshot/density_2.3/CH0.1F0.6/anneal/POSCAR_{0..7440..160}/OUTCAR :
+[CHF_mqa_d2.3_CH0.1F0.8_melt]
+/data2/andynn/Etch/01_dft_trset/09_chf_bulk/00_dft_oneshot/density_2.3/CH0.1F0.8/melt/POSCAR_{0..9920..160}/OUTCAR :
+[CHF_mqa_d2.3_CH0.1F0.8_quench]
+/data2/andynn/Etch/01_dft_trset/09_chf_bulk/00_dft_oneshot/density_2.3/CH0.1F0.8/quench/POSCAR_{0..17920..160}/OUTCAR :
+[CHF_mqa_d2.3_CH0.1F0.8_anneal]
+/data2/andynn/Etch/01_dft_trset/09_chf_bulk/00_dft_oneshot/density_2.3/CH0.1F0.8/anneal/POSCAR_{0..7440..160}/OUTCAR :
+[CHF_mqa_d3.2_CF0.2_melt]
+/data2/andynn/Etch/01_dft_trset/09_chf_bulk/00_dft_oneshot/density_3.2/CF0.2/melt/POSCAR_{0..4960..160}/OUTCAR :
+[CHF_mqa_d3.2_CF0.2_quench]
+/data2/andynn/Etch/01_dft_trset/09_chf_bulk/00_dft_oneshot/density_3.2/CF0.2/quench/POSCAR_{0..8960..160}/OUTCAR :
+[CHF_mqa_d3.2_CF0.2_anneal]
+/data2/andynn/Etch/01_dft_trset/09_chf_bulk/00_dft_oneshot/density_3.2/CF0.2/anneal/POSCAR_{0..7440..160}/OUTCAR :
+[CHF_mqa_d3.2_CF0.4_melt]
+/data2/andynn/Etch/01_dft_trset/09_chf_bulk/00_dft_oneshot/density_3.2/CF0.4/melt/POSCAR_{0..4960..160}/OUTCAR :
+[CHF_mqa_d3.2_CF0.4_quench]
+/data2/andynn/Etch/01_dft_trset/09_chf_bulk/00_dft_oneshot/density_3.2/CF0.4/quench/POSCAR_{0..8960..160}/OUTCAR :
+[CHF_mqa_d3.2_CF0.4_anneal]
+/data2/andynn/Etch/01_dft_trset/09_chf_bulk/00_dft_oneshot/density_3.2/CF0.4/anneal/POSCAR_{0..7440..160}/OUTCAR :
+[CHF_mqa_d3.2_CH0.05F1_melt]
+/data2/andynn/Etch/01_dft_trset/09_chf_bulk/00_dft_oneshot/density_3.2/CH0.05F1/melt/POSCAR_{0..9920..160}/OUTCAR :
+[CHF_mqa_d3.2_CH0.05F1_quench]
+/data2/andynn/Etch/01_dft_trset/09_chf_bulk/00_dft_oneshot/density_3.2/CH0.05F1/quench/POSCAR_{0..17920..160}/OUTCAR :
+[CHF_mqa_d3.2_CH0.05F1_anneal]
+/data2/andynn/Etch/01_dft_trset/09_chf_bulk/00_dft_oneshot/density_3.2/CH0.05F1/anneal/POSCAR_{0..7440..160}/OUTCAR :
+[CHF_mqa_d3.2_CH0.15F1_melt]
+/data2/andynn/Etch/01_dft_trset/09_chf_bulk/00_dft_oneshot/density_3.2/CH0.15F1/melt/POSCAR_{0..9920..160}/OUTCAR :
+[CHF_mqa_d3.2_CH0.15F1_quench]
+/data2/andynn/Etch/01_dft_trset/09_chf_bulk/00_dft_oneshot/density_3.2/CH0.15F1/quench/POSCAR_{0..17920..160}/OUTCAR :
+[CHF_mqa_d3.2_CH0.15F1_anneal]
+/data2/andynn/Etch/01_dft_trset/09_chf_bulk/00_dft_oneshot/density_3.2/CH0.15F1/anneal/POSCAR_{0..7440..160}/OUTCAR :
+[CHF_mqa_d3.2_CH0.1F0.1_melt]
+/data2/andynn/Etch/01_dft_trset/09_chf_bulk/00_dft_oneshot/density_3.2/CH0.1F0.1/melt/POSCAR_{0..9920..160}/OUTCAR :
+[CHF_mqa_d3.2_CH0.1F0.1_quench]
+/data2/andynn/Etch/01_dft_trset/09_chf_bulk/00_dft_oneshot/density_3.2/CH0.1F0.1/quench/POSCAR_{0..17920..160}/OUTCAR :
+[CHF_mqa_d3.2_CH0.1F0.1_anneal]
+/data2/andynn/Etch/01_dft_trset/09_chf_bulk/00_dft_oneshot/density_3.2/CH0.1F0.1/anneal/POSCAR_{0..7440..160}/OUTCAR :
+[CHF_mqa_d3.2_CH0.1F0.4_melt]
+/data2/andynn/Etch/01_dft_trset/09_chf_bulk/00_dft_oneshot/density_3.2/CH0.1F0.4/melt/POSCAR_{0..9920..160}/OUTCAR :
+[CHF_mqa_d3.2_CH0.1F0.4_quench]
+/data2/andynn/Etch/01_dft_trset/09_chf_bulk/00_dft_oneshot/density_3.2/CH0.1F0.4/quench/POSCAR_{0..17920..160}/OUTCAR :
+[CHF_mqa_d3.2_CH0.1F0.4_anneal]
+/data2/andynn/Etch/01_dft_trset/09_chf_bulk/00_dft_oneshot/density_3.2/CH0.1F0.4/anneal/POSCAR_{0..7440..160}/OUTCAR :
+[CHF_mqa_d3.2_CH0.1F0.6_melt]
+/data2/andynn/Etch/01_dft_trset/09_chf_bulk/00_dft_oneshot/density_3.2/CH0.1F0.6/melt/POSCAR_{0..9920..160}/OUTCAR :
+[CHF_mqa_d3.2_CH0.1F0.6_quench]
+/data2/andynn/Etch/01_dft_trset/09_chf_bulk/00_dft_oneshot/density_3.2/CH0.1F0.6/quench/POSCAR_{0..17920..160}/OUTCAR :
+[CHF_mqa_d3.2_CH0.1F0.6_anneal]
+/data2/andynn/Etch/01_dft_trset/09_chf_bulk/00_dft_oneshot/density_3.2/CH0.1F0.6/anneal/POSCAR_{0..7440..160}/OUTCAR :
+[CHF_mqa_d3.2_CH0.1F0.8_melt]
+/data2/andynn/Etch/01_dft_trset/09_chf_bulk/00_dft_oneshot/density_3.2/CH0.1F0.8/melt/POSCAR_{0..9920..160}/OUTCAR :
+[CHF_mqa_d3.2_CH0.1F0.8_quench]
+/data2/andynn/Etch/01_dft_trset/09_chf_bulk/00_dft_oneshot/density_3.2/CH0.1F0.8/quench/POSCAR_{0..17920..160}/OUTCAR :
+[CHF_mqa_d3.2_CH0.1F0.8_anneal]
+/data2/andynn/Etch/01_dft_trset/09_chf_bulk/00_dft_oneshot/density_3.2/CH0.1F0.8/anneal/POSCAR_{0..7440..160}/OUTCAR :
+
+[ CHF_slab ]
+/data/SiN_etch/training_set_oneshot/CHF/CHF_slab/POSCAR_{26..1585}/OUTCAR :
+
+[diatomic_gas]
+/data/SiN_etch/training_set_OUTCAR/diatomic_EOS/CC/{60..148}/OUTCAR :
+/data/SiN_etch/training_set_OUTCAR/diatomic_EOS/CSi/{60..148}/OUTCAR :
+/data/SiN_etch/training_set_OUTCAR/diatomic_EOS/CF/{60..148}/OUTCAR :
+/data/SiN_etch/training_set_OUTCAR/diatomic_EOS/CH/{46..148}/OUTCAR :
+/data/SiN_etch/training_set_OUTCAR/diatomic_EOS/hch/FF/eos/{0..30}/OUTCAR :
+/data/SiN_etch/training_set_OUTCAR/diatomic_EOS/hch/FF/eos/_{1..10}/OUTCAR :
+/data/SiN_etch/training_set_OUTCAR/diatomic_EOS/hch/HF/eos/{0..30}/OUTCAR :
+/data/SiN_etch/training_set_OUTCAR/diatomic_EOS/hch/HF/eos/_{1..10}/OUTCAR :
+/data/SiN_etch/training_set_OUTCAR/diatomic_EOS/hch/HH/eos/{0..30}/OUTCAR :
+/data/SiN_etch/training_set_OUTCAR/diatomic_EOS/hch/HH/eos/_{1..10}/OUTCAR :
+/data/SiN_etch/training_set_OUTCAR/diatomic_EOS/hch/SiF/eos/{0..30}/OUTCAR :
+/data/SiN_etch/training_set_OUTCAR/diatomic_EOS/hch/SiF/eos/_{1..10}/OUTCAR :
+/data/SiN_etch/training_set_OUTCAR/diatomic_EOS/hch/SiH/eos/{0..30}/OUTCAR :
+/data/SiN_etch/training_set_OUTCAR/diatomic_EOS/hch/SiH/eos/_{1..10}/OUTCAR :
+/data/SiN_etch/training_set_OUTCAR/diatomic_EOS/hch/SiSi/eos/{0..30}/OUTCAR :
+/data/SiN_etch/training_set_OUTCAR/diatomic_EOS/hch/SiSi/eos/_{1..10}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/01_diatomic/OC/POSCAR_{0..30}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/01_diatomic/OC/POSCAR__{1..10}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/01_diatomic/OF/POSCAR_{0..30}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/01_diatomic/OF/POSCAR__{1..10}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/01_diatomic/OO/POSCAR_{0..30}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/01_diatomic/OO/POSCAR__{1..10}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/01_diatomic/OSi/POSCAR_{0..30}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/01_diatomic/OSi/POSCAR__{1..10}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/01_diatomic/OH/POSCAR_{0..30}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/01_diatomic/OH/POSCAR__{1..10}/OUTCAR :
+
+[interstitial_Siterm]
+/data2/andynn/Etch/01_dft_trset/04_interstitial/01_Si_terminated/01_Si/POSCAR_{0..3960..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/04_interstitial/01_Si_terminated/02_O/POSCAR_{0..3960..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/04_interstitial/01_Si_terminated/03_C/POSCAR_{0..3960..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/04_interstitial/01_Si_terminated/04_H/POSCAR_{0..3960..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/04_interstitial/01_Si_terminated/05_F/POSCAR_{0..3960..40}/OUTCAR :
+[interstitial_Oterm]
+/data2/andynn/Etch/01_dft_trset/04_interstitial/02_O_terminated/01_Si/POSCAR_{0..3960..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/04_interstitial/02_O_terminated/02_O/POSCAR_{0..3960..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/04_interstitial/02_O_terminated/03_C/POSCAR_{0..3960..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/04_interstitial/02_O_terminated/04_H/POSCAR_{0..3960..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/04_interstitial/02_O_terminated/05_F/POSCAR_{0..3960..40}/OUTCAR :
+
+[ Iter_1_CF_10eV ]
+/data2/andynn/Etch/03_train/02_iter_learn/Iter_1/03_dft_oneshot/CF_10/POSCAR_{1..50}_{0..4}/OUTCAR :
+[ Iter_1_CF_30eV ]
+/data2/andynn/Etch/03_train/02_iter_learn/Iter_1/03_dft_oneshot/CF_30/POSCAR_{1..50}_{0..4}/OUTCAR :
+[ Iter_1_CF3_10eV ]
+/data2/andynn/Etch/03_train/02_iter_learn/Iter_1/03_dft_oneshot/CF3_10/POSCAR_{1..50}_{0..4}/OUTCAR :
+[ Iter_1_CF3_30eV ]
+/data2/andynn/Etch/03_train/02_iter_learn/Iter_1/03_dft_oneshot/CF3_30/POSCAR_{1..50}_{0..4}/OUTCAR :
+[ Iter_1_CH2F_10eV ]
+/data2/andynn/Etch/03_train/02_iter_learn/Iter_1/03_dft_oneshot/CH2F_10/POSCAR_{1..50}_{0..4}/OUTCAR :
+[ Iter_1_CH2F_30eV ]
+/data2/andynn/Etch/03_train/02_iter_learn/Iter_1/03_dft_oneshot/CH2F_30/POSCAR_{1..50}_{0..4}/OUTCAR :
+[ Iter_1_CHF2_10eV ]
+/data2/andynn/Etch/03_train/02_iter_learn/Iter_1/03_dft_oneshot/CHF2_10/POSCAR_{1..50}_{0..4}/OUTCAR :
+[ Iter_1_CHF2_30eV ]
+/data2/andynn/Etch/03_train/02_iter_learn/Iter_1/03_dft_oneshot/CHF2_30/POSCAR_{1..50}_{0..4}/OUTCAR :
+
+[ Iter_1_CF_10eV ]
+/data2/andynn/Etch/03_train/02_iter_learn/Iter_2/03_dft_oneshot/CF_10/POSCAR_{1..50}_{0..4}/OUTCAR :
+[ Iter_1_CF_30eV ]
+/data2/andynn/Etch/03_train/02_iter_learn/Iter_2/03_dft_oneshot/CF_30/POSCAR_{1..50}_{0..4}/OUTCAR :
+[ Iter_1_CF3_10eV ]
+/data2/andynn/Etch/03_train/02_iter_learn/Iter_2/03_dft_oneshot/CF3_10/POSCAR_{1..50}_{0..4}/OUTCAR :
+[ Iter_1_CF3_30eV ]
+/data2/andynn/Etch/03_train/02_iter_learn/Iter_2/03_dft_oneshot/CF3_30/POSCAR_{1..50}_{0..4}/OUTCAR :
+[ Iter_1_CH2F_10eV ]
+/data2/andynn/Etch/03_train/02_iter_learn/Iter_2/03_dft_oneshot/CH2F_10/POSCAR_{1..50}_{0..4}/OUTCAR :
+[ Iter_1_CH2F_30eV ]
+/data2/andynn/Etch/03_train/02_iter_learn/Iter_2/03_dft_oneshot/CH2F_30/POSCAR_{1..50}_{0..4}/OUTCAR :
+[ Iter_1_CHF2_10eV ]
+/data2/andynn/Etch/03_train/02_iter_learn/Iter_2/03_dft_oneshot/CHF2_10/POSCAR_{1..50}_{0..4}/OUTCAR :
+[ Iter_1_CHF2_30eV ]
+/data2/andynn/Etch/03_train/02_iter_learn/Iter_2/03_dft_oneshot/CHF2_30/POSCAR_{1..50}_{0..4}/OUTCAR :
+
+[ Iter_1_CF_10eV ]
+/data2/andynn/Etch/03_train/02_iter_learn/Iter_3/03_dft_oneshot/CF_10/POSCAR_{1..50}_{0..4}/OUTCAR :
+[ Iter_1_CF_30eV ]
+/data2/andynn/Etch/03_train/02_iter_learn/Iter_3/03_dft_oneshot/CF_30/POSCAR_{1..50}_{0..4}/OUTCAR :
+[ Iter_1_CF3_10eV ]
+/data2/andynn/Etch/03_train/02_iter_learn/Iter_3/03_dft_oneshot/CF3_10/POSCAR_{1..50}_{0..4}/OUTCAR :
+[ Iter_1_CF3_30eV ]
+/data2/andynn/Etch/03_train/02_iter_learn/Iter_3/03_dft_oneshot/CF3_30/POSCAR_{1..50}_{0..4}/OUTCAR :
+[ Iter_1_CH2F_10eV ]
+/data2/andynn/Etch/03_train/02_iter_learn/Iter_3/03_dft_oneshot/CH2F_10/POSCAR_{1..50}_{0..4}/OUTCAR :
+[ Iter_1_CH2F_30eV ]
+/data2/andynn/Etch/03_train/02_iter_learn/Iter_3/03_dft_oneshot/CH2F_30/POSCAR_{1..50}_{0..4}/OUTCAR :
+[ Iter_1_CHF2_10eV ]
+/data2/andynn/Etch/03_train/02_iter_learn/Iter_3/03_dft_oneshot/CHF2_10/POSCAR_{1..50}_{0..4}/OUTCAR :
+[ Iter_1_CHF2_30eV ]
+/data2/andynn/Etch/03_train/02_iter_learn/Iter_3/03_dft_oneshot/CHF2_30/POSCAR_{1..50}_{0..4}/OUTCAR :
+
+[ polyatomic_gas ]
+/data2/andynn/Etch/01_dft_trset/03_gas/02_polyatomic/02_oneshot/CF2/oneshot/POSCAR_{0..980..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/02_polyatomic/02_oneshot/CF2O/oneshot/POSCAR_{0..980..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/02_polyatomic/02_oneshot/CF2O2/oneshot/POSCAR_{0..980..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/02_polyatomic/02_oneshot/CF3/oneshot/POSCAR_{0..980..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/02_polyatomic/02_oneshot/CF3O/oneshot/POSCAR_{0..980..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/02_polyatomic/02_oneshot/CF4/oneshot/POSCAR_{0..980..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/02_polyatomic/02_oneshot/CFO2/oneshot/POSCAR_{0..980..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/02_polyatomic/02_oneshot/CH2/oneshot/POSCAR_{0..980..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/02_polyatomic/02_oneshot/CH2F/oneshot/POSCAR_{0..980..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/02_polyatomic/02_oneshot/CH2F2/oneshot/POSCAR_{0..980..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/02_polyatomic/02_oneshot/CH2FO/oneshot/POSCAR_{0..980..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/02_polyatomic/02_oneshot/CH2O/oneshot/POSCAR_{0..980..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/02_polyatomic/02_oneshot/CH3/oneshot/POSCAR_{0..980..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/02_polyatomic/02_oneshot/CH3F/oneshot/POSCAR_{0..980..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/02_polyatomic/02_oneshot/CH3O/oneshot/POSCAR_{0..980..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/02_polyatomic/02_oneshot/CH4/oneshot/POSCAR_{0..980..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/02_polyatomic/02_oneshot/CHF/oneshot/POSCAR_{0..980..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/02_polyatomic/02_oneshot/CHF2/oneshot/POSCAR_{0..980..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/02_polyatomic/02_oneshot/CHF2O/oneshot/POSCAR_{0..980..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/02_polyatomic/02_oneshot/CHF3/oneshot/POSCAR_{0..980..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/02_polyatomic/02_oneshot/CHFO/oneshot/POSCAR_{0..980..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/02_polyatomic/02_oneshot/CHO/oneshot/POSCAR_{0..980..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/02_polyatomic/02_oneshot/CHO2/oneshot/POSCAR_{0..980..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/02_polyatomic/02_oneshot/CO2/oneshot/POSCAR_{0..980..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/02_polyatomic/02_oneshot/CO3/oneshot/POSCAR_{0..980..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/02_polyatomic/02_oneshot/CO4/oneshot/POSCAR_{0..980..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/02_polyatomic/02_oneshot/F2O/oneshot/POSCAR_{0..980..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/02_polyatomic/02_oneshot/F2O2Si/oneshot/POSCAR_{0..980..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/02_polyatomic/02_oneshot/F2OSi/oneshot/POSCAR_{0..980..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/02_polyatomic/02_oneshot/F2Si/oneshot/POSCAR_{0..980..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/02_polyatomic/02_oneshot/F3OSi/oneshot/POSCAR_{0..980..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/02_polyatomic/02_oneshot/F3Si/oneshot/POSCAR_{0..980..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/02_polyatomic/02_oneshot/F4Si/oneshot/POSCAR_{0..980..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/02_polyatomic/02_oneshot/FO2Si/oneshot/POSCAR_{0..980..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/02_polyatomic/02_oneshot/FO3Si/oneshot/POSCAR_{0..980..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/02_polyatomic/02_oneshot/FOSi/oneshot/POSCAR_{0..980..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/02_polyatomic/02_oneshot/H2F2Si/oneshot/POSCAR_{0..980..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/02_polyatomic/02_oneshot/H2FOSi/oneshot/POSCAR_{0..980..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/02_polyatomic/02_oneshot/H2FSi/oneshot/POSCAR_{0..980..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/02_polyatomic/02_oneshot/H2O/oneshot/POSCAR_{0..980..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/02_polyatomic/02_oneshot/H2OSi/oneshot/POSCAR_{0..980..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/02_polyatomic/02_oneshot/H2Si/oneshot/POSCAR_{0..980..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/02_polyatomic/02_oneshot/H3FSi/oneshot/POSCAR_{0..980..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/02_polyatomic/02_oneshot/H3OSi/oneshot/POSCAR_{0..980..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/02_polyatomic/02_oneshot/H3Si/oneshot/POSCAR_{0..980..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/02_polyatomic/02_oneshot/H4Si/oneshot/POSCAR_{0..980..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/02_polyatomic/02_oneshot/HF2OSi/oneshot/POSCAR_{0..980..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/02_polyatomic/02_oneshot/HF2Si/oneshot/POSCAR_{0..980..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/02_polyatomic/02_oneshot/HF3Si/oneshot/POSCAR_{0..980..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/02_polyatomic/02_oneshot/HFO/oneshot/POSCAR_{0..980..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/02_polyatomic/02_oneshot/HFO2Si/oneshot/POSCAR_{0..980..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/02_polyatomic/02_oneshot/HFOSi/oneshot/POSCAR_{0..980..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/02_polyatomic/02_oneshot/HFSi/oneshot/POSCAR_{0..980..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/02_polyatomic/02_oneshot/HO2/oneshot/POSCAR_{0..980..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/02_polyatomic/02_oneshot/HO2Si/oneshot/POSCAR_{0..980..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/02_polyatomic/02_oneshot/HOSi/oneshot/POSCAR_{0..980..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/02_polyatomic/02_oneshot/O2Si/oneshot/POSCAR_{0..980..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/02_polyatomic/02_oneshot/O3/oneshot/POSCAR_{0..980..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/02_polyatomic/02_oneshot/O3Si/oneshot/POSCAR_{0..980..40}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/03_gas/02_polyatomic/02_oneshot/O4Si/oneshot/POSCAR_{0..980..40}/OUTCAR :
+
+[SiO2_mqa_melt]
+/data2/andynn/Etch/01_dft_trset/02_bulkmqa/01_SiO2/melt/POSCAR_{0..9980..40}/OUTCAR :
+[SiO2_mqa_quench]
+/data2/andynn/Etch/01_dft_trset/02_bulkmqa/01_SiO2/quench/POSCAR_{0..18480..40}/OUTCAR :
+[SiO2_mqa_anneal]
+/data2/andynn/Etch/01_dft_trset/02_bulkmqa/01_SiO2/anneal/POSCAR_{0..7480..40}/OUTCAR :
+
+[ SiO2_mqa_d2.2 ]
+/data2/andynn/Etch/01_dft_trset/02_bulkmqa/03_SiO2_density_2.2/oneshot/melt/POSCAR_{0..9920..80}/OUTCAR :
+[ SiO2_mqa_d2.2 ]
+/data2/andynn/Etch/01_dft_trset/02_bulkmqa/03_SiO2_density_2.2/oneshot/quench/POSCAR_{0..9200..80}/OUTCAR :
+[ SiO2_mqa_d2.2 ]
+/data2/andynn/Etch/01_dft_trset/02_bulkmqa/03_SiO2_density_2.2/oneshot/anneal/POSCAR_{0..7440..80}/OUTCAR :
+
+[slab_MD]
+/data2/andynn/Etch/01_dft_trset/07_slab/01_SiO2/01_SlabMD/01_Si_terminated/01_300K/POSCAR_{0..990..10}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/07_slab/01_SiO2/01_SlabMD/01_Si_terminated/02_2000K/POSCAR_{0..990..10}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/07_slab/01_SiO2/01_SlabMD/02_O_terminated/01_300K/POSCAR_{0..990..10}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/07_slab/01_SiO2/01_SlabMD/02_O_terminated/02_2000K/POSCAR_{0..990..10}/OUTCAR :
+
+[SlabMelt_anneal]
+/data2/andynn/Etch/01_dft_trset/07_slab/01_SiO2/02_SlabMelt/md/anneal/POSCAR_{0..7480..20}/OUTCAR :
+[SlabMelt_melt]
+/data2/andynn/Etch/01_dft_trset/07_slab/01_SiO2/02_SlabMelt/md/melt/POSCAR_{0..4980..20}/OUTCAR :
+[SlabMelt_liquid]
+/data2/andynn/Etch/01_dft_trset/07_slab/01_SiO2/02_SlabMelt/md/liquid/POSCAR_{0..9980..20}/OUTCAR :
+
+[vacancy_Siterm]
+/data2/andynn/Etch/01_dft_trset/05_vacancy/01_Si_terminated/01_Si_vacancy/01_case1/POSCAR_{0..1980..20}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/05_vacancy/01_Si_terminated/01_Si_vacancy/02_case2/POSCAR_{0..1980..20}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/05_vacancy/01_Si_terminated/02_O_vacancy/01_case1/POSCAR_{0..1980..20}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/05_vacancy/01_Si_terminated/02_O_vacancy/02_case2/POSCAR_{0..1980..20}/OUTCAR :
+[vacancy_Oterm]
+/data2/andynn/Etch/01_dft_trset/05_vacancy/02_O_terminated/01_Si_vacancy/01_case1/POSCAR_{0..1980..20}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/05_vacancy/02_O_terminated/01_Si_vacancy/02_case2/POSCAR_{0..1980..20}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/05_vacancy/02_O_terminated/02_O_vacancy/01_case1/POSCAR_{0..1980..20}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/05_vacancy/02_O_terminated/02_O_vacancy/02_case2/POSCAR_{0..1980..20}/OUTCAR :
+
+[ vts_d_norm_12816_m ]
+/data2/andynn/Etch/01_dft_trset/06_vts/01_d_normal/01_12816/melt/POSCAR_{0..9960..80}/OUTCAR :
+[ vts_d_norm_12816_q ]
+/data2/andynn/Etch/01_dft_trset/06_vts/01_d_normal/01_12816/quench/POSCAR_{0..13480..80}/OUTCAR :
+[ vts_d_norm_12816_a ]
+/data2/andynn/Etch/01_dft_trset/06_vts/01_d_normal/01_12816/anneal/POSCAR_{0..7480..80}/OUTCAR :
+[ vts_d_norm_36313_m ]
+/data2/andynn/Etch/01_dft_trset/06_vts/01_d_normal/02_36313/melt/POSCAR_{0..9960..80}/OUTCAR :
+[ vts_d_norm_36313_q ]
+/data2/andynn/Etch/01_dft_trset/06_vts/01_d_normal/02_36313/quench/POSCAR_{0..13480..80}/OUTCAR :
+[ vts_d_norm_36313_a ]
+/data2/andynn/Etch/01_dft_trset/06_vts/01_d_normal/02_36313/anneal/POSCAR_{0..7480..80}/OUTCAR :
+[ vts_d_norm_36211_m ]
+/data2/andynn/Etch/01_dft_trset/06_vts/01_d_normal/03_36211/melt/POSCAR_{0..9960..80}/OUTCAR :
+[ vts_d_norm_36211_q ]
+/data2/andynn/Etch/01_dft_trset/06_vts/01_d_normal/03_36211/quench/POSCAR_{0..13480..80}/OUTCAR :
+[ vts_d_norm_36211_a ]
+/data2/andynn/Etch/01_dft_trset/06_vts/01_d_normal/03_36211/anneal/POSCAR_{0..7480..80}/OUTCAR :
+[ vts_d_norm_36050505_m ]
+/data2/andynn/Etch/01_dft_trset/06_vts/01_d_normal/04_36050505/melt/POSCAR_{0..9960..80}/OUTCAR :
+[ vts_d_norm_36050505_q ]
+/data2/andynn/Etch/01_dft_trset/06_vts/01_d_normal/04_36050505/quench/POSCAR_{0..13480..80}/OUTCAR :
+[ vts_d_norm_36050505_a ]
+/data2/andynn/Etch/01_dft_trset/06_vts/01_d_normal/04_36050505/anneal/POSCAR_{0..7480..80}/OUTCAR :
+[ vts_d_norm_33111_m ]
+/data2/andynn/Etch/01_dft_trset/06_vts/01_d_normal/05_33111/melt/POSCAR_{0..9920..80}/OUTCAR :
+[ vts_d_norm_33111_q ]
+/data2/andynn/Etch/01_dft_trset/06_vts/01_d_normal/05_33111/quench/POSCAR_{0..13440..80}/OUTCAR :
+[ vts_d_norm_33111_a ]
+/data2/andynn/Etch/01_dft_trset/06_vts/01_d_normal/05_33111/anneal/POSCAR_{0..7440..80}/OUTCAR :
+[ vts_d_norm_050505605_m ]
+/data2/andynn/Etch/01_dft_trset/06_vts/01_d_normal/06_050505605/melt/POSCAR_{0..9920..80}/OUTCAR :
+[ vts_d_norm_050505605_q ]
+/data2/andynn/Etch/01_dft_trset/06_vts/01_d_normal/06_050505605/quench/POSCAR_{0..13440..80}/OUTCAR :
+[ vts_d_norm_050505605_a ]
+/data2/andynn/Etch/01_dft_trset/06_vts/01_d_normal/06_050505605/anneal/POSCAR_{0..7440..80}/OUTCAR :
+[ vts_d_norm_054050505_m ]
+/data2/andynn/Etch/01_dft_trset/06_vts/01_d_normal/07_054050505/melt/POSCAR_{0..9920..80}/OUTCAR :
+[ vts_d_norm_054050505_q ]
+/data2/andynn/Etch/01_dft_trset/06_vts/01_d_normal/07_054050505/quench/POSCAR_{0..13440..80}/OUTCAR :
+[ vts_d_norm_054050505_a ]
+/data2/andynn/Etch/01_dft_trset/06_vts/01_d_normal/07_054050505/anneal/POSCAR_{0..7440..80}/OUTCAR :
+[ vts_d_norm_11003_m ]
+/data2/andynn/Etch/01_dft_trset/06_vts/01_d_normal/08_11003/melt/POSCAR_{0..10000..80}/OUTCAR :
+[ vts_d_norm_11003_q ]
+/data2/andynn/Etch/01_dft_trset/06_vts/01_d_normal/08_11003/quench/POSCAR_{0..13440..80}/OUTCAR :
+[ vts_d_norm_11003_a ]
+/data2/andynn/Etch/01_dft_trset/06_vts/01_d_normal/08_11003/anneal/POSCAR_{0..7440..80}/OUTCAR :
+[ vts_d_low_12816_m ]
+/data2/andynn/Etch/01_dft_trset/06_vts/02_d_low/01_12816/melt/POSCAR_{0..9960..80}/OUTCAR :
+[ vts_d_low_12816_q ]
+/data2/andynn/Etch/01_dft_trset/06_vts/02_d_low/01_12816/quench/POSCAR_{0..13480..80}/OUTCAR :
+[ vts_d_low_12816_a ]
+/data2/andynn/Etch/01_dft_trset/06_vts/02_d_low/01_12816/anneal/POSCAR_{0..7480..80}/OUTCAR :
+[ vts_d_low_36313_m ]
+/data2/andynn/Etch/01_dft_trset/06_vts/02_d_low/02_36313/melt/POSCAR_{0..9960..80}/OUTCAR :
+[ vts_d_low_36313_q ]
+/data2/andynn/Etch/01_dft_trset/06_vts/02_d_low/02_36313/quench/POSCAR_{0..13480..80}/OUTCAR :
+[ vts_d_low_36313_a ]
+/data2/andynn/Etch/01_dft_trset/06_vts/02_d_low/02_36313/anneal/POSCAR_{0..7480..80}/OUTCAR :
+[ vts_d_low_36211_m ]
+/data2/andynn/Etch/01_dft_trset/06_vts/02_d_low/03_36211/melt/POSCAR_{0..9960..80}/OUTCAR :
+[ vts_d_low_36211_q ]
+/data2/andynn/Etch/01_dft_trset/06_vts/02_d_low/03_36211/quench/POSCAR_{0..13480..80}/OUTCAR :
+[ vts_d_low_36211_a ]
+/data2/andynn/Etch/01_dft_trset/06_vts/02_d_low/03_36211/anneal/POSCAR_{0..7480..80}/OUTCAR :
+[ vts_d_low_36050505_m ]
+/data2/andynn/Etch/01_dft_trset/06_vts/02_d_low/04_36050505/melt/POSCAR_{0..9960..80}/OUTCAR :
+[ vts_d_low_36050505_q ]
+/data2/andynn/Etch/01_dft_trset/06_vts/02_d_low/04_36050505/quench/POSCAR_{0..13480..80}/OUTCAR :
+[ vts_d_low_36050505_a ]
+/data2/andynn/Etch/01_dft_trset/06_vts/02_d_low/04_36050505/anneal/POSCAR_{0..7480..80}/OUTCAR :
+[ vts_d_low_33111_m ]
+/data2/andynn/Etch/01_dft_trset/06_vts/02_d_low/05_33111/melt/POSCAR_{0..9920..80}/OUTCAR :
+[ vts_d_low_33111_q ]
+/data2/andynn/Etch/01_dft_trset/06_vts/02_d_low/05_33111/quench/POSCAR_{0..13440..80}/OUTCAR :
+[ vts_d_low_33111_a ]
+/data2/andynn/Etch/01_dft_trset/06_vts/02_d_low/05_33111/anneal/POSCAR_{0..7440..80}/OUTCAR :
+[ vts_d_low_050505605_m ]
+/data2/andynn/Etch/01_dft_trset/06_vts/02_d_low/06_050505605/melt/POSCAR_{0..9920..80}/OUTCAR :
+[ vts_d_low_050505605_q ]
+/data2/andynn/Etch/01_dft_trset/06_vts/02_d_low/06_050505605/quench/POSCAR_{0..13440..80}/OUTCAR :
+[ vts_d_low_050505605_a ]
+/data2/andynn/Etch/01_dft_trset/06_vts/02_d_low/06_050505605/anneal/POSCAR_{0..7440..80}/OUTCAR :
+[ vts_d_low_054050505_m ]
+/data2/andynn/Etch/01_dft_trset/06_vts/02_d_low/07_054050505/melt/POSCAR_{0..9920..80}/OUTCAR :
+[ vts_d_low_054050505_q ]
+/data2/andynn/Etch/01_dft_trset/06_vts/02_d_low/07_054050505/quench/POSCAR_{0..13440..80}/OUTCAR :
+[ vts_d_low_054050505_a ]
+/data2/andynn/Etch/01_dft_trset/06_vts/02_d_low/07_054050505/anneal/POSCAR_{0..7440..80}/OUTCAR :
+[ vts_d_low_11003_m ]
+/data2/andynn/Etch/01_dft_trset/06_vts/02_d_low/08_11003/melt/POSCAR_{0..9920..80}/OUTCAR :
+[ vts_d_low_11003_q ]
+/data2/andynn/Etch/01_dft_trset/06_vts/02_d_low/08_11003/quench/POSCAR_{0..13440..80}/OUTCAR :
+[ vts_d_low_11003_a ]
+/data2/andynn/Etch/01_dft_trset/06_vts/02_d_low/08_11003/anneal/POSCAR_{0..7440..80}/OUTCAR :
+
