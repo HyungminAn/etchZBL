@@ -23,6 +23,11 @@ class PARAMS:
             'CO': 'red',
             'SiF2': 'green',
             }
+    MARKER_DICT = {
+            'CF2': 'o',
+            'CO': 's',
+            'SiF2': '^',
+            }
 
 
 class DataLoader:
@@ -68,118 +73,163 @@ class DataLoader:
 
 class DataPlotter:
     def run(self, data_sim, data_exp):
-        fig, axes = self.generate_figure()
+        # fig, axes = self.generate_figure()
+        # ax_exp, ax_bar = axes
 
-        ax_exp, ax_bar = axes
-        self.plot(data_sim, data_exp, ax_exp)
-        self.plot_bar(data_sim, data_exp, ax_bar)
+        fig, axes = self.generate_figure()
+        self.plot(data_sim, data_exp, fig, axes)
+        # self.plot_bar(data_sim, data_exp, ax_bar)
         self.save(fig)
 
     def generate_figure(self):
         plt.rcParams.update({'font.size': 10, 'font.family': 'arial'})
-        fig, axes = plt.subplots(2, 1, figsize=(3.5, 2 * 3.5), constrained_layout=True)
+        # fig, axes = plt.subplots(2, 1, figsize=(3.5, 2 * 3.5), constrained_layout=True)
+        fig, axes = plt.subplots(3, 1, figsize=(3.5, 2 * 3.5),
+                                 constrained_layout=True)
         return fig, axes
 
-    def plot(self, data_sim, data_exp, ax_exp):
-        ax_sim = ax_exp.twinx()
-        plotLines = []
+    def plot(self, data_sim, data_exp, fig, axes):
         keys = [key for key in data_exp.keys()]
 
-        group_label = Line2D([], [], color='none', label='Toyoda et al.', linewidth=0)
-        plotLines.append(group_label)
+        alphabets = ['(a)', '(b)', '(c)']
+        legend_locs = ['upper right',
+                       'upper left',
+                       'upper left']
 
-        for key in keys:
-            data = data_exp[key]
-            x, y = data[:, 0], data[:, 1]
+        for key, ax, count_ax, legend_loc in zip(keys, axes, alphabets, legend_locs):
+            x1, y1 = data_exp[key][:, 0], data_exp[key][:, 1]
+            x2, y2 = data_sim[key][:, 0], data_sim[key][:, 1]
+
+            if key == 'CF2':
+                y1 = y1 / y1[1]
+            else:
+                y1 = y1 / y1[2]
+            y2 = y2 / y2[2]
             label = PARAMS.CONVERT_DICT[key]
             color = PARAMS.COLOR_DICT[key]
-            line, = ax_exp.plot(x, y,
-                        linestyle='--',
-                        # alpha=0.5,
-                        marker='o',
-                        label=label,
-                        color=color)
-            plotLines.append(line)
 
-        group_label = Line2D([], [], color='none', label='This study', linewidth=0)
-        plotLines.append(group_label)
+            ax.plot(x1, y1,
+                    label='Toyoda et al.',
+                    linewidth=0.5,
+                    linestyle='--',
+                    color='grey',
+                    marker=PARAMS.MARKER_DICT[key],
+                    markerfacecolor='white',
+                    markeredgecolor='black')
+            ax.plot(x2, y2,
+                    label='This study',
+                    linestyle='-',
+                    marker=PARAMS.MARKER_DICT[key],
+                    markerfacecolor='white',
+                    markeredgecolor=color,
+                    color=color)
 
-        for key in keys:
-            data = data_sim[key]
-            x, y = data[:, 0], data[:, 1]
-            label = PARAMS.CONVERT_DICT[key]
-            color = PARAMS.COLOR_DICT[key]
-            line, = ax_sim.plot(x, y,
-                        linestyle='-',
-                        marker='o',
-                        label=label,
-                        color=color)
-            plotLines.append(line)
-
-        for ax in [ax_exp]:
-            ax.set_xlabel('Incident energy (eV)')
-            ax.set_ylabel('Desorption intensity in experiment (a.u.)')
             ax.set_xlim(0, 500)
-
-        for ax in [ax_sim]:
+            ax.set_ylim(0, None)
+            text = f"{count_ax} {label}"
+            ax.text(-0.15, 1.15, text, transform=ax.transAxes, ha='left', va='top')
             ax.set_xlabel('Incident energy (eV)')
-            ax.set_ylabel('Number of removed molecules')
-            ax.set_xlim(0, 500)
+            ax.legend(loc=legend_loc, frameon=False, fontsize=8)
 
-        self.set_global_legend(ax_exp, plotLines)
-        text = '(a)'
-        ax_exp.text(-0.2, 1.2,
-                text, transform=ax_exp.transAxes, ha='left', va='top')
+        fig.supylabel('Desorption intensity (a.u.)')
 
+        # plotLines = []
+        # group_label = Line2D([], [], color='none', label='Toyoda et al.', linewidth=0)
+        # plotLines.append(group_label)
+        # for key in keys:
+        #     data = data_exp[key]
+        #     x, y = data[:, 0], data[:, 1]
+        #     label = PARAMS.CONVERT_DICT[key]
+        #     color = PARAMS.COLOR_DICT[key]
+        #     line, = ax_exp.plot(x, y,
+        #                 # alpha=0.5,
+        #                 linewidth=0.5,
+        #                 linestyle='--',
+        #                 color='grey',
+        #                 marker=PARAMS.MARKER_DICT[key],
+        #                 label=label,
+        #                 markerfacecolor='white',
+        #                 markeredgecolor='black',
+        #                )
+        #     plotLines.append(line)
 
-    def set_global_legend(self, ax, lines):
-        labels = [line.get_label() for line in lines]
-        ax.legend(lines, labels, loc='upper center', frameon=False, bbox_to_anchor=(0.5, -0.2), ncol=2)
+        # group_label = Line2D([], [], color='none', label='This study', linewidth=0)
+        # plotLines.append(group_label)
+        # for key in keys:
+        #     data = data_sim[key]
+        #     x, y = data[:, 0], data[:, 1]
+        #     label = PARAMS.CONVERT_DICT[key]
+        #     color = PARAMS.COLOR_DICT[key]
+        #     line, = ax_sim.plot(x, y,
+        #                 linestyle='-',
+        #                 marker=PARAMS.MARKER_DICT[key],
+        #                 label=label,
+        #                 color=color)
+        #     plotLines.append(line)
 
-    def plot_bar(self, data_sim, data_exp, ax_bar):
-        target = 200  # eV
-        result_exp = {k: v[v[:, 0] == target, 1] for k, v in data_exp.items()}
-        result_sim = {k: v[v[:, 0] == target, 1] for k, v in data_sim.items()}
+        # for ax in [ax_exp]:
+        #     ax.set_xlabel('Incident energy (eV)')
+        #     ax.set_ylabel('Desorption intensity in experiment (a.u.)')
+        #     ax.set_xlim(0, 500)
 
-        normalize_species = 'CO'
-        result_exp = {k: v[0]/result_exp[normalize_species][0] for k, v in result_exp.items()}
-        result_sim = {k: v[0]/result_sim[normalize_species][0] for k, v in result_sim.items()}
+        # for ax in [ax_sim]:
+        #     ax.set_xlabel('Incident energy (eV)')
+        #     ax.set_ylabel('Number of removed molecules')
+        #     ax.set_xlim(0, 500)
 
-        print("Exp: ", result_exp)
-        print("Sim: ", result_sim)
+        # self.set_global_legend(ax_exp, plotLines)
+        # text = '(a)'
+        # ax_exp.text(-0.2, 1.2,
+        #         text, transform=ax_exp.transAxes, ha='left', va='top')
 
-        keys = list(result_exp.keys())
-
-        y_exp = np.array([result_exp[k] for k in keys])
-        y_sim = np.array([result_sim[k] for k in keys])
-        x = np.arange(len(keys))
-
-        ax_bar.bar(x - 0.2, y_exp, width=0.4, label='Toyoda et al.',
-                   facecolor='white', edgecolor='black')
-        ax_bar.bar(x + 0.2, y_sim, width=0.4, label='This study',
-                   facecolor='black', edgecolor='black')
-
-        ax_bar.set_xticks(x)
-        ax_bar.set_xticklabels([PARAMS.CONVERT_DICT[k] for k in keys])
-        ax_bar.set_ylabel('Relative desorption intensity')
-
-        ax_bar.set_title('CF${}_{3}^{+}$, 200 eV on SiO$_2$', fontsize=10)
-        ax_bar.legend(loc='lower center',
-                      frameon=False,
-                      bbox_to_anchor=(0.5, -0.3),
-                      ncol=2)
-
-        text = '(b)'
-        ax_bar.text(-0.2, 1.2,
-                text, transform=ax_bar.transAxes, ha='left', va='top')
+    # def set_global_legend(self, ax, lines):
+    #     labels = [line.get_label() for line in lines]
+    #     ax.legend(lines, labels, loc='upper center', frameon=False, bbox_to_anchor=(0.5, -0.2), ncol=2)
 
     def save(self, fig):
         # fig.tight_layout()
         # fig.subplots_adjust(bottom=0.2, top=0.1)
         name = '3_1_5_valid_byproduct_ratio'
-        fig.savefig(f'{name}.png')
+        fig.savefig(f'{name}.png', dpi=200)
         fig.savefig(f'{name}.pdf')
         fig.savefig(f'{name}.eps')
+
+    # def plot_bar(self, data_sim, data_exp, ax_bar):
+    #     target = 200  # eV
+    #     result_exp = {k: v[v[:, 0] == target, 1] for k, v in data_exp.items()}
+    #     result_sim = {k: v[v[:, 0] == target, 1] for k, v in data_sim.items()}
+
+    #     normalize_species = 'CO'
+    #     result_exp = {k: v[0]/result_exp[normalize_species][0] for k, v in result_exp.items()}
+    #     result_sim = {k: v[0]/result_sim[normalize_species][0] for k, v in result_sim.items()}
+
+    #     print("Exp: ", result_exp)
+    #     print("Sim: ", result_sim)
+
+    #     keys = list(result_exp.keys())
+
+    #     y_exp = np.array([result_exp[k] for k in keys])
+    #     y_sim = np.array([result_sim[k] for k in keys])
+    #     x = np.arange(len(keys))
+
+    #     ax_bar.bar(x - 0.2, y_exp, width=0.4, label='Toyoda et al.',
+    #                facecolor='white', edgecolor='black')
+    #     ax_bar.bar(x + 0.2, y_sim, width=0.4, label='This study',
+    #                facecolor='black', edgecolor='black')
+
+    #     ax_bar.set_xticks(x)
+    #     ax_bar.set_xticklabels([PARAMS.CONVERT_DICT[k] for k in keys])
+    #     ax_bar.set_ylabel('Relative desorption intensity')
+
+    #     ax_bar.set_title('CF${}_{3}^{+}$, 200 eV on SiO$_2$', fontsize=10)
+    #     ax_bar.legend(loc='lower center',
+    #                   frameon=False,
+    #                   bbox_to_anchor=(0.5, -0.3),
+    #                   ncol=2)
+
+    #     text = '(b)'
+    #     ax_bar.text(-0.2, 1.2,
+    #             text, transform=ax_bar.transAxes, ha='left', va='top')
 
 def main():
     loader = DataLoader()

@@ -21,7 +21,7 @@ class PARAMS:
     }
     label_convert_dict = {
         'CF_300': 'This study',
-        'CF_300 (removal height 2nm)': r'h$_{\mathrm{removal}}$ = 2 nm',
+        'CF_300 (removal height 2nm)': r'$\it{h}_{\mathrm{removal}}$ = 2 nm',
     }
 
 

@@ -120,4 +120,7 @@ class FigureGeneratorSelected(FigureGenerator):
         self.axis_config = axis_config
         self.fsc = FigureSizeCalculatorSelected(axis_config)
         self.adb = AxisDictBuilderSelected()
-        self.figsize = (3.5, 3.5)  # Default figure size
+        if len(data) > 3:
+            self.figsize = (7.1, 3.5)
+        else:
+            self.figsize = (3.5, 3.5)

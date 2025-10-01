@@ -1,0 +1,65 @@
+SiO2:
+  CF:
+    100: "src_SiO2/CF_100.dat"
+    250: "src_SiO2/CF_250.dat"
+    # 300: "src_SiO2/CF_300.dat"
+    500: "src_SiO2/CF_500.dat"
+    750: "src_SiO2/CF_750.dat"
+    1000: "src_SiO2/CF_1000.dat"
+  CF2:
+    # 25: "src_SiO2/CF2_25.dat"
+    # 50: "src_SiO2/CF2_50.dat"
+    # 75: "src_SiO2/CF2_75.dat"
+    100: "src_SiO2/CF2_100.dat"
+    250: "src_SiO2/CF2_250.dat"
+    500: "src_SiO2/CF2_500.dat"
+    750: "src_SiO2/CF2_750.dat"
+    1000: "src_SiO2/CF2_1000.dat"
+  CF3:
+    # 10: "src_SiO2/CF3_10.dat"
+    # 25: "src_SiO2/CF3_25.dat"
+    # 50: "src_SiO2/CF3_50.dat"
+    100: "src_SiO2/CF3_100.dat"
+    250: "src_SiO2/CF3_250.dat"
+    500: "src_SiO2/CF3_500.dat"
+    750: "src_SiO2/CF3_750.dat"
+    1000: "src_SiO2/CF3_1000.dat"
+  CH2F:
+    100: "src_SiO2/CH2F_100.dat"
+    250: "src_SiO2/CH2F_250.dat"
+    500: "src_SiO2/CH2F_500.dat"
+    750: "src_SiO2/CH2F_750.dat"
+    1000: "src_SiO2/CH2F_1000.dat"
+  CHF2:
+    100: "src_SiO2/CHF2_100.dat"
+    250: "src_SiO2/CHF2_250.dat"
+    500: "src_SiO2/CHF2_500.dat"
+    750: "src_SiO2/CHF2_750.dat"
+    1000: "src_SiO2/CHF2_1000.dat"
+
+Si3N4:
+  CF:
+    250: "src_Si3N4/CF_250.dat"
+    500: "src_Si3N4/CF_500.dat"
+    750: "src_Si3N4/CF_750.dat"
+    1000: "src_Si3N4/CF_1000.dat"
+  CF2:
+    250: "src_Si3N4/CF2_250.dat"
+    500: "src_Si3N4/CF2_500.dat"
+    750: "src_Si3N4/CF2_750.dat"
+    1000: "src_Si3N4/CF2_1000.dat"
+  CF3:
+    250: "src_Si3N4/CF3_250.dat"
+    500: "src_Si3N4/CF3_500.dat"
+    750: "src_Si3N4/CF3_750.dat"
+    1000: "src_Si3N4/CF3_1000.dat"
+  CH2F:
+    250: "src_Si3N4/CH2F_250.dat"
+    500: "src_Si3N4/CH2F_500.dat"
+    750: "src_Si3N4/CH2F_750.dat"
+    1000: "src_Si3N4/CH2F_1000.dat"
+  CHF2:
+    250: "src_Si3N4/CHF2_250.dat"
+    500: "src_Si3N4/CHF2_500.dat"
+    750: "src_Si3N4/CHF2_750.dat"
+    1000: "src_Si3N4/CHF2_1000.dat"

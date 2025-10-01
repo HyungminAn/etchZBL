@@ -157,7 +157,8 @@ class Plotter:
                 y = np.array([data[k].get(elem, 0) for k in keys])
                 color = PARAMS.color_dict[elem]
                 line, = ax.plot(x, y, label=elem, color=color)
-                line_exp, = ax.plot(x_exp, y_exp, label=f"{elem} (exp)", color=color, marker='o', linestyle='--')
+                line_exp, = ax.plot(x_exp, y_exp, label=f"{elem} (exp)",
+                                    color=color, marker='o', linewidth=0)
                 self.decorate(ax, label)
                 line_dict[elem] = line
                 line_dict[f"{elem}_exp"] = line_exp
@@ -187,6 +188,11 @@ class Plotter:
         ax.set_title(PARAMS.ion_convert_dict[label] + ', 1000 eV on Si$_3$N$_4$', fontsize=10)
         ax.set_xlim(0, 1)
         ax.set_ylim(0, 2.0)
+
+        ax_twin = ax.twinx()
+        ax_twin.set_xlim(0, 1)
+        ax_twin.set_ylim(0, 2.0)
+        ax_twin.set_ylabel("Relative amount of atoms")
 
     def set_global_legend(self, fig, axes, line_dict):
         elem_list = PARAMS.elements_selected

@@ -1,6 +1,7 @@
-import yaml
-
 from dataclasses import dataclass
+from itertools import chain
+
+import yaml
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -8,22 +9,14 @@ import matplotlib.pyplot as plt
 class PlotInfo:
     color_list = {
         'SiO2': 'red',
-        # 'Si3N4': 'blue',
         'Si3N4': 'red',
     }
     marker_list = {
         'CF3': '^',
         'CF2': '^',
         'CF': '^',
-        'CH2F': '^',
         'CHF2': '^',
-    }
-    marker_list_exp = {
-        'CF3': 'o',
-        'CF2': 'o',
-        'CF': 'o',
-        'CH2F': 'o',
-        'CHF2': 'o',
+        'CH2F': '^',
     }
     species_list = [
         'CF3_',
@@ -36,13 +29,12 @@ class PlotInfo:
         'loc': 'lower center',
         'bbox_to_anchor': (0.5, 0),
         'frameon': False,
-        # 'loc': 'lower center',
-        # 'bbox_to_anchor': (0.5, -0.2),
     }
     scatter_props = {
         's': 30,
-        'edgecolor': 'k',
-        'alpha': 0.7,
+        # 'edgecolor': 'k',
+        'edgecolor': 'red',
+        'alpha': 1,
     }
     scatter_props_ref = {
         's': 30,
@@ -51,7 +43,7 @@ class PlotInfo:
     }
     fit_props = {
         'linestyle': '--',
-        'alpha': 0.3,
+        'alpha': 1,
     }
     label_map = {
         'SiO2': {
@@ -66,8 +58,15 @@ class PlotInfo:
             'exp': {
                 'CF3 (ref.1)': 'Karahashi et al.',
                 'CF3 (ref.2)': 'Toyoda et al.',
-                'CF2': 'Karahashi et al.',
-                'CF': 'Karahashi et al.',
+                'CF3 (ref.3)': 'Shibano et al.',
+                'CF3 (ref.4)': 'Yamaguchi et al.',
+
+                'CF2 (ref.1)': 'Karahashi et al.',
+                'CF2 (ref.3)': 'Shibano et al.',
+
+                'CF (ref.1)': 'Karahashi et al.',
+                'CF (ref.3)': 'Shibano et al.',
+
                 'CHF2': 'Ito et al.',
                 },
             },
@@ -86,19 +85,21 @@ class PlotInfo:
             },
         }
 
-    facecolor_map = {
-        'Karahashi et al.': 'black',
-        'Ito et al.': 'grey',
-        'Toyoda et al.': 'white',
+    scatter_prop_map = {
+        'Karahashi et al.': ('black', 'o'),
+        'Ito et al.': ('black', 's'),
+        'Toyoda et al.': ('black', 'D'),
+        'Shibano et al.': ('black', 'x'),
+        'Yamaguchi et al.': ('black', '+'),
     }
 
     key_convert_dict = {
-            'CF3_': 'CF$_3$',
-            'CF2_': 'CF$_2$',
-            'CF_': 'CF',
-            'CHF2_': 'CHF$_2$/CH$_2$F',
-            'CH2F_': 'CHF$_2$/CH$_2$F',
-            }
+        'CF3_': 'CF$_3$',
+        'CF2_': 'CF$_2$',
+        'CF_': 'CF',
+        'CHF2_': 'CHF$_2$/CH$_2$F',
+        'CH2F_': 'CHF$_2$/CH$_2$F',
+    }
 
 class DataPlotter:
     def run(self, data_total):
@@ -182,6 +183,7 @@ class DataPlotter:
                        color=plot_color,
                        marker=plot_marker,
                        label=label,
+                       zorder=1,
                        **PlotInfo.scatter_props)
 
             idx_select = np.where(np.abs(y) > 0.01)
@@ -190,26 +192,26 @@ class DataPlotter:
 
             z = np.polyfit(x, y, 1)
             y_hat = np.poly1d(z)(x)
-            ax.plot(x, y_hat, color=plot_color, **PlotInfo.fit_props)
+            ax.plot(x, y_hat, color=plot_color, zorder=0, **PlotInfo.fit_props)
 
     def plot_ref(self, ax, data):
         key = 'exp'
-        if len([i for i in data[key].keys()]) > 2:
-            raise ValueError('Too many data in the reference data')
-
+        system = data['system']
         for ion_type in data[key].keys():
             x = np.array([i for i in data[key][ion_type].keys()])
             y = np.array([i for i in data[key][ion_type].values()])
-            marker = PlotInfo.marker_list_exp[ion_type.split()[0]]
-
+            color, marker = PlotInfo.scatter_prop_map.get(
+                PlotInfo.label_map[system][key].get(ion_type)
+            )
             label = PlotInfo.label_map[data['system']][key].get(ion_type)
             if len(y) > 1:
-                ax.plot(x, y, color='k', linestyle='--')
+                ax.plot(x, y, color='k', linestyle='--', zorder=0)
 
             ax.scatter(x, y,
                        label=label,
                        marker=marker,
-                       facecolor=PlotInfo.facecolor_map.get(label),
+                       facecolor=color,
+                       zorder=0,
                        **PlotInfo.scatter_props_ref)
 
     def decorate(self, ax):
@@ -246,18 +248,17 @@ class DataPlotter:
         handles = unique_handles
         labels = unique_labels
 
-        fig.legend(handles, labels, ncol=len(labels), **PlotInfo.legend_props)
+        fig.legend(handles, labels, ncol=len(labels)/2, **PlotInfo.legend_props)
 
     @staticmethod
     def flip(items, ncol):
-        from itertools import chain
         return chain(*[items[i::ncol] for i in range(ncol)])
 
     def save(self, fig):
         # line = plt.Line2D([2/3, 2/3], [0.02, 0.98], color='grey', linestyle='--')
         # fig.add_artist(line)
         fig.tight_layout()
-        fig.subplots_adjust(bottom=0.2)
+        fig.subplots_adjust(bottom=0.23)
         name = '3_1_2_valid_etchyield'
         fig.savefig(f'{name}.png')
         fig.savefig(f'{name}.pdf')

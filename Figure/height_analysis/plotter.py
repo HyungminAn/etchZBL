@@ -38,13 +38,7 @@ class DataReconfigurerSelected:
                 data_selected[system] = data[system][key]
             print(f'Plotting {key} for {len(data_selected)} systems')
 
-            if key == 'fc_ratio_mixed':
-                ylim = (1, 4)
-            elif key == 'spx_ratio_mixed':
-                ylim = (0, 1)
-            else:
-                ylim = None
-
+            ylim = None
             ax_dict_selected = {system: ax_dict[system][idx] for system in data.keys()}
             result[key] = BatchAxisProcessor(data_selected,
                                              ax_dict_selected,
@@ -89,7 +83,7 @@ class DataPlotter:
         '''
         Save the figure in different formats.
         '''
-        fig.savefig(f'{name}.png')
+        fig.savefig(f'{name}.png', dpi=200)
         fig.savefig(f'{name}.pdf')
         fig.savefig(f'{name}.eps')
 
@@ -99,6 +93,7 @@ class DataPlotterSelected(DataPlotter):
         self.axis_config = [
             ('stacked', AxisProcessorMixedFilmStacked),
             ('atomcount_mixed', AxisProcessorAtomCountNumberDensity),
+            # ('height_change', AxisProcessorHeight),
         ]
 
     def run(self, data):
@@ -119,7 +114,12 @@ class DataPlotterSelected(DataPlotter):
 
     def adjust_xyticks(self, ax_dict):
         def xticks_formatter(x, _):
-            return str(int(x)) if x == int(x) else round(x, 1)
+            if x == int(x):
+                return str(int(x))
+            elif x == round(x, 1):
+                return round(x, 1)
+            else:
+                return round(x, 2)
 
         for idx, (system, axes) in enumerate(ax_dict.items()):
             # turn off y-tick labels for all but the first column
@@ -163,11 +163,10 @@ class DataPlotterSelected(DataPlotter):
             # 2: (0.5, 0.05),
             # 2: None,
         }
-
         for row in range(n_row):
             h, l = handles[row], labels[row]
             ncol = len(l) if len(l) < 3 else 3
-            if pos_dict[row] is None:
+            if pos_dict[row] is None or len(h) == 0:
                 continue
             fig.legend(h, l,
                        loc='lower center',

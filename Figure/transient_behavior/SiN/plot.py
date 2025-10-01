@@ -12,7 +12,9 @@ class PARAMS:
     for ion in ['CF+', 'CH2F+']:
         SIM_FILES[ion] = {}
         for e in ENERGIES:
-            SIM_FILES[ion][e] = f"./sim/data_{ion.replace('+','')}_{e}eV.csv"
+            # SIM_FILES[ion][e] = f"./sim/data_{ion.replace('+','')}_{e}eV.csv"
+            SIM_FILES[ion][e] = f"./sim_new/{ion.replace('+','')}_{e}_shifted_height.txt"
+
     EXP_CSV = './exp/thickness_ref1.csv'
     LINTYPES = ['-', '--', ':']
     EXP_MARKERS = {'CF+': 'o', 'CH2F+': 'o'}
@@ -84,6 +86,26 @@ class SimValuePlotter:
         ax.set_xlabel(r'Ion Dose ($\times$ 10$^{17}$ cm$^{-2}$)')
         ax.set_ylim(-1.5, 6.0)
 
+class SimValuePlotterNew(SimValuePlotter):
+    def __init__(self, files):
+        self.files = files
+
+    def run(self, ax):
+        for label, path in self.files.items():
+            if not os.path.exists(path):
+                continue
+            data = np.loadtxt(path, skiprows=1)
+            x, y = data[:, 0], data[:, 1]
+            x /= 9000
+            y -= y[0]  # Normalize to the first value
+            y /= 10
+            ax.plot(x, y, label=PARAMS.label_dict[label],
+                    color=PARAMS.SIM_COLORS.get(label.split('/')[0], 'red'))
+
+        ax.set_ylabel('Surface height change (nm)')
+        ax.set_xlabel(r'Ion Dose ($\times$ 10$^{17}$ cm$^{-2}$)')
+        ax.set_ylim(-3.0, 6.0)
+
 class ExpValuePlotter:
     def __init__(self, ptype, draw_fit=False, adjust_xlim=False):
         self.ptype = ptype.lower()
@@ -154,7 +176,8 @@ class Plotter:
             # lts = self.p.LINTYPES
             files = {f'{ion}/{e}eV': self.p.SIM_FILES[ion][e] for e in self.p.ENERGIES}
             ExpValuePlotter(ion, draw_fit=False, adjust_xlim=True).run(ax)
-            SimValuePlotter(files).run(ax)
+            # SimValuePlotter(files).run(ax)
+            SimValuePlotterNew(files).run(ax)
             # ax.set_title(f'{PARAMS.ion_name_dict[ion]}')
             ax.legend(loc='upper left', bbox_to_anchor=(0.01, 0.99), frameon=False)
             ax.text(-0.2, 1.1, alphabet_dict[i], transform=ax.transAxes, fontsize=10)
@@ -168,7 +191,7 @@ class Plotter:
 
     def run(self):
         fg = FigureGenerator()
-        self.run_calc_only(fg)
+        # self.run_calc_only(fg)
         self.run_calc_with_exp(fg)
 
     # def interp_colors(self, c1, c2, n):

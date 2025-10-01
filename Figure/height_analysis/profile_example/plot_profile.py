@@ -1,10 +1,6 @@
-import os
-from functools import wraps
 from dataclasses import dataclass
 
 from ase.io import read
-from ase.data import atomic_numbers, atomic_masses
-from ase.neighborlist import NeighborList
 import numpy as np
 from scipy.stats import gaussian_kde
 from scipy.spatial import cKDTree
@@ -53,27 +49,6 @@ class PARAMS:
         'F': '#90E050',
     }
 
-
-def save_npresult_as(func_gen_name):
-    '''
-    Decorator to save the result of a function as a numpy file.
-    '''
-    def decorator(func):
-        @wraps(func)
-        def wrapper(self, *args, **kwargs):
-            path_save = func_gen_name(self)
-            if os.path.exists(path_save):
-                print(f"{path_save} already exists, loading data from it.")
-                data = np.loadtxt(path_save, skiprows=1)
-                x = data[:, 0].astype(float)
-                y = data[:, 1]
-                return x, y
-            x, y = func(self, *args, **kwargs)
-            np.savetxt(path_save, np.c_[x, y], **PARAMS.NP_SAVE_OPTS)
-            return x, y
-        return wrapper
-    return decorator
-
 class DensityProfileGenerator:
     def run(self, atoms):
         pos_z = atoms.get_positions()[:, 2]
@@ -94,35 +69,10 @@ class DensityProfileGenerator:
         return result
 
 class DensityProfileAnalyzer:
-    def run(self, atoms, profile):
-        data = self.get_thickness(profile,
-                                  PARAMS.CUTOFF_RATIO_FILM,
-                                  PARAMS.CUTOFF_RATIO_MIXED,
-                                  )
-        density_mixed_layer = self.calculate_average_density(
-                atoms, data['z_mixed_min'], data['z_mixed_max'])
-        density_film_layer = self.calculate_average_density(
-                atoms, data['z_film_min'], data['z_film_max'])
-        fc_ratio_mixed_layer = self.calculate_FC_ratio(
-                atoms, data['z_mixed_min'], data['z_mixed_max'])
-        fc_ratio_film_layer = self.calculate_FC_ratio(
-                atoms, data['z_film_min'], data['z_film_max'])
-
-        spx_ratio = self.calculate_spx_ratio(
-                atoms, data['z_film_min'], data['z_film_max'])
-
-        carbon_status = self.get_carbon_status(atoms)
-
-        data.update({
-            'density_mixed_layer': density_mixed_layer,
-            'density_film_layer': density_film_layer,
-            'fc_ratio_mixed_layer': fc_ratio_mixed_layer,
-            'fc_ratio_film_layer': fc_ratio_film_layer,
-            'spx_ratio': spx_ratio,
-        })
-
+    def run(self, profile):
+        ct = CalculatorThickness()
+        data = ct.run(profile, PARAMS.CUTOFF_RATIO_FILM, PARAMS.CUTOFF_RATIO_MIXED)
         self.print_results(data)
-
         return data
 
     def print_results(self, data):
@@ -137,10 +87,104 @@ class DensityProfileAnalyzer:
                 print(f"{key:20}: {val}")
         return data
 
-    def get_thickness(self,
-                      profile,
-                      cutoff_ratio_film,
-                      cutoff_ratio_mixed):
+class DensityProfilePlotter:
+    def run(self, axes_config, ad_rbd, path_output):
+        plt.rcParams.update({'font.family': 'Arial', 'font.size': 10})
+        n_axis = len(axes_config)
+        fig, axes = plt.subplots(1, n_axis, figsize=(3.5 * 1.5, 7.1))
+        if n_axis == 1:
+            axes = [axes]
+
+        for ax, (text, (ad, fill_regions)) in zip(axes, axes_config.items()):
+            ad.run(ax)
+            ad_rbd.run(ax, fill_regions=fill_regions)
+            self.add_text(ax, text)
+
+        fig.tight_layout()
+        fig.savefig(f'{path_output}.png', dpi=200)
+        fig.savefig(f'{path_output}.eps')
+        fig.savefig(f'{path_output}.pdf')
+
+    def add_text(self, ax, text):
+        ax.text(-0.25, 1.05, text,
+                transform=ax.transAxes, ha='left', va='top', fontsize=10)
+
+class AxisDrawerAtomwiseDensity:
+    def __init__(self, profile):
+        self.profile = profile
+
+    def run(self, ax):
+        profile = self.profile
+        for elem in PARAMS.ELEM_LIST:
+            if elem not in profile:
+                continue
+            ax.plot(profile[elem], profile['z'], label=elem,
+                    color=PARAMS.ATOM_COLOR[elem], zorder=1)
+        ax.set_xlabel('Atom density')
+        ax.set_ylabel(r'Height ($\mathrm{\AA}$)')
+        ax.set_xlim(0, None)
+        ax.set_ylim(0, 200)
+        ax.legend()
+
+class AxisDrawerRatio:
+    def __init__(self, profile):
+        self.profile = profile
+
+    def run(self, ax):
+        profile = self.profile
+        prof_CHF = profile['C'] + profile['F']
+        prof_all = profile['Si'] + profile['O'] + prof_CHF
+        prof_ratio = prof_CHF / (prof_all + 1e-8)
+        ax.plot(prof_ratio, profile['z'], label='CHF/all', color='black', zorder=1)
+        ax.set_xlabel('CHF/SiOCHF')
+        ax.yaxis.label.set_visible(False)
+        ax.yaxis.set_ticklabels([])
+        ax.set_xlim(0, 1)
+        ax.set_ylim(0, 200)
+        ax.axvline(0.1, color='gray', linestyle='--', zorder=0, label='Mixed Layer Cutoff')
+        ax.axvline(0.6, color='gray', linestyle='--', zorder=0, label='Film Layer Cutoff')
+
+class AxisDrawerNormalizedRatio:
+    def __init__(self, profile):
+        self.profile = profile
+
+    def run(self, ax):
+        profile = self.profile
+        prof_CHF = profile['C'] + profile['F']
+        normalized_ratio = prof_CHF / np.max(prof_CHF)
+        ax.plot(normalized_ratio, profile['z'], label='CHF/CHF_max', color='red', zorder=1)
+        ax.set_xlabel('CHF/max(CHF)')
+        ax.yaxis.label.set_visible(False)
+        ax.yaxis.set_ticklabels([])
+        ax.set_xlim(0, 1)
+        ax.set_ylim(0, 200)
+        ax.axvline(0.6, color='gray', linestyle='--', zorder=0, label='Film Layer Cutoff')
+
+class AxisDrawerRegionBoundary:
+    def __init__(self, result):
+        self.result = result
+
+    def run(self, ax, fill_regions=False):
+        result = self.result
+        z_mixed_min = result['z_mixed_min']
+        z_mixed_max = result['z_mixed_max']
+        z_film_max = result['z_film_max']
+        z_film_max = result['z_film_max']
+        if z_mixed_min is not None:
+            ax.axhline(z_mixed_min, color='gray', linestyle='--', zorder=0)
+        if z_mixed_max is not None:
+            ax.axhline(z_mixed_max, color='gray', linestyle='--', zorder=0)
+        if z_film_max is not None:
+            ax.axhline(z_film_max, color='gray', linestyle='--', zorder=0)
+        if fill_regions:
+            ax.fill_between(x=ax.get_xlim(), y1=z_mixed_min, y2=z_mixed_max,
+                            color='#d1ae4d', alpha=0.5, label='Mixed Layer',
+                            zorder=0)
+            ax.fill_between(x=ax.get_xlim(), y1=z_mixed_max, y2=z_film_max,
+                            color='#3d2e04', alpha=0.5, label='Film Layer', zorder=0)
+
+class CalculatorThickness:
+    def run(self, profile, cutoff_ratio_film, cutoff_ratio_mixed):
         """
         profile: dict with keys 'z', 'Si', 'O', 'C', 'H', 'F'
         x1: peak threshold to define existence of film
@@ -246,67 +290,37 @@ class DensityProfileAnalyzer:
 
         return z_film_min, z_film_max, h_film
 
-    def calculate_average_density(self, atoms, z_min, z_max):
-        if z_min is None or z_max is None:
-            return None
-
-        cell = atoms.get_cell()
-        pos_z = atoms.get_positions()[:, 2]
-        mask = (np.logical_and(pos_z >= z_min, pos_z <= z_max))
-
-        if np.sum(mask) == 0:
-            return None
-
-        symbols = atoms.get_chemical_symbols()
-        masses = [atomic_masses[atomic_numbers[symbol]]
-                  for idx, symbol in enumerate(symbols) if mask[idx]]
-        masses = np.array(masses)
-        total_mass = np.sum(masses)  # amu unit
-
-        lat_x, lat_y = cell[0, 0], cell[1, 1]
-        volume = lat_x * lat_y * (z_max - z_min)  # A^3
-
-        AMU_TO_G = 1.66053906660e-24  # g
-        A3_TO_CM3 = 1e-24  # cm^3
-
-        density = (total_mass * AMU_TO_G) / (volume * A3_TO_CM3)  # g/cm^3
-        return density
-
-    def calculate_FC_ratio(self, atoms, z_min, z_max):
-        if z_min is None or z_max is None:
-            return None
-
-        pos_z = atoms.get_positions()[:, 2]
-        mask = (np.logical_and(pos_z >= z_min, pos_z <= z_max))
-
-        if np.sum(mask) == 0:
-            return None
-
-        symbols = atoms.get_chemical_symbols()
-        symbols = [symbols[idx] for idx in range(len(symbols)) if mask[idx]]
-        mask_C = np.array([idx for idx, symbol in enumerate(symbols) if symbol == 'C'])
-        mask_F = np.array([idx for idx, symbol in enumerate(symbols) if symbol == 'F'])
-        if len(mask_C) ==0 or len(mask_F) == 0:
-            return None
-        fc_ratio = len(mask_F) / len(mask_C)
-        return fc_ratio
-
-    def calculate_spx_ratio(self, atoms, z_min, z_max):
+class CalculatorBondDensity:
+    def run(self, atoms, z_min, z_max, bin_width=0.5):
         """
-        Compute spx hybridization counts for carbon atoms within a specified z-range,
-        accounting for periodic boundary conditions and per-pair cutoffs.
+        Compute bond density profiles for specified bond types within a z-range.
+
+        The z-range is divided into bins of `bin_width`. The density is
+        calculated as the number of bonds per bin divided by the bin volume.
+
+        Args:
+            atoms (ase.Atoms): An Atoms object containing positions and symbols.
+            z_min (float): The minimum z-coordinate to consider.
+            z_max (float): The maximum z-coordinate to consider.
+            bin_width (float): The width of the z-bins for density calculation.
 
         Returns:
-            dict: {'sp3': int, 'sp2': int, 'sp': int, 'others': int}
+            dict: A dictionary containing z-bin centers and density profiles for
+                  each bond category. Returns None if no atoms are found or
+                  if the z-range is invalid.
         """
-        if z_min is None or z_max is None:
+        if z_min is None or z_max is None or z_min >= z_max:
             return None
 
         # Positions and cell dimensions for PBC
         positions = atoms.get_positions()
+        symbols = atoms.get_chemical_symbols()
+
         # Assumes orthorhombic cell: use diagonal entries
         box = atoms.get_cell().diagonal()
-        tree = cKDTree(positions, boxsize=box)
+        if np.any(box <= 0):
+            print("Error: Invalid or non-orthorhombic cell dimensions.")
+            return None
 
         # Filter atoms by z-range
         z_coords = positions[:, 2]
@@ -314,301 +328,171 @@ class DensityProfileAnalyzer:
         if not np.any(z_mask):
             return None
 
-        symbols = atoms.get_chemical_symbols()
-        # Map element to cutoff-matrix index
+        # Map element to cutoff-matrix index.
+        # This mapping must be consistent with the provided cutoff_matrix.
+        # For this example, we'll use a hardcoded map and dummy data.
         symbol_map = {'Si': 0, 'O': 1, 'C': 2, 'H': 3, 'F': 4}
 
-        # Load pairwise cutoff distances
+        # Define the bond categories based on element groups
+        group1_elements = {'Si', 'O'}
+        group2_elements = {'C', 'H', 'F'}
+
+        # Load pairwise cutoff distances.
         cutoff_mat = np.loadtxt('cutoff_matrix.npy')
 
-        # Identify carbon atoms in region
-        region_idx = np.where(z_mask)[0]
-        is_carbon = np.array([symbols[i] == 'C' for i in region_idx])
-        carbon_idx = region_idx[is_carbon]
-        if carbon_idx.size == 0:
-            return None
+        # Build the cKDTree for all atoms in the system
+        tree = cKDTree(positions, boxsize=box)
 
-        # Build a tree for carbon atoms
-        carbon_pos = positions[carbon_idx]
-        carbon_tree = cKDTree(carbon_pos, boxsize=box)
-
-        # Use sparse distance matrix to get all pairs within max cutoff
+        # Use a max cutoff for the initial neighbor search
         max_cut = cutoff_mat.max()
-        # sparse_distance_matrix returns dict {(i_local, j_global): distance}
-        dist_dict = carbon_tree.sparse_distance_matrix(tree, max_cut)
+
+        # Query all pairs within max_cut. sparse_distance_matrix returns a dict
+        # {(i, j): distance} for pairs i, j.
+        dist_dict = tree.sparse_distance_matrix(tree, max_cut)
 
         # Convert to arrays for vectorized filtering
         pairs = np.array(list(dist_dict.keys()), dtype=int)
         dists = np.array(list(dist_dict.values()))
-        i_local, j_global = pairs[:, 0], pairs[:, 1]
 
-        # Remove self-pairs
-        global_i = carbon_idx[i_local]
-        self_mask = (global_i == j_global)
-        i_local = i_local[~self_mask]
+        # Separate indices of the pair
+        i_global, j_global = pairs[:, 0], pairs[:, 1]
+
+        # Remove self-pairs (i == j)
+        self_mask = (i_global == j_global)
+        i_global = i_global[~self_mask]
         j_global = j_global[~self_mask]
         dists = dists[~self_mask]
 
-        # Determine neighbor types and corresponding cutoffs
-        j_types = np.array([symbol_map[symbols[j]] for j in j_global])
-        c_type = symbol_map['C']
-        valid_cut = cutoff_mat[c_type, j_types]
-        valid = dists <= valid_cut
+        # Use only unique pairs (i < j) to avoid double counting bonds
+        # Note: cKDTree returns both (i, j) and (j, i)
+        unique_pair_mask = (i_global < j_global)
+        i_global = i_global[unique_pair_mask]
+        j_global = j_global[unique_pair_mask]
+        dists = dists[unique_pair_mask]
 
-        # Count neighbors per carbon atom
-        counts = np.bincount(i_local[valid], minlength=carbon_idx.size)
+        # Vectorized check for valid bonds based on pairwise cutoffs
+        i_types = np.array([symbol_map.get(symbols[i], -1) for i in i_global])
+        j_types = np.array([symbol_map.get(symbols[j], -1) for j in j_global])
 
-        # Classify hybridization
-        spx_ratio = {
-            'sp3': int(np.count_nonzero(counts == 4)),
-            'sp2': int(np.count_nonzero(counts == 3)),
-            'sp': int(np.count_nonzero(counts == 2)),
-            'others': int(np.count_nonzero(~np.isin(counts, [2, 3, 4])))
+        # Check for invalid symbols (not in symbol_map)
+        valid_symbol_mask = (i_types != -1) & (j_types != -1)
+        i_global = i_global[valid_symbol_mask]
+        j_global = j_global[valid_symbol_mask]
+        dists = dists[valid_symbol_mask]
+        i_types = i_types[valid_symbol_mask]
+        j_types = j_types[valid_symbol_mask]
+
+        # Get the correct cutoff for each valid pair
+        valid_cutoffs = cutoff_mat[i_types, j_types]
+
+        # Filter for bonds within their specific cutoff
+        valid_bond_mask = dists <= valid_cutoffs
+
+        # Get the final list of valid bonds
+        bond_i_idx = i_global[valid_bond_mask]
+        bond_j_idx = j_global[valid_bond_mask]
+
+        # Calculate the z-coordinate of the midpoint for each bond
+        bond_z_midpoints = (positions[bond_i_idx, 2] + positions[bond_j_idx, 2]) / 2.0
+
+        # Filter bonds to only those with midpoints in the specified z-range
+        midpoint_mask = (bond_z_midpoints >= z_min) & (bond_z_midpoints <= z_max)
+        bond_i_idx = bond_i_idx[midpoint_mask]
+        bond_j_idx = bond_j_idx[midpoint_mask]
+        bond_z_midpoints = bond_z_midpoints[midpoint_mask]
+
+        # Initialize bins for bond counts
+        num_bins = int(np.ceil((z_max - z_min) / bin_width))
+        bins = np.linspace(z_min, z_max, num_bins + 1)
+        bin_indices = np.digitize(bond_z_midpoints, bins) - 1 # -1 to make it 0-indexed
+
+        # Initialize count arrays for each bond category
+        counts_cat1 = np.zeros(num_bins, dtype=int)
+        counts_cat2 = np.zeros(num_bins, dtype=int)
+        counts_cat3 = np.zeros(num_bins, dtype=int)
+
+        # Categorize and count bonds
+        for i, j, bin_idx in zip(bond_i_idx, bond_j_idx, bin_indices):
+            if bin_idx >= num_bins or bin_idx < 0:
+                continue
+
+            sym_i, sym_j = symbols[i], symbols[j]
+            is_i_g1 = sym_i in group1_elements
+            is_j_g1 = sym_j in group1_elements
+            is_i_g2 = sym_i in group2_elements
+            is_j_g2 = sym_j in group2_elements
+
+            if is_i_g1 and is_j_g1:
+                counts_cat1[bin_idx] += 1
+            elif is_i_g2 and is_j_g2:
+                counts_cat2[bin_idx] += 1
+            else:
+                # All other bonds (Si-C, C-O, etc.)
+                counts_cat3[bin_idx] += 1
+
+        # Calculate bin volume
+        bin_volume = box[0] * box[1] * bin_width
+
+        # Calculate densities (bonds per volume)
+        density_cat1 = counts_cat1 / bin_volume
+        density_cat2 = counts_cat2 / bin_volume
+        density_cat3 = counts_cat3 / bin_volume
+
+        # Get the center of each bin for plotting
+        z_bin_centers = (bins[:-1] + bins[1:]) / 2
+
+        # Return the results
+        return {
+            'z_bins': z_bin_centers,
+            'Si_O_bonds': density_cat1,
+            'C_H_F_bonds': density_cat2,
+            'Other_bonds': density_cat3,
         }
 
-        # Debug output
-        debug = True
-        debug_n = 10
-        if debug:
-            print(f"Debug spx for first {min(debug_n, carbon_idx.size)} carbons:")
-            for il in range(min(debug_n, carbon_idx.size)):
-                gi = carbon_idx[il]
-                cnt = int(counts[il]) if il < counts.size else 0
-                hyb = ('sp3' if cnt == 4 else 'sp2' if cnt == 3 else 'sp' if cnt == 2 else 'others')
-                print(f"Carbon global idx {gi} (local {il}): hybridization={hyb}, neighbor count={cnt}")
-                mask_pair = (valid & (i_local == il))
-                nbrs = j_global[mask_pair]
-                dists_n = dists[mask_pair]
-                for jg, dist in zip(nbrs, dists_n):
-                    pos = positions[jg]
-                    print(f"  Neighbor idx {jg}: pos={pos}, dist={dist:.3f}")
+class AxisDrawerBondDensity:
+    def __init__(self, bond_profile):
+        self.bond_profile = bond_profile
 
-        return spx_ratio
+    def run(self, ax):
+        x = self.bond_profile['z_bins']
+        y1 = self.bond_profile['Si_O_bonds']
+        y2 = self.bond_profile['C_H_F_bonds']
+        y3 = self.bond_profile['Other_bonds']
+        ax.plot(y1, x, label='Si-O', color='blue', zorder=1)
+        ax.plot(y2, x, label='C-H-F', color='green', zorder=1)
+        ax.plot(y3, x, label='others', color='red', zorder=1)
 
-    def get_carbon_status(self, atoms):
-        cnc = CarbonNeighborClassifier(atoms)
-        classification = cnc.run()
-
-class CarbonNeighborClassifier:
-    """
-    Classify carbon atoms based on neighbor atom types using a cutoff matrix.
-
-    Attributes:
-        atoms: ASE Atoms object
-        cutoff_matrix: 2D numpy array of pairwise cutoffs (element_type x element_type)
-        element_order: list of element symbols defining indices in cutoff_matrix
-    """
-    def __init__(self, atoms, element_order=None):
-        self.atoms = atoms
-        self.cutoff_matrix = np.loadtxt('cutoff_matrix.npy')
-        # Default element order if not provided
-        if element_order is None:
-            self.element_order = ["Si", "O", "C", "H", "F"]
-        else:
-            self.element_order = element_order
-        self.symbol_to_index = {sym: i for i, sym in enumerate(self.element_order)}
-
-    def run(self):
-        """
-        Classify each carbon atom based on its neighbors.
-        Returns:
-            dict: mapping carbon atom index -> classification string
-        """
-        adjacency = self.build_adjacency()
-        symbols = self.atoms.get_chemical_symbols()
-        classification = {}
-        # Iterate over all atoms, pick carbons
-        for idx, sym in enumerate(symbols):
-            if sym != 'C':
-                continue
-            # Get neighbor symbols
-            nbr_syms = [symbols[j] for j in adjacency[idx]]
-            # Determine bond type
-            bondtype = self.get_bondtype(nbr_syms)
-            classification[idx] = bondtype
-
-        result = {}
-        for idx, bondtype in classification.items():
-            if result.get(bondtype) is None:
-                result[bondtype] = []
-            result[bondtype].append(idx)
-        result = {k: len(v) for k, v in result.items()}
-        return result
-
-    def build_adjacency(self):
-        """
-        Build adjacency list based on cutoff distances with periodic boundary conditions.
-        Returns:
-            adjacency: list of sets, adjacency[i] is the set of neighbor indices of atom i
-        """
-        # Ensure wrapped within cell
-        self.atoms.wrap()
-        positions = self.atoms.get_positions()
-        # Clean tiny negative values
-        positions[positions < -1e-10] = 0.0
-        # PBC box lengths
-        cell_lengths = self.atoms.get_cell().lengths()
-        # Build k-d tree
-        tree = cKDTree(positions, boxsize=cell_lengths)
-        max_cutoff = np.max(self.cutoff_matrix)
-        # Sparse distance in COO
-        pairs = tree.sparse_distance_matrix(tree, max_cutoff, output_type='coo_matrix')
-        num_atoms = len(self.atoms)
-        adjacency = [set() for _ in range(num_atoms)]
-        row, col, dist = pairs.row, pairs.col, pairs.data
-        atom_types = np.array([self.symbol_to_index[s] for s in self.atoms.get_chemical_symbols()])
-        # Filter by element-specific cutoff
-        valid = dist <= self.cutoff_matrix[atom_types[row], atom_types[col]]
-        for i, j in zip(row[valid], col[valid]):
-            if i != j:
-                adjacency[i].add(j)
-                adjacency[j].add(i)
-        return adjacency
-
-    @staticmethod
-    def get_bondtype(symbols):
-        """
-        Classify based on the multiset of neighbor symbols.
-        Input:
-            symbols: list or space-separated string of neighbor element symbols
-        Returns:
-            classification string
-        """
-        case_dict = {
-            ('C',): 'CX',
-            ('C', 'H'): 'CX',
-            ('Si',): 'SiC_cluster',
-            ('H', 'Si'): 'SiC_cluster',
-            ('C', 'Si'): 'SiC_cluster',
-            ('C', 'H', 'Si'): 'SiC_cluster',
-            ('F', 'Si'): 'SiC_cluster',
-            ('F', 'H', 'Si'): 'SiC_cluster',
-            ('C', 'F', 'Si'): 'SiC_cluster',
-            ('C', 'F', 'H', 'Si'): 'SiC_cluster',
-            ('C', 'O', 'Si'): 'SiC_cluster',
-            ('C', 'H', 'O', 'Si'): 'SiC_cluster',
-            ('C', 'F'): 'Fluorocarbon',
-            ('C', 'F', 'H'): 'Fluorocarbon',
-            ('C', 'O'): 'Fluorocarbon',
-            ('C', 'H', 'O'): 'Fluorocarbon',
-            ('C', 'F', 'O'): 'Fluorocarbon',
-            ('C', 'F', 'H', 'O'): 'Fluorocarbon',
-            ('C', 'F', 'O', 'Si'): 'Fluorocarbon',
-            ('C', 'F', 'H', 'O', 'Si'): 'Fluorocarbon',
-        }
-        if symbols is None:
-            return 'etc'
-        if isinstance(symbols, str):
-            symbols = symbols.split()
-        key = tuple(sorted(set(symbols)))
-        out = case_dict.get(key)
-        if out == 'CX':
-            # Count number of C bonds
-            count_C = symbols.count('C')
-            return f"C{count_C}"
-        return out if out is not None else 'etc'
-
-class DensityProfilePlotter:
-    def run(self, profile, result, path_output):
-        plt.rcParams.update({'font.family': 'Arial', 'font.size': 10})
-        fig, axes = plt.subplots(1, 3, figsize=(3.5 * 1.5, 7.1))
-        ax_left, ax_middle, ax_right = axes
-        self.draw_atomwise_density(ax_left, profile)
-        self.draw_ratio(ax_middle, profile)
-        self.draw_normalized_ratio(ax_right, profile)
-
-        self.draw_region_boundary(ax_left, result, fill_regions=False)
-        self.draw_region_boundary(ax_middle, result, fill_regions=True)
-        self.draw_region_boundary(ax_right, result, fill_regions=True)
-
-        self.add_text(ax_left, '(b)')
-        self.add_text(ax_middle, '(c)')
-        self.add_text(ax_right, '(d)')
-
-        fig.tight_layout()
-        fig.savefig(path_output, dpi=200)
-
-    def draw_atomwise_density(self, ax, profile):
-        for elem in PARAMS.ELEM_LIST:
-            if elem not in profile:
-                continue
-            ax.plot(profile[elem], profile['z'], label=elem,
-                    color=PARAMS.ATOM_COLOR[elem], zorder=1)
-        ax.set_xlabel('Atom density')
-        ax.set_ylabel(r'Height ($\mathrm{\AA}$)')
         ax.set_xlim(0, None)
         ax.set_ylim(0, 200)
-        ax.legend()
-
-    def draw_ratio(self, ax, profile):
-        # prof_CHF = profile['C'] + profile['H'] + profile['F']
-        prof_CHF = profile['C'] + profile['F']
-        prof_all = profile['Si'] + profile['O'] + prof_CHF
-        prof_ratio = prof_CHF / (prof_all + 1e-8)
-        ax.plot(prof_ratio, profile['z'], label='CHF/all', color='black', zorder=1)
-        ax.set_xlabel('CHF/SiOCHF')
-        ax.yaxis.label.set_visible(False)
-        ax.yaxis.set_ticklabels([])
-        ax.set_xlim(0, 1)
-        ax.set_ylim(0, 200)
-        ax.axvline(0.1, color='gray', linestyle='--', zorder=0, label='Mixed Layer Cutoff')
-        ax.axvline(0.6, color='gray', linestyle='--', zorder=0, label='Film Layer Cutoff')
-
-    def draw_normalized_ratio(self, ax, profile):
-        prof_CHF = profile['C'] + profile['F']
-        normalized_ratio = prof_CHF / np.max(prof_CHF)
-        ax.plot(normalized_ratio, profile['z'], label='CHF/CHF_max', color='red', zorder=1)
-        ax.set_xlabel('CHF/max(CHF)')
-        ax.yaxis.label.set_visible(False)
-        ax.yaxis.set_ticklabels([])
-        ax.set_xlim(0, 1)
-        ax.set_ylim(0, 200)
-        ax.axvline(0.6, color='gray', linestyle='--', zorder=0, label='Film Layer Cutoff')
-
-    def draw_region_boundary(self, ax, result, fill_regions=False):
-        z_mixed_min = result['z_mixed_min']
-        z_mixed_max = result['z_mixed_max']
-        z_film_max = result['z_film_max']
-        z_film_max = result['z_film_max']
-        if z_mixed_min is not None:
-            ax.axhline(z_mixed_min, color='gray', linestyle='--', zorder=0)
-        if z_mixed_max is not None:
-            ax.axhline(z_mixed_max, color='gray', linestyle='--', zorder=0)
-        if z_film_max is not None:
-            ax.axhline(z_film_max, color='gray', linestyle='--', zorder=0)
-        if fill_regions:
-            ax.fill_between(x=ax.get_xlim(), y1=z_mixed_min, y2=z_mixed_max,
-                            color='#d1ae4d', alpha=0.5, label='Mixed Layer',
-                            zorder=0)
-            ax.fill_between(x=ax.get_xlim(), y1=z_mixed_max, y2=z_film_max,
-                            color='#3d2e04', alpha=0.5, label='Film Layer', zorder=0)
-
-    def add_text(self, ax, text):
-        ax.text(-0.25, 1.05, text, transform=ax.transAxes, ha='left', va='top',
-                fontsize=10)
+        ax.set_xlabel('Bond Density (bonds/Å³)')
+        ax.set_ylabel(r'Height ($\mathrm{\AA}$)')
+        ax.legend(loc='upper right', fontsize=10, frameon=False)
 
 def main():
     image_list = {
-            # 'density_profile_1.png': "/data_etch/data_HM/nurion/set_1/CF_100_coo/CF/100eV/rm_byproduct_str_shoot_20.coo",
-            # 'density_profile_2.png': "/data_etch/data_HM/nurion/set_1/CF_100_coo/CF/100eV/rm_byproduct_str_shoot_1000.coo",
-            # 'density_profile_2.png': "/data_etch/data_HM/nurion/set_3/CF_300_coo/CF/300eV/rm_byproduct_str_shoot_130.coo",
-            # 'density_profile_3.png': "/data_etch/data_HM/nurion/set_1/CF_100_coo/CF/100eV/rm_byproduct_str_shoot_2000.coo",
-            'density_profile_4.png': "/data_etch/data_HM/nurion/set_1/CF_100_coo/CF/100eV/rm_byproduct_str_shoot_4500.coo",
-            # 'density_profile_5.png': "/data_etch/data_HM/nurion/set_1/CF_100_coo/CF/100eV/rm_byproduct_str_shoot_6690.coo",
-            # 'density_profile_5.png': "/data_etch/data_HM/nurion/set_1/CF_100_coo/CF/100eV/rm_byproduct_str_shoot_9000.coo",
-            # 'density_profile_5.png': "/data_etch/data_HM/nurion/set_2/CF_250_coo/CF/250eV/rm_byproduct_str_shoot_830.coo",
+            # 'result.png': "/data_etch/data_HM/nurion/set_1/CF_100_coo/CF/100eV/rm_byproduct_str_shoot_4500.coo",
+            'result': "str.coo",
             }
 
     dpg = DensityProfileGenerator()
     dpa = DensityProfileAnalyzer()
     dpl = DensityProfilePlotter()
+    dpb = CalculatorBondDensity()
 
     for path_output, path_image in image_list.items():
         atoms = read(path_image, **PARAMS.LAMMPS_READ_OPTS)
         profile = dpg.run(atoms)
-        analyze_result = dpa.run(atoms, profile)
-        dpl.run(profile, analyze_result, path_output)
+        analyze_result = dpa.run(profile)
+        bond_result = dpb.run(atoms, 0, 200)
 
+        axes_config = {
+            '(b)': (AxisDrawerAtomwiseDensity(profile), False),
+            # '(c)': (AxisDrawerRatio(profile), True),
+            # '(d)': (AxisDrawerNormalizedRatio(profile), True),
+            '(c)': (AxisDrawerBondDensity(bond_result), False),
+        }
+        ad_rbd = AxisDrawerRegionBoundary(analyze_result)
+        dpl.run(axes_config, ad_rbd, path_output)
 
 if __name__ == "__main__":
     main()

@@ -169,7 +169,7 @@ class PARAMS:
         class ATOMDENSITY:
             SPACING = 0.1  # density profile
             BW_WIDTH = 0.2  # density profile
-            CUTOFF_RATIO_FILM = 0.6  # density profile
+            CUTOFF_RATIO_FILM = 0.8  # density profile
             CUTOFF_RATIO_MIXED = 0.1  # density profile
             CUTOFF_RATIO_FILM_UPPER = 0.5  # density profile
             ELEM_LIST_SiO2 = ['Si', 'O', 'C', 'H', 'F']

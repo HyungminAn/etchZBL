@@ -70,8 +70,8 @@ class AxisProcessorHeight(BaseAxisProcessor):
         Plot the height change.
         '''
         x, y, _ = self.data
-        color = PARAMS.PLOT.COLORS.COLORS.get(self.system, PARAMS.PLOT.COLORS.COLOR_LIST['default'])
-        # color = PARAMS.PLOT.COLORS.COLORS_Si3N4.get(self.system, PARAMS.PLOT.COLORS.COLOR_LIST['default'])
+        # color = PARAMS.PLOT.COLORS.COLORS.get(self.system, PARAMS.PLOT.COLORS.COLOR_LIST['default'])
+        color = PARAMS.PLOT.COLORS.COLORS_Si3N4.get(self.system, PARAMS.PLOT.COLORS.COLOR_LIST['default'])
         self.ax.plot(x, y, 'o-', markersize=2, color=color, alpha=0.5)
         self.ax.axhline(0, color='grey', linestyle='--', linewidth=0.4, alpha=0.5)
         print(f'{self.system}: Etched thickness {np.min(y):.2f} nm')
