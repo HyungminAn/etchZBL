@@ -1,0 +1,15 @@
+##########################################################
+# Simple cell relaxation CUBIC CELL
+##########################################################
+
+units           metal
+newton          on
+dimension       3
+boundary        p p p   # periodic boundary conditions (f ? aperiodic/ p - periodic)
+atom_style 	atomic      # Define what style of atoms to use in a simulation. http://lammps.sandia.gov/doc/atom_style.html
+
+#box tilt large
+read_data coo                        # from where coordinates are read
+
+
+pair_style     zbl/pair

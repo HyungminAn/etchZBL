@@ -1,0 +1,9 @@
+neighbor 2 bin
+neigh_modify    every 50 delay 0 check yes   # When the neighbours list will be updated http://lammps.sandia.gov/doc/neigh_modify.html
+compute 	_rg all gyration                # All atoms will be involved in the simulation http://lammps.sandia.gov/doc/compute.html 
+thermo_style custom temp etotal pxx pyy pzz pxy pyz pxz
+
+run 0
+
+variable e equal etotal
+print "free  energy $e"
