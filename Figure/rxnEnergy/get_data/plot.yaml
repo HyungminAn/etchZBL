@@ -1,0 +1,3 @@
+src: "/data_etch/figure_HM/Supplementary/06_RxnEmetric"
+cal_type_1: 'dft'
+cal_type_2: 'bpnn'
