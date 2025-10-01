@@ -322,3 +322,4 @@
 </div>
 
 # Other scripts
+See `etc/README.md`.
