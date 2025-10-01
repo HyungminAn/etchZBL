@@ -223,7 +223,6 @@ class EtchSimulator:
                           self.etc_params,
                           elmlist=self.pot_params[KEY.ELMLIST],
                           log=self.log)
-        to_check_slab_height = nit % self.run_params[KEY.SLAB_UPDATE_ITERATION] == 0
         if calc.calc_done():
             self.log.print(f'Calculation is already done at {nit} iteration')
             is_lmp_input_updated = calc.update_height_parameter()
@@ -250,6 +249,7 @@ class EtchSimulator:
 
         calc.update()
         calc.remove_byproduct()
+        to_check_slab_height = nit % self.run_params[KEY.SLAB_UPDATE_ITERATION] == 0
         if to_check_slab_height:
             is_anneal_needed = calc.slab_modify_height()
 

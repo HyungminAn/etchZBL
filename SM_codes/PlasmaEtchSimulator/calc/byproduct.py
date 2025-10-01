@@ -47,11 +47,18 @@ class ByProductRemover:
 
         remove_cluster_height = calc.etch_params['remove_high_clutser_height_crit']
         fix_height = calc.etch_params['fix']
-        calc.str_out = self._remove_byproduct(calc.str_out,
-                                              calc.clusters_in,
-                                              remove_cluster_height,
-                                              fix_height
-                                              )
+        ### ------------------------- For debugging --------------------
+        is_remove_within_removal_region = calc.etch_params.get('remove_within_removal_region', False)
+        if is_remove_within_removal_region:
+            calc.str_out = self._remove_byproduct_within_removal_region(calc.str_out, calc.clusters_in, remove_cluster_height, fix_height)
+            self.logger.print(f'Remove byproducts within removal region')
+        ### ------------------------- For debugging --------------------
+        else:
+            calc.str_out = self._remove_byproduct(calc.str_out,
+                                                  calc.clusters_in,
+                                                  remove_cluster_height,
+                                                  fix_height
+                                                  )
         save_atom(calc, 'rm_byproduct_'+calc.name_in, calc.str_out)
         calc.byproduct_removed = True
 
@@ -99,6 +106,54 @@ class ByProductRemover:
             h_cluster_min = np.min(pos_z[np.array(list(cluster))])
             is_within_fixed_region = h_cluster_min < fix_height
             if is_within_fixed_region:
+                continue
+
+            label, is_in_byproduct = self._is_in_byproduct(cluster, atoms)
+            self.logger.print(f'Cluster {idx} : {label} is in byproduct list : {is_in_byproduct}')
+            if is_in_byproduct:
+                idx_to_remove += list(cluster)
+                continue
+
+            is_unnecessary_cluster = h_cluster_min - h_slab_max > slab_height_crit
+            if is_unnecessary_cluster:
+                self.logger.print(f'Cluster {idx} : {label} is unnecessary (height : {h_cluster_min:.2f} - {h_slab_max:.2f} > {slab_height_crit:.2f})')
+                idx_to_remove += list(cluster)
+                continue
+
+        ## Remove the byproduct from the ase.Atom object
+        del oatom[idx_to_remove]
+
+        return oatom
+
+    def _remove_byproduct_within_removal_region(self,
+                                                atoms : ase.Atoms,
+                                                cluster_list : list,
+                                                slab_height_crit : float,
+                                                fix_height : float) -> ase.Atoms:
+        oatom = copy.deepcopy(atoms)
+        slab_idx = np.argmax([len(c) for c in cluster_list])
+        pos_z = atoms.get_positions()[:, 2].flatten()
+        h_slab_max = np.max(pos_z[np.array(list(cluster_list[slab_idx]))])
+
+        thickness_removal_region = 20.0  # arbitrary value
+        removal_crit = h_slab_max - thickness_removal_region
+
+        # Get chemical symbols and number of atoms for each cluster
+        idx_to_remove = []
+
+        for idx, cluster in enumerate(cluster_list):
+            ## Pass the cluster is slab
+            if idx == slab_idx:
+                continue
+
+            h_cluster_min = np.min(pos_z[np.array(list(cluster))])
+            is_within_fixed_region = h_cluster_min < fix_height
+            if is_within_fixed_region:
+                continue
+
+            h_cluster_max = np.max(pos_z[np.array(list(cluster))])
+            if h_cluster_max < removal_crit:
+                self.logger.print(f'debug - Cluster {idx} : {h_cluster_max:.2f} < {removal_crit:.2f} is within removal region')
                 continue
 
             label, is_in_byproduct = self._is_in_byproduct(cluster, atoms)

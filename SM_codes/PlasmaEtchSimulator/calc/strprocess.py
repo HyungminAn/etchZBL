@@ -126,6 +126,11 @@ class StrProcess:
     def calc_done(self) -> bool:
         return self.exists_out
 
+    def skip_calc(self, crit) -> bool:
+        if self.iteration < crit:
+            return True
+        return False
+
     def has_input(self) -> bool:
         return self.exists_in
 
