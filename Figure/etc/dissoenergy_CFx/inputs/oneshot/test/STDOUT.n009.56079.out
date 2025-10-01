@@ -1,0 +1,63 @@
+LAMMPS (2 Aug 2023 - Update 1)
+  using 1 OpenMP thread(s) per MPI task
+Reading data file ...
+  orthogonal box = (0 0 0) to (20 20 20)
+  2 by 4 by 4 MPI processor grid
+  reading atoms ...
+  4 atoms
+  read_data CPU = 0.308 seconds
+WARNING: No fixes with time integration, atoms won't move (src/verlet.cpp:60)
+Generated 0 of 10 mixed pair_coeff terms from geometric mixing rule
+Neighbor list info ...
+  update: every = 1 steps, delay = 0 steps, check = yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 8
+  ghost atom cutoff = 8
+  binsize = 4, bins = 5 5 5
+  2 neighbor lists, perpetual/occasional/extra = 2 0 0
+  (1) pair nn/intel, perpetual
+      attributes: full, newton on
+      pair build: full/bin/atomonly
+      stencil: full/bin/3d
+      bin: standard
+  (2) pair zbl/pair, perpetual, half/full trim from (1)
+      attributes: half, newton on, cut 4.054
+      pair build: halffull/newton/trim
+      stencil: none
+      bin: none
+Setting up Verlet run ...
+  Unit style    : metal
+  Current step  : 0
+  Time step     : 0.001
+Per MPI rank memory allocation (min/avg/max) = 3.581 | 3.585 | 3.706 Mbytes
+   Step          Temp          E_pair         E_mol          TotEng         Press     
+         0   0             -19.46906       0             -19.46906       9.3321286    
+Loop time of 2.19466e-06 on 32 procs for 0 steps with 4 atoms
+
+152.4% CPU use with 32 MPI tasks x 1 OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 0          | 0          | 0          |   0.0 |  0.00
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 0          | 0          | 0          |   0.0 |  0.00
+Output  | 0          | 0          | 0          |   0.0 |  0.00
+Modify  | 0          | 0          | 0          |   0.0 |  0.00
+Other   |            | 2.195e-06  |            |       |100.00
+
+Nlocal:          0.125 ave           4 max           0 min
+Histogram: 31 0 0 0 0 0 0 0 0 1
+Nghost:        6.96875 ave          17 max           0 min
+Histogram: 1 0 11 0 12 4 0 3 0 1
+Neighs:         0.1875 ave           6 max           0 min
+Histogram: 31 0 0 0 0 0 0 0 0 1
+FullNghs:        0.375 ave          12 max           0 min
+Histogram: 31 0 0 0 0 0 0 0 0 1
+
+Total # of neighbors = 12
+Ave neighs/atom = 3
+Neighbor list builds = 0
+Dangerous builds = 0
+my_pe= -19.469059594513943523 eV
+Total wall time: 0:00:01
