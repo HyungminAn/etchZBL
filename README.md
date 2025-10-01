@@ -4,6 +4,8 @@ See `generate_trainset/README.md`.
 # Plasma Simulator (Etching MD simulation)
 See `SM_codes/README.md`.
 
+To use `pair_d2` and `pair_zbl` in LAMMPS, it must be compiled with the files in `lammps/`.
+
 # Potential Files
 - SiO<sub>2</sub> (simple-nn): `pot/simplenn/SiO2/potential_saved_bestmodel`
 - Si<sub>3</sub>N<sub>4</sub> (simple-nn): `pot/simplenn/Si3N4/pot_SiNCHF_new`
