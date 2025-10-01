@@ -1,0 +1,27 @@
+[diatomic_gas]
+/data_etch/OUTCAR_trainingset/training_set_OUTCAR/diatomic_EOS/CC/{60..148}/OUTCAR :
+/data_etch/OUTCAR_trainingset/training_set_OUTCAR/diatomic_EOS/CSi/{60..148}/OUTCAR :
+/data_etch/OUTCAR_trainingset/training_set_OUTCAR/diatomic_EOS/CF/{60..148}/OUTCAR :
+/data_etch/OUTCAR_trainingset/training_set_OUTCAR/diatomic_EOS/CH/{46..148}/OUTCAR :
+/data_etch/OUTCAR_trainingset/training_set_OUTCAR/diatomic_EOS/hch/FF/eos/{0..30}/OUTCAR :
+/data_etch/OUTCAR_trainingset/training_set_OUTCAR/diatomic_EOS/hch/FF/eos/_{1..10}/OUTCAR :
+/data_etch/OUTCAR_trainingset/training_set_OUTCAR/diatomic_EOS/hch/HF/eos/{0..30}/OUTCAR :
+/data_etch/OUTCAR_trainingset/training_set_OUTCAR/diatomic_EOS/hch/HF/eos/_{1..10}/OUTCAR :
+/data_etch/OUTCAR_trainingset/training_set_OUTCAR/diatomic_EOS/hch/HH/eos/{0..30}/OUTCAR :
+/data_etch/OUTCAR_trainingset/training_set_OUTCAR/diatomic_EOS/hch/HH/eos/_{1..10}/OUTCAR :
+/data_etch/OUTCAR_trainingset/training_set_OUTCAR/diatomic_EOS/hch/SiF/eos/{0..30}/OUTCAR :
+/data_etch/OUTCAR_trainingset/training_set_OUTCAR/diatomic_EOS/hch/SiF/eos/_{1..10}/OUTCAR :
+/data_etch/OUTCAR_trainingset/training_set_OUTCAR/diatomic_EOS/hch/SiH/eos/{0..30}/OUTCAR :
+/data_etch/OUTCAR_trainingset/training_set_OUTCAR/diatomic_EOS/hch/SiH/eos/_{1..10}/OUTCAR :
+/data_etch/OUTCAR_trainingset/training_set_OUTCAR/diatomic_EOS/hch/SiSi/eos/{0..30}/OUTCAR :
+/data_etch/OUTCAR_trainingset/training_set_OUTCAR/diatomic_EOS/hch/SiSi/eos/_{1..10}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/oneshot/03_gas/01_diatomic/OC/POSCAR_{0..30}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/oneshot/03_gas/01_diatomic/OC/POSCAR__{1..10}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/oneshot/03_gas/01_diatomic/OF/POSCAR_{0..30}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/oneshot/03_gas/01_diatomic/OF/POSCAR__{1..10}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/oneshot/03_gas/01_diatomic/OO/POSCAR_{0..30}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/oneshot/03_gas/01_diatomic/OO/POSCAR__{1..10}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/oneshot/03_gas/01_diatomic/OSi/POSCAR_{0..30}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/oneshot/03_gas/01_diatomic/OSi/POSCAR__{1..10}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/oneshot/03_gas/01_diatomic/OH/POSCAR_{0..30}/OUTCAR :
+/data2/andynn/Etch/01_dft_trset/oneshot/03_gas/01_diatomic/OH/POSCAR__{1..10}/OUTCAR :
