@@ -1,6 +1,12 @@
 # PlasmaEtchSimulator
 A python code to run ion beam etch simulation.
 
+<div align="center">
+    <img src="./flowchart/figure.png"
+    width="1087" height="1355"
+    title="flowchart"/>
+</div>
+
 # How to install
 ```python
 pip install -e . # (requires setup.py)
