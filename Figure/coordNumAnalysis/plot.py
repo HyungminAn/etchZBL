@@ -256,14 +256,13 @@ def batch_calculate_coordnum(mapping, elem_list, cutoff_mat, fmt, method='discre
 @timing
 def plot(elem_list, coord_by_tag,
          groups=None, exclude_tags=None,
-         style='hist', out_png="result.png"):
+         style='hist', path_output="result"):
     """
     elem_list: list of element symbols
     coord_by_tag: dict[tag] -> dict[element] -> list of coordination numbers (int or float)
     groups: dict[group_name] -> list of tags to combine (optional)
     exclude_tags: list of tags to skip (optional)
     style: 'hist' for stacked histogram, 'curve' for shaded KDE curves
-    out_png: filename for saving the figure
     """
     # Filter tags
     all_tags = list(coord_by_tag.keys())
@@ -356,7 +355,9 @@ def plot(elem_list, coord_by_tag,
                frameon=False,
                fontsize='small')
     fig.tight_layout(rect=[0, 0, 1, 0.95])
-    fig.savefig(out_png, dpi=200)
+    fig.savefig(f"{path_output}.png", dpi=200)
+    fig.savefig(f"{path_output}.pdf")
+    fig.savefig(f"{path_output}.eps")
 
 
 def main():
@@ -387,7 +388,6 @@ def main():
         },
         'exclude_tags': ['bulk', 'slab', 'gas', 'chf_slab', 'iterlearn'],
         'style': args.style,
-        'out_png': 'result.png'
     }
     plot(elem_list, coord_by_tag, **plot_opts)
 
