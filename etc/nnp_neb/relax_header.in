@@ -1,0 +1,7 @@
+# Simulation variables
+variable log_step equal 10
+variable fix_h_low equal 2.0
+# Structure inputs
+units metal
+boundary p p f
+read_data input.data

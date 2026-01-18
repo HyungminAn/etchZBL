@@ -1,0 +1,40 @@
+# Simulation variables
+variable log_step equal 10
+variable fix_h_low equal 2.0
+# Structure inputs
+units metal
+boundary p p f
+read_data input.data
+# Set mass
+mass 1 28.0855
+mass 2 14.0067
+mass 3 1.0078
+mass 4 14.007
+# Potential
+pair_style nn/intel
+variable    path_potential  string  "/data2/andynn/SiN_etch/dump/potential_0"
+pair_coeff * * ${path_potential} Si N H F
+# Pair calculation
+neighbor 2 bin
+neigh_modify every 1 delay 0 check no
+compute _rg all gyration
+# Setting fixed region
+region      rfix       block   EDGE EDGE  EDGE EDGE  EDGE ${fix_h_low} units box
+group       gfix       region  rfix
+velocity    gfix       set     0.0 0.0 0.0
+fix         fix_bot    gfix    setforce 0.0 0.0 0.0
+
+# calculation balance
+fix         f_balance  all  balance 0 1.05 shift xyz 20 1.05 weight time 1
+# Set dump
+dump        dMovie  all     custom ${log_step}    dump.lammps &
+           id element x y z vx vy vz fx fy fz # Dump file
+dump_modify dMovie  element  Si N H F
+dump_modify dMovie  sort id  time yes
+dump_modify dMovie  format line &
+            "%3d %2s %10.5f %10.5f %10.5f %10.5f %10.5f %10.5f %10.5f %10.5f %10.5f"
+# Minimize
+min_style   cg
+minimize    0 0.01 100000 100000
+# Write final data
+write_data  FINAL.coo

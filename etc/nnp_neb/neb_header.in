@@ -1,0 +1,11 @@
+# Simulation variables
+variable log_step equal 100
+variable fix_h_low equal 2.0
+# Structure inputs
+units metal
+boundary p p f
+atom_modify id yes map array
+# Read data
+variable path_initial string "initial.dat"
+variable path_final string "final.dat"
+read_data ${path_initial}
