@@ -92,8 +92,8 @@ class DataPlotterSelected(DataPlotter):
         super().__init__(system, ylim)
         self.axis_config = [
             ('stacked', AxisProcessorMixedFilmStacked),
-            ('atomcount_mixed', AxisProcessorAtomCountNumberDensity),
-            # ('height_change', AxisProcessorHeight),
+            # ('atomcount_mixed', AxisProcessorAtomCountNumberDensity),
+            ('height_change', AxisProcessorHeight),
         ]
 
     def run(self, data):

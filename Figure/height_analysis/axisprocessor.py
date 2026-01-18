@@ -71,8 +71,13 @@ class AxisProcessorHeight(BaseAxisProcessor):
         '''
         x, y, _ = self.data
         # color = PARAMS.PLOT.COLORS.COLORS.get(self.system, PARAMS.PLOT.COLORS.COLOR_LIST['default'])
-        color = PARAMS.PLOT.COLORS.COLORS_Si3N4.get(self.system, PARAMS.PLOT.COLORS.COLOR_LIST['default'])
-        self.ax.plot(x, y, 'o-', markersize=2, color=color, alpha=0.5)
+        # color = PARAMS.PLOT.COLORS.COLORS_Si3N4.get(self.system, PARAMS.PLOT.COLORS.COLOR_LIST['default'])
+        self.ax.plot(x, y,
+                     # 'o-',
+                     '-',
+                     # markersize=2,
+                     color=color,
+                     linewidth=2)
         self.ax.axhline(0, color='grey', linestyle='--', linewidth=0.4, alpha=0.5)
         print(f'{self.system}: Etched thickness {np.min(y):.2f} nm')
 
@@ -97,10 +102,10 @@ class AxisProcessorCarbonThickness(BaseAxisProcessor):
         x, y, _ = self.data
         y_film = y[:, 2]
         # color = PARAMS.PLOT.COLORS.COLOR_LIST['layer']['film']
-        color = 'black'
+        color = 'grey'
         # self.ax.plot(x, y_film, color=color)
-        self.ax.fill_between(x, 0, y_film, color=color, alpha=0.5)
-        self.ax.set_yticklabels([])
+        self.ax.fill_between(x, 0, y_film, color=color)
+        # self.ax.set_yticklabels([])
 
     def normalize_y(self):
         x, y, labels = self.data
@@ -111,7 +116,7 @@ class AxisProcessorCarbonThickness(BaseAxisProcessor):
     def decorate(self):
         ax = self.ax
         ax.set_ylabel('Carbon film thickness (nm)')
-        ax.axhline(0, color='grey', linestyle='--', linewidth=1, alpha=0.5)
+        ax.axhline(0, color='grey', linestyle='--', linewidth=1, zorder=-1)
 
 class AxisProcessorEtchedAmount(BaseAxisProcessor):
     def normalize(self):
@@ -357,7 +362,8 @@ class CombinedAxisProcessor(BaseAxisProcessor):
     def __init__(self, system, data_class_pair, ax, skip_decorate=False):
         self.system = system
         self.data_class_pair = data_class_pair
-        self.ax = (ax, ax.twinx())
+        # self.ax = (ax, ax.twinx())
+        self.ax = (ax, ax)
         self.skip_decorate = skip_decorate
 
     def run(self):
