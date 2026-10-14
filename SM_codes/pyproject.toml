@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "PlasmaEtchSimulator"
+version = "0.2.0"
+description = "Iterative ion-bombardment MD workflow with LAMMPS for plasma-etch simulation"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [
+  { name = "Sangmin Oh" },
+]
+
+dependencies = [
+  "ase>=3.23",
+  "numpy>=1.26",
+  "PyYAML>=6.0",
+  # networkx is the default graph backend; scipy is optional (see below)
+  "networkx>=3.2",
+]
+
+[project.optional-dependencies]
+# Alternative graph backend (no NetworkX required)
+scipy = ["scipy>=1.12"]
+# Full development stack
+dev = ["pytest>=8.0", "ruff>=0.4"]
+
+[project.scripts]
+etch-simulator = "PlasmaEtchSimulator.main:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["PlasmaEtchSimulator*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
