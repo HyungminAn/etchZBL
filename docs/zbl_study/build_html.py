@@ -67,15 +67,11 @@ blockquote p { margin: 4px 0; }
 .table-wrap { overflow-x: auto; margin: 16px 0; border: 1px solid var(--line); border-radius: 8px; background: var(--card); }
 table { border-collapse: collapse; width: 100%; font-size: 14.5px; }
 th, td { padding: 8px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
-th { background: var(--th-bg); font-weight: 600; white-space: nowrap; }
+th { background: var(--th-bg); font-weight: 600; }
 tr:last-child td { border-bottom: 0; }
 figure.fig { margin: 20px 0 4px; padding: 12px; background: #ffffff; border: 1px solid var(--line); border-radius: 8px; }
 figure.fig svg { width: 100%; height: auto; display: block; }
 p > em:only-child { color: var(--muted); font-size: 14px; }
-.arithmatex { overflow-x: auto; overflow-y: hidden; }
-mjx-container[display="true"] { overflow-x: auto; overflow-y: hidden; max-width: 100%; min-width: 0 !important; }
-mjx-container:not([display="true"]) { display: inline-block; max-width: 100%; overflow-x: auto; overflow-y: hidden; vertical-align: middle; }
-div.arithmatex { max-width: 100%; }
 .theme-btn {
   position: fixed; top: 12px; right: 12px; z-index: 10; border: 1px solid var(--line);
   background: var(--card); color: var(--fg); border-radius: 6px; padding: 4px 10px; font-size: 13px; cursor: pointer;
@@ -127,10 +123,36 @@ svg.plot .bar { stroke: none; }
 .cells { display: grid; grid-template-columns: repeat(30, 1fr); gap: 2px; margin-top: 2px; }
 .cells span { display: block; height: 12px; border-radius: 2px; border: 1px solid var(--line); }
 @media (max-width: 700px) { .cells { grid-template-columns: repeat(20, 1fr); } .demo { padding: 12px 10px 8px; } }
+.arithmatex, mjx-container { overflow: visible; }
+svg.geo .geo-circle { fill: none; stroke: var(--muted); stroke-dasharray: 4 4; }
+svg.geo .geo-bond { stroke: var(--fg); stroke-width: 2; }
+svg.geo .geo-bond2 { stroke: var(--s2); stroke-width: 1.5; stroke-dasharray: 5 3; }
+svg.geo .geo-arrow { stroke: var(--s2); stroke-width: 3; }
+svg.geo .geo-ang { fill: none; stroke: var(--s1); stroke-width: 2; }
+svg.geo .geo-dang { fill: none; stroke: var(--s2); stroke-width: 4; }
+svg.geo .geo-atom { fill: var(--s1); stroke: var(--card); stroke-width: 2; }
+svg.geo .geo-atom.ghost { fill: var(--s2); }
+svg.geo .geo-label { fill: var(--fg); font-size: 15px; font-weight: 600; }
+mjx-container[display="true"] { margin: 0.8em 0 !important; }
 </style>
 <script>
 window.MathJax = { tex: { inlineMath: [["\\\\(", "\\\\)"]], displayMath: [["\\\\[", "\\\\]"]] },
-                   options: { processHtmlClass: "arithmatex" } };
+                   options: { processHtmlClass: "arithmatex" },
+                   startup: { pageReady: function () { return MathJax.startup.defaultPageReady().then(fitMath); } } };
+// shrink formulas that are wider than their column instead of showing a scrollbar
+function fitMath() {
+  document.querySelectorAll("mjx-container").forEach(function (c) {
+    if (c.dataset.fs === undefined) c.dataset.fs = parseFloat(c.style.fontSize) || 100;
+    var base = +c.dataset.fs;
+    c.style.fontSize = base + "%";
+    var box = c.getAttribute("display") === "true" ? c.parentElement : c.closest("p, li, td, th, div");
+    if (!box || box.closest(".table-wrap")) return;
+    var avail = box.clientWidth, need = c.firstElementChild ? c.firstElementChild.getBoundingClientRect().width : 0;
+    if (need > avail && avail > 0) c.style.fontSize = (base * Math.floor(avail / need * 98) / 100) + "%";
+  });
+}
+var fitTimer;
+window.addEventListener("resize", function () { clearTimeout(fitTimer); fitTimer = setTimeout(function () { if (window.MathJax && MathJax.startup) fitMath(); }, 150); });
 </script>
 <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js"></script>
 </head>

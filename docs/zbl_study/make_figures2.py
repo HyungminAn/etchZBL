@@ -425,6 +425,26 @@ def fig_spill(scan):
     plt.close(fig)
 
 
+def fig_learn(L):
+    fig, ax = plt.subplots(1, 2, figsize=(9.8, 3.6))
+    for k, t, c, ls in [("G2", "full", COL["sw"], "-"), ("Bessel", "full", COL["bad"], "-"),
+                        ("G2", "delta", COL["mult"], "--"), ("Bessel", "delta", COL["fermi"], "--")]:
+        ax[0].semilogy(L["rmins"], [L["fits"][f"{k}|{t}|{x}"]["rmse_F"] for x in L["rmins"]], color=c, ls=ls, marker="o", ms=3, label=f"{k}, {t}")
+    ax[0].invert_xaxis(); ax[0].set_xlabel("training r_min (Å)"); ax[0].set_ylabel("force RMSE on training set (eV/Å)")
+    ax[0].set_title("same model, data extended toward r → 0"); ax[0].legend(frameon=False, fontsize=8)
+    for k, c in [("G2", COL["sw"]), ("Bessel", COL["bad"])]:
+        d = L[f"Lreq_{k}"]
+        ax[1].loglog(d["r"], d["full"], color=c, label=f"{k}, full")
+        ax[1].loglog(d["r"], d["delta"], color=c, ls="--", label=f"{k}, delta")
+    rr = np.array(L["Lreq_G2"]["r"]); m = rr < 0.4
+    ax[1].loglog(rr[m], 3e1 * rr[m] ** -3, color="#868e96", ls=":", label="∝ r⁻³")
+    ax[1].set_xlabel("r (Å)"); ax[1].set_ylabel("required Lipschitz constant |F|/(2‖dG/dr‖)")
+    ax[1].set_title("a priori: what the weights would have to do"); ax[1].legend(frameon=False, fontsize=7.5)
+    fig.tight_layout()
+    fig.savefig(os.path.join(FIG, "learnability.svg"))
+    plt.close(fig)
+
+
 def fig_softening():
     fig, ax = plt.subplots(1, 2, figsize=(9.5, 3.4))
     for frac, c in [(0.0, COL["bad"]), (0.05, COL["sw"]), (0.3, COL["mult"])]:
@@ -466,7 +486,20 @@ if __name__ == "__main__":
     if os.path.exists(p7):          # produced by sevennet_scan.py (needs torch)
         extra = json.load(open(p7))
         fig_sevennet(extra, data); fig_spill(extra)
+    learn, swv = {}, {}
+    pl = os.path.join(HERE, "learnability.json")      # produced by learnability_scan.py (needs torch)
+    if os.path.exists(pl):
+        learn = json.load(open(pl))
+        for f in learn["fits"].values():
+            for k in ("r", "E_ref", "E_fit", "F_ref", "F_fit", "dGdr"):
+                f[k] = rnd(f[k][::2])
+        for k in ("Lreq_G2", "Lreq_Bessel"):
+            learn[k] = {kk: rnd(v[::2]) for kk, v in learn[k].items()}
+        fig_learn(learn)
+    ps = os.path.join(HERE, "sw_variants.json")       # produced by sw_variants.py (needs torch)
+    if os.path.exists(ps):
+        swv = json.load(open(ps))
     with open(os.path.join(HERE, "demo_data.json"), "w") as fh:
-        json.dump({"dimers": data, "folded": folded, "cluster": rows, "sevennet": c7, "sevennet_scan": extra},
-                  fh, separators=(",", ":"))
+        json.dump({"dimers": data, "folded": folded, "cluster": rows, "sevennet": c7, "sevennet_scan": extra,
+                   "learn": learn, "sw_variants": swv}, fh, separators=(",", ":"))
     print("demo_data.json", os.path.getsize(os.path.join(HERE, "demo_data.json")) // 1024, "KB")

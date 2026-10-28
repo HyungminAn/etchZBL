@@ -5,6 +5,7 @@ ZBL(Ziegler–Biersack–Littmark) 포텐셜이 무엇이고, 왜 MD/MLIP에 끼
 - 참고한 LAMMPS 문서: [pair zbl](https://docs.lammps.org/pair_zbl.html), [pair lj/gromacs](https://docs.lammps.org/pair_gromacs.html) (switching function), [pair tersoff/zbl](https://docs.lammps.org/pair_tersoff_zbl.html) (hybrid 예시)
 - 그림과 숫자는 모두 `make_figures.py`로 다시 만들 수 있다. 출력 숫자는 `figures/numbers.txt`에 있다.
 - 단위는 eV, Å, amu. ZBL 상수는 `lammps/pair_zbl_const.h`와 같다.
+- **3부(20–25장)**는 학습 가능성의 한계(r_min과 오차 바닥), basis 선택, switching 설계(DP-ZBL, ACE, 연구실 SevenNet)를 다룬다. 숫자는 `learnability_scan.py`, `sw_variants.py`(torch 필요)로 다시 만들 수 있다.
 - **2부(11–19장)**는 MLIP 쪽 질문이다. BPNN의 에너지·힘 상한, radial/angular force, atom-wise vs bond-wise switching, message-passing U-MLIP의 spectator force를 다룬다. 2부 숫자는 `make_figures2.py`(SIMPLE-NN 파일을 직접 읽는 `simplenn_eval.py` 사용)와 `sevennet_scan.py`(torch 필요)로 다시 만들 수 있다.
 - HTML 버전에는 각 질문에 대한 interactive 예제가 들어 있다. Markdown에는 같은 내용의 정적 그림이 들어 있다.
 
@@ -731,6 +732,219 @@ dimer라면 방향이 고정되므로 모든 입력이 유한한 극한을 갖�
 
 ---
 
+## 20. 3부 요약: 학습 가능성, basis, switching 설계
+
+| 질문 | 짧은 답 |
+|---|---|
+| (1) r→0에서 기울기가 0이 되는 descriptor에 r→0으로 갈수록 커지는 데이터를 넣으면? | dimer라면 어떤 모델이든 $E(r)=\Phi(G(r))$이므로 $\lvert dE/dr\rvert\le L\,\lVert dG/dr\rVert$이다. $\lVert dG/dr\rVert\propto r$, $\lvert F_{ZBL}\rvert\propto1/r^2$이므로 **필요한 Lipschitz 상수가 $r^{-3}$으로 커진다.** 원리적으로 못 배우는 것은 아니지만, $r_{min}$을 절반으로 줄이면 가중치가 8배 커져야 한다. 그래서 실제로는 오차 바닥이 생기고, 그 바닥은 $\max(0,\lvert F_{ref}\rvert-L\lVert dG/dr\rVert)$로 **예측할 수 있다**. GNN도 dimer에서는 같은 식이 적용된다. 21장. |
+| (2) 왜 유계 basis를 쓰나? 발산 거동을 쓰는 MLIP는? | 정규화, 조건수, 완비성, 매끄러운 cutoff 때문이다. 게다가 발산하는 **입력**은 NN을 지나면서 포화되므로 발산하는 **에너지**를 만들지 못한다. 1/r을 원하면 $\sum_kc_ke^{-d_kr}/r$을 에너지에 **선형으로** 더해야 한다(ZBL 형태). 이렇게 하는 예로 SpookyNet(학습 가능한 ZBL항), sGDML(역거리 descriptor), MACE(ZBL pair, Agnesi 거리 변환)가 있다. 22장. |
+| (3) "수직 성분"이란? | 맞다. i를 중심으로 반지름 $r_{ij}$인 원(3D에서는 구)의 **접선 방향**으로 j를 δ만큼 움직이면 각도가 $\delta/r_{ij}$만큼 바뀐다. i를 움직여도 크기는 같고 부호만 반대다. 23장. |
+| (4) DP/ZBL, SevenNet 방식은 출판됐나? spurious force는? | DP-ZBL은 Wang et al., *APL* **114**, 244101 (2019)로 출판됐고 SevenNet(2024)보다 먼저다. 연구실 SevenNet의 switch는 SevenNet 논문에는 없는 것으로 안다. spectator force는 보존력이지만 **물리적으로 틀린 의존성**이다. softmin α를 0.03으로 줄이면 54 → 0.02 eV/Å로 사라진다. 고립 원자 기준 보정은 거의 효과가 없다. 24장. |
+| (5) ACE core repulsion? bond 단위 끄기는 상한 문제에 안 걸리나? | ML-PACE 소스에 세 가지 모드가 있다. density 기반 atom switch, **"distance": radial basis에 inner cutoff (bond 단위)**, **"zbl": 가장 가까운 이웃 거리(hard min)로 atom switch + ZBL**. bond 단위로 끄면 NN은 그 쌍을 보지 않고 발산은 명시적 pair 항이 맡는다. 그래서 상한 문제에 걸리지 않는다. 대가는 inner 안쪽에서 ZBL 오차를 보정할 수 없다는 점이다. 25장. |
+
+---
+
+## 21. 질문 (1): r→0으로 갈수록 커지는 데이터를 계속 넣으면?
+
+### 21.1 dimer에서는 어떤 모델이든 $E(r)=\Phi(G(r))$
+
+두 원자만 있으면 BPNN은 $E=E_A(G_A(r))+E_B(G_B(r))$이다. message passing GNN도 edge 입력이 $B_n(r)$과 $Y_{lm}(\hat r)$뿐이고, 접근 방향이 고정되면 $Y$는 상수다. 따라서 층이 몇 개든 $E=\Phi(B(r))$이다. 그러면 chain rule과 Cauchy–Schwarz 부등식으로
+
+$$
+\Big\lvert\frac{dE}{dr}\Big\rvert=\Big\lvert\nabla_G\Phi\cdot\frac{dG}{dr}\Big\rvert\le L\,\Big\lVert\frac{dG}{dr}\Big\rVert,\qquad L\equiv\max_{\text{data}}\lVert\nabla_G\Phi\rVert .
+$$
+
+$L$은 모델이 descriptor 공간에서 낼 수 있는 기울기의 상한(Lipschitz 상수)이고, 가중치 크기가 정한다. 14.2에 따르면 tanh 네트워크에서는 $L\le\lVert W_1\rVert\lVert W_2\rVert\lVert w\rVert$이다.
+
+### 21.2 r→0에서 $\lVert dG/dr\rVert\propto r$이므로 필요한 $L$은 $r^{-3}$으로 커진다
+
+테일러 전개하면
+
+$$
+G2_\mu(r)\approx1-\Big(\eta_\mu+\tfrac{\pi^2}{4r_c^2}\Big)r^2,\qquad B_n(r)=0.4\Big(c_n-\tfrac{c_n^3}{6}r^2\Big)+\cdots
+\quad\Rightarrow\quad\Big\lVert\frac{dG}{dr}\Big\rVert\approx\kappa\,r
+$$
+
+이다. 따라서 목표 force $\lvert F_{ref}\rvert\approx Z_AZ_Be^2/r^2$을 맞추는 데 필요한 기울기는
+
+$$
+L_{req}(r)=\frac{\lvert F_{ref}(r)\rvert}{\lVert dG/dr\rVert}\;\approx\;\frac{Z_AZ_Be^2}{\kappa\,r^{3}} .
+$$
+
+- **절대 못 배우나?** 아니다. Rs=0인 G2는 r에 대해 단조여서 $G(r)$이 단사다. 그러므로 $(r_{min},r_c)$ 위에서 $E$는 $G$의 연속함수이고, universal approximation에 의해 충분히 큰 네트워크라면 맞출 수 있다. 다만 필요한 가중치 크기가 $r_{min}^{-3}$으로 커진다. 에너지 폭 $\Delta E\approx V_{ZBL}(r_{min})$을 tanh 상한 안에 담으려면 $\sum\lvert w\rvert\gtrsim\Delta E/2$도 필요하다.
+- 실제 학습에는 유한한 step 수, weight decay, 입력 정규화(데이터 전체 분산에 맞춘 scale), 부동소수점 해상도($\Delta G\sim\eta r\,\Delta r$)가 있다. 그래서 **유한한 오차 바닥**이 생긴다.
+- 특성 길이 $\ell$은 G2에서 $1/\sqrt{\eta_{max}}$(SiO2 Si–Si: $\eta_{max}=1.43\,\text{Å}^{-2}$ → 0.84 Å), Bessel에서 $1/c_{max}$(SevenNet: 5.14 Å⁻¹ → 0.19 Å)다. 15장에서 본 BPNN 평탄화(≲0.8 Å)와 SevenNet 수렴(≲0.1 Å)이 이 값과 맞는다.
+
+### 21.3 실험: 같은 모델에 r→0 쪽 데이터를 점점 추가
+
+`learnability_scan.py`로 한 실험이다. 목표는 DFT형 Si–Si dimer 곡선이다(짧은 거리에서 1.05×ZBL, 평형 근처는 Morse). 두 종류의 입력으로 각각 fit했다.
+
+- G2: SiO2 potential의 Si–Si G2 8개, tanh 8-30-30-1
+- Bessel: SevenNet의 학습된 Bessel 8개, SiLU 8-64-64-1
+
+목표는 "full"(reference 자체)과 "delta"(reference − (ZBL+S), 저장소의 inner/outer)이고, 학습 데이터 $r\in[r_{min},4]$에서 $r_{min}$을 1.4 Å에서 0.12 Å까지 줄였다. 손실은 에너지와 force를 각각의 표준편차로 나눈 MSE이고, AdamW 6000 step이다.
+
+| training $r_{min}$ (Å) | 1.4 | 1.2 | 1.0 | 0.8 | 0.6 | 0.5 | 0.4 | 0.3 | 0.2 | 0.12 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| G2, full: RMSE_F | 0.0341 | 0.0772 | 0.173 | 3.2 | 87.8 | 256 | 642 | 1.68e+03 | 4.84e+03 | 1.46e+04 |
+| Bessel, full: RMSE_F | 0.0349 | 0.0404 | 0.0533 | 0.175 | 0.391 | 0.941 | 3.06 | 11.7 | 275 | 5.7e+03 |
+| G2, delta: RMSE_F | 0.022 | 0.0341 | 0.0301 | 0.0275 | 0.0591 | 0.121 | 0.272 | 0.943 | 60.5 | 506 |
+| Bessel, delta: RMSE_F | 0.0308 | 0.0331 | 0.033 | 0.0342 | 0.0415 | 0.0503 | 0.103 | 0.195 | 0.582 | 7.96 |
+| G2: $L_{req}$ (full) | 40 | 77 | 1.5e+02 | 3.5e+02 | 1e+03 | 2.1e+03 | 4.9e+03 | 1.4e+04 | 6.2e+04 | 3.5e+05 |
+| Bessel: $L_{req}$ (full) | 23 | 37 | 87 | 1.5e+02 | 2.6e+02 | 4.4e+02 | 9.2e+02 | 2.5e+03 | 1e+04 | 5.6e+04 |
+
+(training set force RMSE, 단위 eV/Å. $L_{req}$는 eV/(G 단위))
+
+- **G2 full**은 $r_{min}$ ≈ 0.8 Å부터 무너진다(3.2 → 88 → 1680 eV/Å). 21.2의 $\ell=1/\sqrt{\eta_{max}}$ = 0.84 Å과 맞는다. 학습된 $L$은 3000–5000에서 멈추는데(tanh + weight decay), $L_{req}$는 $r^{-3}$으로 계속 커진다.
+- **Bessel full**은 0.4 Å까지 버티고(3 eV/Å) 0.2 Å 아래에서 무너진다. $\ell=1/c_{max}$ = 0.19 Å이다. SiLU라서 $L$이 25만까지 커질 수 있었지만, 그래도 $r^{-3}$을 따라가지 못한다.
+- **delta**는 같은 모델로도 두 자릿수 이상 작은 오차를 낸다. ZBL+S가 발산을 맡으므로 $L_{req}$가 작다. 다만 G2 delta도 0.2 Å 아래(inner 1.598 Å보다 훨씬 안쪽)에서는 residual의 $-C$와 1.05×ZBL의 5% 차이를 맞춰야 해서 다시 커진다.
+- $L_{fit}\ge L_{req}$는 **필요조건이지 충분조건이 아니다.** G2 full 0.6 Å에서는 $L_{fit}$ = 3654 > $L_{req}$ = 1031인데도 오차가 컸다. $\nabla_G\Phi$의 방향이 모든 r에서 $dG/dr$와 맞아야 하고, 동시에 다른 점들도 맞춰야 하기 때문이다.
+
+<!-- demo:learn -->
+
+![learnability](figures/learnability.svg)
+
+*그림 3-1. 왼쪽: training set force RMSE. 오른쪽: model과 무관하게 데이터와 descriptor만으로 계산한 $L_{req}(r)$. r→0에서 $r^{-3}$ 기울기를 따른다.*
+
+### 21.4 $r_{min}$으로부터 오차 수준을 예측할 수 있나?
+
+**하한은 예측할 수 있다.** 각 데이터 점에서
+
+$$
+\varepsilon_F(r)\;\ge\;\max\big(0,\;\lvert F_{ref}(r)\rvert-L\,\lVert dG/dr\rVert\big)
+$$
+
+이다. $L$은 두 방법으로 정할 수 있다. 하나는 학습된 모델에서 재는 것(a posteriori)이다. 다른 하나는 "이 정도 가중치 크기까지 허용한다"는 예산으로 두는 것(a priori)이다. 위 demo의 보라색 선이 이 하한이고, 실제 오차(주황)는 그보다 위에 있다.
+
+<!-- demo:lreq -->
+
+### 21.5 일반적인 training data 분포에서 training error를 미리 예측할 수 있나?
+
+부분적으로만 가능하다.
+
+- **가능한 것:** 구조마다 $L_{req}=\lvert F_{ref}\rvert/\lVert\partial G/\partial x\rVert$를 계산하면(다체계에서는 원자별로) 학습 전에 "이 descriptor와 이 크기의 모델로는 못 맞추는 구조"를 골라낼 수 있다. 짧은 거리 구조가 많은 충돌 데이터에서는 이 하한이 오차의 대부분을 설명할 것이다.
+- **불가능한 것:** 평형 근처 데이터에서는 $L_{req}$가 작아서 하한이 거의 0이다. 그러면 실제 오차는 다체 복잡도, 데이터 noise, 모델 용량, 최적화가 정한다. 이 논리만으로는 예측되지 않는다.
+- 결국 이것은 **descriptor 해상도로 인한 오차 바닥**이다. 전체 training error의 예측식이라기보다 "어디까지가 descriptor 탓인가"를 가르는 진단 도구로 쓰는 것이 맞다.
+
+### 21.6 message passing GNN에도 적용되나?
+
+- **dimer:** 그대로 적용된다(21.1). Bessel basis도 $dB/dr\propto r$이므로 $L_{req}\propto r^{-3}$이다. 다만 $\ell=1/c_{max}$가 작아서 더 안쪽까지 버틴다.
+- **다체계:** 충돌 쌍의 radial 입력은 여전히 평탄해진다. 하지만 GNN은 (i) 여러 층의 곱으로 $L$이 커질 수 있고(SiLU는 위로 열려 있음), (ii) 다른 이웃을 거친 경로로도 r 의존성을 만들 수 있다. 그래서 같은 데이터에서 BPNN보다 더 가파르게 맞출 여지가 있다. 그 대가가 18장의 spectator 전파다. 연구실 SevenNet raw ML이 1 Å까지 ZBL을 따라간 것(13장)과 맞는 그림이다.
+- 방향 $Y_{lm}$에서 오는 수직 성분은 $\sim1/r$이므로(15.3) 접근 방향의 force에는 기여하지 않는다.
+
+---
+
+## 22. 질문 (2): 유계 basis를 쓰는 이유, 그리고 발산 거동을 쓰는 MLIP
+
+### 22.1 유계 basis를 쓰는 이유
+
+1. **입력 정규화와 조건수:** NN 입력은 표준화해서 넣는다. 1/r 같은 입력은 데이터마다 크기가 수 자릿수씩 달라서 표준화가 무너지고, 최적화가 불안정해진다.
+2. **완비성과 cutoff:** Gaussian(ACSF)이나 구면 Bessel $j_0(kr)=\sin(kr)/(kr)$은 $[0,r_c]$ 위의 매끄러운 함수를 전개하는 basis다. Bessel은 공 안에서 경계값 0인 Laplacian의 고유함수라서 서로 직교한다(DimeNet). 경계 $r_c$에서 매끄럽게 0이 되는 envelope와도 잘 맞는다.
+3. **발산하는 입력은 발산하는 에너지를 만들지 못한다:** tanh에서는 포화하고, SiLU에서는 입력에 선형으로만 커진다. 1/r 입력을 넣어도 짧은 거리에서는 결국 "큰 상수" 입력이 될 뿐이다.
+4. **물리의 분리:** 결합 영역(수 eV)은 ML이, 핵간 반발(수백~수만 eV)은 해석적 항이 맡는 것이 데이터 효율과 외삽 안정성 면에서 낫다.
+
+### 22.2 발산 거동을 직접 쓰는 MLIP
+
+| 모델 | 방식 |
+|---|---|
+| Coulomb matrix (Rupp et al. 2012), sGDML/GDML | descriptor 자체가 $Z_iZ_j/r_{ij}$ 또는 역거리 $1/r_{ij}$. 분자용, 고정 원자 수 |
+| SpookyNet (Unke et al. 2021) | 에너지에 **학습 가능한 ZBL형 핵 반발항**을 더함. ZBL 문헌값으로 초기화하고 양수로 제한하며 $\sum c_k=1$로 묶어 짧은 거리 점근선을 보장 |
+| MACE | `pair_repulsion`(ZBL) 옵션과, 짧은 거리 해상도를 높이는 `distance_transform`(Agnesi, 공유 반경 기반) 옵션 |
+| NequIP/Allegro, DeePMD(`use_srtab`), ACE(core repulsion) | 명시적 ZBL/pair 항을 더하거나 보간 |
+| 최근 연구 | 짧은 거리 경험적 포텐셜을 넣으면 MLIP의 robustness와 학습 효율이 좋아진다는 보고(arXiv:2504.15925) |
+
+### 22.3 수학적으로 "1/r 거동"이 필요할 때 쓰는 basis
+
+- **역거듭제곱(Laurent형)** $r^{-n}$: 점근 차수를 정확히 지정할 수 있지만 조건수가 나쁘다.
+- **차폐 쿨롱(Yukawa) 합** $\sum_kc_ke^{-d_kr}/r$: ZBL과 Molière가 바로 이 형태다. $r\to0$에서 $1/r$, 멀리서는 지수 감쇠한다.
+- **변수 변환:** $x=1/r$이나 $x=\log r$로 바꾼 뒤 그 변수에 유계 basis를 쓰면 짧은 거리 해상도가 높아진다(MACE의 distance transform이 이런 계열이다).
+- **핵심:** 어떤 basis든 발산이 에너지까지 가려면 **비선형 층 밖에서 선형으로** 더해져야 한다. 그래서 실무 답은 "유계 basis + ML"과 "명시적 반발항"의 합이다.
+
+<!-- demo:basis -->
+
+---
+
+## 23. 질문 (3): angular 미분의 "수직 성분"
+
+i와 k를 고정하고 j를 움직인다고 하자. $\cos\theta_{jik}=\hat r_{ij}\cdot\hat r_{ik}$는 $\mathbf r_{ij}$의 **방향**에만 의존한다.
+
+$$
+\frac{\partial\cos\theta_{jik}}{\partial\mathbf x_j}=\frac{1}{r_{ij}}\big(\hat r_{ik}-\cos\theta_{jik}\,\hat r_{ij}\big)
+$$
+
+- 이 벡터를 $\hat r_{ij}$에 내적하면 $(\cos\theta-\cos\theta)/r_{ij}=0$이다. 즉 **기울기는 전부 $\hat r_{ij}$에 수직**이다.
+- 크기는 $\sin\theta/r_{ij}$이다. i를 중심으로 반지름 $r_{ij}$인 원(3D에서는 구) 위에서 j를 **접선 방향**으로 δ만큼 움직이면 호의 길이 = $r\,\Delta\theta$이므로 $\Delta\theta=\delta/r_{ij}$이다. 같은 δ라도 $r_{ij}$가 작을수록 각도가 크게 바뀐다.
+- i를 움직이는 경우: $\mathbf r_{ij}=\mathbf x_j-\mathbf x_i$이므로 i를 j 주위의 원 접선 방향으로 움직이면 같은 크기, 반대 부호다(병진 불변성: $\partial/\partial\mathbf x_i=-\partial/\partial\mathbf x_j-\partial/\partial\mathbf x_k$).
+- 질문하신 그림("i를 i–j 반지름의 원 위에서 접선 방향으로")이 맞다. 15.3에서 "j를 움직인다"고 쓴 것과 같은 내용이다.
+
+<!-- demo:tangent -->
+
+---
+
+## 24. 질문 (4): DP/ZBL과 SevenNet 방식의 출판, spectator force 억제
+
+### 24.1 출판 여부와 순서
+
+- **DP-ZBL:** H. Wang, X. Guo, L. Zhang, H. Wang, J. Xue, "Deep learning inter-atomic potential model for accurate irradiation damage simulations", *Appl. Phys. Lett.* **114**, 244101 (2019), arXiv:1904.00360. fcc Al의 cascade, 문턱 변위 에너지, 결함에 적용했다. 이후 MoS₂(2020), 3C-SiC(arXiv:2305.19516)에도 쓰였다. 식은 DeePMD-kit 문서의 "Interpolation or combination with a pairwise potential"(`smin_alpha`, `sw_rmin`, `sw_rmax`)에 있다.
+- **SevenNet:** SevenNet 논문(Park et al., *JCTC* 2024)에는 ZBL switch가 없는 것으로 안다. checkpoint의 구현은 DP-ZBL의 softmin 방식을 SevenNet에 옮긴 연구실 내부 구현으로 보인다. 정확한 출처는 작성자에게 확인하기 바란다. 순서는 DP-ZBL(2019)이 먼저다.
+
+### 24.2 spectator force는 무엇이 문제인가
+
+- **보존성 문제는 아니다.** 모델 에너지의 정확한 gradient이므로 NVE는 지켜진다.
+- **물리 문제다.** $f_i$가 softmin을 통해 원자 i의 **모든 이웃 위치**에 의존하므로, 모델 에너지가 충돌하지 않는 원자의 위치에 비물리적으로 의존한다. 충돌 순간 그 원자들이 수십 eV/Å로 걷어차이면 cascade, 스퍼터링, 결함 생성 통계가 바뀐다.
+
+### 24.3 억제 방법 (같은 E_i^ML, 같은 Si17 경로에서 switch 정의만 바꿔 측정)
+
+| 밀어 넣은 거리 (Å) | 0.8 | 0.7 | 0.6 | 0.5 | 0.4 |
+|---|---|---|---|---|---|
+| α = 0.104 (checkpoint) | 9.6 | 26.3 | 53.8 | 54.3 | 12.7 |
+| α = 0.104, $E_i^{ML}-E_{iso}$ | 10.1 | 27.4 | 55.3 | 55.3 | 12.8 |
+| α = 0.05 | 7.1 | 6.0 | 0.86 | 0 | 0 |
+| α = 0.03 | 0.71 | 0.35 | 0.02 | 0 | 0 |
+| α = 0.02 | 0.03 | 0.01 | 0.001 | 0 | 0 |
+| hard min (ACE "zbl" 방식) | 0 | 0 | 0 | 0 | 0 |
+
+(spectator 최대 force, eV/Å. `sw_variants.py`)
+
+- **고립 원자 기준 보정은 효과가 거의 없다.** 이 구간의 $E_i^{ML}$(25–75 eV)은 기준 이동이 아니라 학습된 반발이기 때문이다.
+- **α를 줄이면 거의 사라진다.** spectator k의 softmin 가중치가 $e^{-(\bar r_k-\bar r_{min})/\alpha}$로 지수적으로 작아진다.
+- **hard min(가장 가까운 이웃 거리)을 쓰면 정확히 0이다.** 대신 가장 가까운 이웃이 바뀌는 순간 기울기가 불연속이다. 두 이웃이 동시에 window 안에 있을 때만 생기는 드문 경우다.
+- **"추가 항으로 억제"에 대해:** $-E_i^{ML}\nabla f_i$는 구조에서 나오는 항이라 loss의 penalty로 없앨 수는 없다. 대신 switch window 안에서 **$E_i^{ML}$ 자체를 작게** 만들 수 있다. 예를 들면 ML 안에서 pair baseline을 빼서 학습하거나(delta), window 안의 데이터로 ML 에너지를 묶는 것이다. 근본 해법은 bond 단위 switch다(25장).
+- α를 바꾸면 모델 에너지가 달라지므로 **재학습이 필요하다.** 위 표는 switch 항만의 추정치다.
+
+<!-- demo:swvar -->
+
+---
+
+## 25. 질문 (5): ACE core repulsion, 그리고 bond 단위 switch의 상한 문제
+
+### 25.1 ML-PACE(LAMMPS `pair_style pace`) 소스에서 확인한 내용
+
+`ICAMS/lammps-user-pace`의 `ML-PACE/ace/ace_b_evaluator.cpp`와 `ace-evaluator/ace_radial.cpp`를 읽었다. inner cutoff 방식은 세 가지다.
+
+1. **기본(density) 방식:** core 밀도 $\rho^{core}_i=\sum_jA e^{-\lambda r_{ij}^2}/r_{ij}\cdot\text{env}(r_{ij})$를 쓴다. $E_i=f(\rho^{core}_i)\,E_i^{ACE}+\rho^{core}_i$이고, $f$는 `rho_core_cut`, `drho_core_cut`로 정한다. atom 단위 switch지만 switch 변수가 **강하게 감쇠하는 반발 pair의 합**이라 가장 가까운 쌍이 지배한다.
+2. **`inner_cutoff_type: distance` — bond 단위:** ACE의 radial basis에 $g_n(r)\to g_n(r)\,[1-f_{in}(r)]$를 곱한다(`r_in`, `delta_in`). 그래서 inner 안쪽의 이웃은 **descriptor에서 매끄럽게 사라진다.** core repulsion $Ae^{-\lambda r^2}/r$은 반대로 $f_{in}(r)$을 곱해서 inner 안쪽에서만 켜진다. 17.4의 해법 C가 바로 이것이다.
+3. **`inner_cutoff_type: zbl` — 가장 가까운 이웃 기준 atom switch:** $\rho^{core}_i=\sum_jV_{ZBL}(r_{ij})$이고(ZBL은 outer cutoff까지 "full force"), $E_i=f\,E_i^{ACE}+(1-f)\,\rho^{core}_i$이다. $f$는 **가장 가까운 이웃까지의 거리 $r_{min,i}$**(종 쌍별 inner 값으로 이동)의 다항식 cutoff다. switch의 미분은 가장 가까운 이웃 $j_{min}$에만 걸리므로 **spectator force가 없다.** LAMMPS에서는 원자별 core-repulsion 비율을 `fix pair … pace corerep`으로 출력할 수 있다.
+
+pacemaker에는 ZBL core repulsion을 데이터로부터 맞추는 `pace_corerep` 도구가 있다. FAQ는 짧은 거리 데이터가 없을 때 core repulsion을 권한다. 문서 버전에 따라 transition 구간 표기($[r_{in}-\delta,r_{in}]$ vs $[r_{in},r_{in}+\delta]$)가 다르므로, 쓰는 버전의 소스를 확인하는 것이 안전하다.
+
+### 25.2 bond 단위로 끄면 상한(학습 가능성) 문제에 걸리나?
+
+**걸리지 않는다.** 이유는 다음과 같다.
+
+- 21장의 문제는 "NN이 descriptor를 통해 $1/r^2$ force를 만들어야 하는데 $dG/dr\propto r$이라 불가능"이었다. bond 단위 switch에서는 inner 안쪽의 쌍이 **NN 입력에서 빠지고**, 발산은 명시적 pair 항(ZBL)이 **선형으로** 맡는다(22.3의 조건).
+- window 안에서 NN이 맞출 것은 residual $E_{ref}-V_{ZBL}$이고, 입력 쪽 r 의존성은 $g_n(r)[1-f_{in}(r)]$로 유계·매끄럽다. 그러므로 $L_{req}$가 발산하지 않는다.
+- message passing에서는 그 edge의 message 자체가 사라지므로 18장의 spectator 전파도 근원에서 막힌다.
+
+**대가와 주의점:**
+
+- inner 안쪽에서는 ML이 그 쌍을 보지 못하므로 **ZBL의 오차(수~십여 %)를 보정할 수 없다.** $r_{in}$은 ZBL이 충분히 맞는 거리(대략 ≲1 Å, 2·4장)에 두거나, ZBL 대신 DFT dimer에 맞춘 pair를 쓴다.
+- 그 상태에서 ML 에너지는 "그 이웃이 없는 환경"의 값이 된다. 다른 결합은 유지되므로 대체로 합리적이다.
+- **구조에 따라 쉬운 정도가 다르다.** ACE/MACE처럼 다체 basis가 단일 이웃 함수의 곱인 구조에서는 radial 함수 하나에 인자를 곱하면 그 이웃이 모든 차수에서 사라진다. 반면 ACSF G4는 $f_c(r_{jk})$처럼 이웃끼리의 거리가 직접 들어가므로 $r_{jk}$ 다리에도 inner 인자를 넣어야 한다.
+- descriptor가 바뀌므로 **재학습이 필요하다.**
+
+---
+
 ## 참고 문헌
 
 - J. F. Ziegler, J. P. Biersack, U. Littmark, *The Stopping and Range of Ions in Matter*, Vol. 1, Pergamon (1985).
@@ -746,3 +960,9 @@ dimer라면 방향이 고정되므로 모든 입력이 유한한 극한을 갖�
 - S. Batzner et al., "E(3)-equivariant graph neural networks for data-efficient and accurate interatomic potentials" (NequIP), *Nat. Commun.* **13**, 2453 (2022).
 - Y. Park et al., "Scalable parallel algorithm for graph neural network interatomic potentials in molecular dynamics simulations" (SevenNet), *J. Chem. Theory Comput.* **20**, 4857 (2024).
 - DeePMD-kit 문서: DP/ZBL 모델 (`sw_rmin`, `sw_rmax`, `smin_alpha`).
+- H. Wang, X. Guo, L. Zhang, H. Wang, J. Xue, "Deep learning inter-atomic potential model for accurate irradiation damage simulations", *Appl. Phys. Lett.* **114**, 244101 (2019), arXiv:1904.00360.
+- O. T. Unke et al., "SpookyNet: Learning force fields with electronic degrees of freedom and nonlocal effects", *Nat. Commun.* **12**, 7273 (2021), arXiv:2105.00304.
+- M. Rupp, A. Tkatchenko, K.-R. Müller, O. A. von Lilienfeld, "Fast and accurate modeling of molecular atomization energies with machine learning", *Phys. Rev. Lett.* **108**, 058301 (2012).
+- S. Chmiela et al., "Towards exact molecular dynamics simulations with machine-learned force fields" (sGDML), *Nat. Commun.* **9**, 3887 (2018).
+- Y. Lysogorskiy et al., "Performant implementation of the atomic cluster expansion (PACE)", *npj Comput. Mater.* **7**, 97 (2021); ML-PACE 소스 `ICAMS/lammps-user-pace`; pacemaker 문서(Input file, FAQ, `pace_corerep`).
+- "Improving robustness and training efficiency of machine-learned potentials by incorporating short-range empirical potentials", arXiv:2504.15925 (2025).

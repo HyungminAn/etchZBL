@@ -114,7 +114,8 @@
     yl.textContent = o.ylabel || "";
     const leg = (o.series || []).filter((s) => s.label);
     leg.forEach((s, i) => {
-      const lxp = o.legendLeft || W < 520 ? L + 10 : W - R - 210, lyp = T + 14 + i * 16;
+      const lxp = o.legendLeft || W < 520 ? L + 10 : W - R - 210;
+      const lyp = o.legendBottom ? H - B - 8 - (leg.length - 1 - i) * 16 : T + 14 + i * 16;
       el("line", { x1: lxp, x2: lxp + 20, y1: lyp - 4, y2: lyp - 4, class: "line " + (s.cls || "s1") + (s.dash ? " dash" : "") }, svg);
       el("text", { x: lxp + 26, y: lyp, class: "legend" }, svg).textContent = s.label;
     });
@@ -574,6 +575,153 @@
       const slope = (g) => (g(2.2) - g(1.8)) / 0.4;
       ro.innerHTML = `fitted / true slope on 1.8–2.2 Å: <b>${(slope(f) / slope(V)).toFixed(2)}</b>. Same model, same loss: what decides the steepness off equilibrium is how much data is there, ` +
         `and how strongly the fit is pulled toward smooth/small functions where data is thin. Far outside the data no term in the loss asks for steepness at all.`;
+    };
+    root._redraw();
+  };
+
+  // 11. learnability: fits with shrinking r_min (precomputed with torch) -------------
+  DEMOS.learn = function (root) {
+    const L = window.DEMO_DATA.learn;
+    const st = ui(root, [
+      { key: "kind", type: "select", label: "features", value: "G2", options: [["G2", "BPNN G2 (SiO2 Si–Si set, Rs = 0)"], ["Bessel", "Bessel (SevenNet checkpoint)"]] },
+      { key: "target", type: "select", label: "target", value: "full", options: [["full", "full reference E(r)"], ["delta", "delta: reference − (ZBL + S)"]] },
+      { key: "k", type: "range", label: "training r_min", min: 0, max: L.rmins.length - 1, step: 1, value: 8, show: (v) => L.rmins[v] + " Å" },
+      { key: "view", type: "select", label: "show", value: "F", options: [["F", "force error vs r (with bound)"], ["E", "energy fit"], ["sum", "RMSE vs r_min (all fits)"]] },
+    ]);
+    const [s1] = svgBox(root, 1), ro = readout(root);
+    root._redraw = function () {
+      const rm = L.rmins[st.k], f = L.fits[`${st.kind}|${st.target}|${rm}`];
+      if (st.view === "sum") {
+        const ser = [];
+        [["G2", "full", "s2"], ["Bessel", "full", "s4"], ["G2", "delta", "s3"], ["Bessel", "delta", "s5"]].forEach(([k, t, c]) => {
+          ser.push({ x: L.rmins, y: L.rmins.map((x) => L.fits[`${k}|${t}|${x}`].rmse_F), cls: c, dash: t === "delta" ? 1 : 0, label: `${k}, ${t}` });
+        });
+        plot(s1, { xlim: [0.1, 1.5], ylim: [1e-3, 1e4], logy: true, xlabel: "training r_min (Å)", ylabel: "force RMSE on the training set (eV/Å)", series: ser, vlines: [[rm, "vline"]] });
+      } else if (st.view === "E") {
+        const pos = (a) => a.map((v) => Math.max(v, 1e-3));
+        plot(s1, { xlim: [rm, 4], ylim: st.target === "full" ? [0.01, 3e4] : [-10, 10], logy: st.target === "full", xlabel: "r (Å)", ylabel: st.target === "full" ? "E (eV, log)" : "E (eV)",
+          series: [{ x: f.r, y: st.target === "full" ? pos(f.E_ref.map((v) => v + 3.2)) : f.E_ref, cls: "s6", label: "target" + (st.target === "full" ? " + 3.2 eV" : "") },
+                   { x: f.r, y: st.target === "full" ? pos(f.E_fit.map((v) => v + 3.2)) : f.E_fit, cls: "s2", dash: 1, label: "fit" + (st.target === "full" ? " + 3.2 eV" : "") }] });
+      } else {
+        const err = f.F_fit.map((v, i) => Math.abs(v - f.F_ref[i]) + 1e-6);
+        const floor = f.F_ref.map((v, i) => Math.max(Math.abs(v) - f.L_fit * f.dGdr[i], 1e-6));
+        plot(s1, { xlim: [rm, 4], ylim: [1e-3, 1e5], logy: true, xlabel: "r (Å)", ylabel: "|force| (eV/Å)",
+          series: [{ x: f.r, y: f.F_ref.map((v) => Math.abs(v) + 1e-6), cls: "s6", label: "|F_ref|" }, { x: f.r, y: err, cls: "s2", label: "|F_fit − F_ref|" },
+                   { x: f.r, y: f.r.map((_, i) => f.L_fit * f.dGdr[i] + 1e-6), cls: "s3", dash: 1, label: "max reachable L·‖dG/dr‖" },
+                   { x: f.r, y: floor, cls: "s5", dash: 1, label: "predicted floor |F_ref| − L‖dG/dr‖" }] });
+      }
+      ro.innerHTML = `${st.kind}, ${st.target}, r<sub>min</sub> = ${rm} Å: RMSE<sub>E</sub> = <b>${fmt(f.rmse_E, 3)}</b> eV, RMSE<sub>F</sub> = <b>${fmt(f.rmse_F, 2)}</b> eV/Å; ` +
+        `fitted Lipschitz constant L = max‖∂E/∂G‖ = ${fmt(f.L_fit, 1)}, required L<sub>req</sub> = max |F<sub>ref</sub>|/‖dG/dr‖ = <b>${fmt(f.L_req, 1)}</b>. ` +
+        `Where the green line falls below |F<sub>ref</sub>| no setting of the weights with this L can reach the target force — the purple line is that floor.`;
+    };
+    root._redraw();
+  };
+
+  // 12. required Lipschitz constant (a priori, model-free) -----------------------------
+  DEMOS.lreq = function (root) {
+    const L = window.DEMO_DATA.learn;
+    const st = ui(root, [{ key: "L", type: "range", label: "Lipschitz budget L of your model (log10)", min: 0, max: 6, step: 0.1, value: 2.5, show: (v) => "10^" + v.toFixed(1) }]);
+    const [s1] = svgBox(root, 1), ro = readout(root);
+    root._redraw = function () {
+      const a = L.Lreq_G2, b = L.Lreq_Bessel, Lb = Math.pow(10, st.L);
+      plot(s1, { xlim: [0.05, 4], ylim: [1e-2, 1e9], logx: true, logy: true, xlabel: "r (Å)", ylabel: "L_req(r) = |F_ref| / (2‖dG/dr‖)",
+        series: [{ x: a.r, y: a.full, cls: "s2", label: "G2, full target" }, { x: a.r, y: a.delta, cls: "s3", dash: 1, label: "G2, delta target" },
+                 { x: b.r, y: b.full, cls: "s4", label: "Bessel, full target" }, { x: b.r, y: b.delta, cls: "s5", dash: 1, label: "Bessel, delta target" },
+                 { x: [0.05, 4], y: [Lb, Lb], cls: "s6", dash: 1, label: "your L" }] });
+      const cross = (arr) => { for (let i = arr.r.length - 1; i >= 0; i--) if (arr.full[i] > Lb) return arr.r[i]; return null; };
+      const cg = cross(a), cb = cross(b);
+      ro.innerHTML = `With L = ${fmt(Lb, 0)}, the full target becomes unreachable below about <b>${cg ? cg.toFixed(2) : "—"} Å</b> (G2) and <b>${cb ? cb.toFixed(2) : "—"} Å</b> (Bessel). ` +
+        `Near r → 0 both feature sets have ‖dG/dr‖ ∝ r while |F<sub>ZBL</sub>| ∝ 1/r², so L<sub>req</sub> ∝ r<sup>−3</sup>: halving r<sub>min</sub> asks for 8× larger weights. ` +
+        `The delta target only has to bridge the residual, so its curve stays orders of magnitude lower.`;
+    };
+    root._redraw();
+  };
+
+  // 13. basis families near r = 0 ----------------------------------------------------------
+  DEMOS.basis = function (root) {
+    const st = ui(root, [
+      { key: "fam", type: "select", label: "basis family", value: "all", options: [["all", "compare"], ["gauss", "Gaussian G2 (Rs = 0)"], ["bessel", "Bessel sin(cr)/r"], ["inv", "inverse power 1/r"], ["yuk", "screened Coulomb e^{−κr}/r"]] },
+      { key: "p", type: "range", label: "width parameter (η, c, κ)", min: 0.2, max: 5, step: 0.1, value: 1.5, show: (v) => v.toFixed(1) },
+    ]);
+    const [s1, s2] = svgBox(root, 2), ro = readout(root);
+    root._redraw = function () {
+      const p = st.p, r = logspace(-2.5, Math.log10(4), 220);
+      const fams = {
+        gauss: [(x) => Math.exp(-p * x * x), (x) => 2 * p * x * Math.exp(-p * x * x), "s2", "Gaussian"],
+        bessel: [(x) => Math.sin(p * x) / x, (x) => Math.abs((p * x * Math.cos(p * x) - Math.sin(p * x)) / (x * x)), "s3", "Bessel"],
+        inv: [(x) => 1 / x, (x) => 1 / (x * x), "s4", "1/r"],
+        yuk: [(x) => Math.exp(-p * x) / x, (x) => Math.exp(-p * x) * (p * x + 1) / (x * x), "s5", "e^{−κr}/r"],
+      };
+      const keys = st.fam === "all" ? Object.keys(fams) : [st.fam];
+      plot(s1, { xlim: [r[0], 4], ylim: [1e-3, 1e3], logx: true, logy: true, xlabel: "r (Å)", ylabel: "|φ(r)|", title: "value",
+        series: keys.map((k) => ({ x: r, y: r.map((x) => Math.abs(fams[k][0](x))), cls: fams[k][2], label: fams[k][3] })) });
+      plot(s2, { xlim: [r[0], 4], ylim: [1e-4, 1e6], logx: true, logy: true, xlabel: "r (Å)", ylabel: "|dφ/dr|", title: "slope (what a force can be built from)",
+        series: keys.map((k) => ({ x: r, y: r.map((x) => fams[k][1](x)), cls: fams[k][2], label: fams[k][3] })) });
+      ro.innerHTML = `Gaussian and Bessel: value → constant, slope ∝ r (bounded inputs, no force at r = 0). 1/r and e<sup>−κr</sup>/r: value ∝ 1/r, slope ∝ 1/r² — the shape of nuclear repulsion. ` +
+        `But a divergent <i>input</i> alone does not give a divergent <i>energy</i>: through tanh it saturates, through SiLU it grows only linearly in the input. ` +
+        `To inherit 1/r you need the singular function to enter the energy <b>linearly</b>, i.e. as an explicit pair term Σ c<sub>k</sub> e<sup>−d<sub>k</sub>r</sup>/r — exactly the ZBL form.`;
+    };
+    root._redraw();
+  };
+
+  // 14. what "perpendicular" means for the angle derivative --------------------------------
+  DEMOS.tangent = function (root) {
+    const st = ui(root, [
+      { key: "r", type: "range", label: "r_ij (Å)", min: 0.15, max: 2.5, step: 0.01, value: 1.0, show: (v) => v.toFixed(2) },
+      { key: "th", type: "range", label: "θ_jik (°)", min: 20, max: 160, step: 1, value: 70 },
+      { key: "d", type: "range", label: "move j by δ (Å)", min: 0, max: 0.3, step: 0.005, value: 0.1, show: (v) => v.toFixed(3) },
+      { key: "dir", type: "select", label: "direction of δ", value: "t", options: [["t", "tangential (⊥ r_ij)"], ["n", "radial (∥ r_ij)"]] },
+    ]);
+    const wrap = document.createElement("div"); wrap.className = "plots"; root.appendChild(wrap);
+    const svg = el("svg", { viewBox: "0 0 640 330", class: "plot geo" }, wrap);
+    const ro = readout(root);
+    root._redraw = function () {
+      while (svg.firstChild) svg.removeChild(svg.firstChild);
+      const sc = 100, cx = 260, cy = 200, th = st.th * Math.PI / 180, r = st.r;
+      const P = (x, y) => [cx + x * sc, cy - y * sc];
+      const [ix, iy] = P(0, 0), [kx, ky] = P(2.2, 0);
+      const jx = r * Math.cos(th), jy = r * Math.sin(th);
+      const ux = Math.cos(th), uy = Math.sin(th), tx = -uy, ty = ux;
+      const dx = st.dir === "t" ? tx * st.d : ux * st.d, dy = st.dir === "t" ? ty * st.d : uy * st.d;
+      const j2x = jx + dx, j2y = jy + dy, th2 = Math.atan2(j2y, j2x);
+      el("circle", { cx: ix, cy: iy, r: r * sc, class: "geo-circle" }, svg);
+      el("line", { x1: ix, y1: iy, x2: kx, y2: ky, class: "geo-bond" }, svg);
+      el("line", { x1: ix, y1: iy, x2: P(jx, jy)[0], y2: P(jx, jy)[1], class: "geo-bond" }, svg);
+      el("line", { x1: ix, y1: iy, x2: P(j2x, j2y)[0], y2: P(j2x, j2y)[1], class: "geo-bond2" }, svg);
+      el("line", { x1: P(jx, jy)[0], y1: P(jx, jy)[1], x2: P(j2x, j2y)[0], y2: P(j2x, j2y)[1], class: "geo-arrow" }, svg);
+      const arc = (rad, a0, a1, cls) => {
+        const [x0, y0] = P(rad * Math.cos(a0), rad * Math.sin(a0)), [x1, y1] = P(rad * Math.cos(a1), rad * Math.sin(a1));
+        el("path", { d: `M${x0},${y0} A${rad * sc},${rad * sc} 0 0 0 ${x1},${y1}`, class: cls }, svg);
+      };
+      arc(0.35, 0, th, "geo-ang");
+      if (Math.abs(th2 - th) > 1e-4) arc(0.5, Math.min(th, th2), Math.max(th, th2), "geo-dang");
+      [[ix, iy, "i"], [kx, ky, "k"], [...P(jx, jy), "j"], [...P(j2x, j2y), "j′"]].forEach(([x, y, t]) => {
+        el("circle", { cx: x, cy: y, r: t === "j′" ? 6 : 9, class: "geo-atom" + (t === "j′" ? " ghost" : "") }, svg);
+        el("text", { x: t === "j′" ? x - 26 : x + 11, y: y - 9, class: "geo-label" }, svg).textContent = t;
+      });
+      const dth = (th2 - th) * 180 / Math.PI;
+      const cos1 = Math.cos(th), cos2 = Math.cos(th2);
+      ro.innerHTML = `j moves by δ = ${st.d.toFixed(3)} Å ${st.dir === "t" ? "along the circle around i (tangent)" : "straight away from i"}: θ changes by <b>${dth.toFixed(2)}°</b> ` +
+        (st.dir === "t" ? `≈ (δ/r<sub>ij</sub>)·180/π = ${(st.d / r * 180 / Math.PI).toFixed(2)}°.` : `(zero: the direction of r<sub>ij</sub> is unchanged).`) +
+        ` Δcosθ = ${(cos2 - cos1).toFixed(4)}. Shrink r<sub>ij</sub> with the same δ and the tangential change grows like 1/r<sub>ij</sub>. ` +
+        `Moving i instead of j gives the same angle change with the opposite sign (only r<sub>ij</sub> = x<sub>j</sub> − x<sub>i</sub> enters), so "the force on i" and "the force on j" from this term are equal and opposite.`;
+    };
+    root._redraw();
+  };
+
+  // 15. switch variants for the SevenNet spectator force ------------------------------------
+  DEMOS.swvar = function (root) {
+    const V = window.DEMO_DATA.sw_variants;
+    const st = ui(root, [{ key: "log", type: "check", label: "log scale", value: true }]);
+    const [s1] = svgBox(root, 1), ro = readout(root);
+    root._redraw = function () {
+      const r = V.rows.map((x) => x.r), lg = st.log, y = (k) => V.rows.map((x) => (lg ? Math.max(x[k], 1e-3) : x[k]));
+      plot(s1, { xlim: [0.3, 0.9], ylim: lg ? [1e-3, 100] : [0, 60], logy: lg, legendBottom: lg, legendLeft: true, xlabel: "distance of the pushed Si (Å)", ylabel: "max spectator force from the switch (eV/Å)",
+        series: [{ x: r, y: y("a0.104"), cls: "s6", label: "α = 0.104 (checkpoint)" }, { x: r, y: y("ref_iso"), cls: "s4", dash: 1, label: "α = 0.104, E_i^ML − E_iso" },
+                 { x: r, y: y("a0.05"), cls: "s2", label: "α = 0.05" }, { x: r, y: y("a0.03"), cls: "s3", label: "α = 0.03" }, { x: r, y: y("a0.02"), cls: "s5", label: "α = 0.02" }] });
+      ro.innerHTML = `Same E<sub>i</sub><sup>ML</sup> (from the checkpoint) and the same Si17 path; only the switch definition changes. Re-referencing to the isolated atom (E<sub>iso</sub> = ${V.E_iso.toFixed(2)} eV) hardly helps, ` +
+        `because E<sub>i</sub><sup>ML</sup> is 25–75 eV here from learned repulsion. A sharper softmin (smaller α) makes ∂σ<sub>i</sub>/∂x<sub>k</sub> ≈ 0 for every k that is not the closest neighbour. ` +
+        `ACE's "zbl" mode uses the hard minimum distance: spectator term exactly 0. Changing α changes the model energy, so it needs retraining.`;
     };
     root._redraw();
   };
