@@ -5,6 +5,8 @@ ZBL(Ziegler–Biersack–Littmark) 포텐셜이 무엇이고, 왜 MD/MLIP에 끼
 - 참고한 LAMMPS 문서: [pair zbl](https://docs.lammps.org/pair_zbl.html), [pair lj/gromacs](https://docs.lammps.org/pair_gromacs.html) (switching function), [pair tersoff/zbl](https://docs.lammps.org/pair_tersoff_zbl.html) (hybrid 예시)
 - 그림과 숫자는 모두 `make_figures.py`로 다시 만들 수 있다. 출력 숫자는 `figures/numbers.txt`에 있다.
 - 단위는 eV, Å, amu. ZBL 상수는 `lammps/pair_zbl_const.h`와 같다.
+- **2부(11–19장)**는 MLIP 쪽 질문이다. BPNN의 에너지·힘 상한, radial/angular force, atom-wise vs bond-wise switching, message-passing U-MLIP의 spectator force를 다룬다. 2부 숫자는 `make_figures2.py`(SIMPLE-NN 파일을 직접 읽는 `simplenn_eval.py` 사용)와 `sevennet_scan.py`(torch 필요)로 다시 만들 수 있다.
+- HTML 버전에는 각 질문에 대한 interactive 예제가 들어 있다. Markdown에는 같은 내용의 정적 그림이 들어 있다.
 
 ---
 
@@ -129,7 +131,7 @@ $$
 
 이 저장소의 `zbl/pair`는 이 식을 그대로 쓰되, $r_1, r_c$를 **pair마다 따로** 받는다(LAMMPS 원본은 global 값 하나).
 
-![switching](figures/switching.svg)
+![static:switch](figures/switching.svg)
 
 *그림 1. Si–Si(inner 1.598, outer 2.054 Å, 학습 스크립트 값). 왼쪽: 에너지. 덧셈형(주황)은 inner 안쪽에서 bare ZBL(파랑)보다 C = −3.56 eV 아래에 평행하게 놓인다. 곱셈형 f_c·ZBL(초록 점선)은 inner 안쪽에서 bare ZBL과 같다. 오른쪽: force. 덧셈형과 곱셈형 모두 inner 안쪽에서는 ZBL force와 같다. 곱셈형은 전이 구간에서 f_c′·E 항 때문에 ZBL보다 큰 bump가 생긴다.*
 
@@ -232,7 +234,7 @@ Velocity Verlet처럼 symplectic한 적분기로 에너지가 (오차 범위 내
 
 Si–Si 정면충돌($E_{cm}$ = 30 eV, dt = 1 fs, velocity Verlet)을 다섯 가지 결합 방식으로 돌려서 총에너지 $E_{tot}$의 변화를 봤다.
 
-![nve](figures/nve.svg)
+![static:nve](figures/nve.svg)
 
 | 방식 | 충돌 중 최대 \|ΔE\| | 충돌 후 ΔE | 판정 |
 |---|---|---|---|
@@ -380,6 +382,355 @@ $$
 
 ---
 
+## 11. 2부 (MLIP 쪽에서 본 ZBL hybrid) 요약
+
+| 질문 | 짧은 답 |
+|---|---|
+| hybrid에서 MLIP는 inner 안쪽에서도 켜져 있나? | 그렇다. `zbl/pair`는 ZBL만 계산하고 NN은 `hybrid/overlay`로 따로 더해진다. delta learning에서는 NN이 inner 안쪽에서 −C를 채워 주므로 **켜져 있어야** 맞다. |
+| PES softening은 데이터 탓인가, 구조 탓인가? | 주원인은 데이터 분포(평형 근처 구조가 대부분)다. 구조는 "데이터가 없는 곳에서 가파르게 올라갈 이유가 없다"는 쪽으로 작용해서 softening을 막지 못한다. 13장. |
+| tanh면 왜 atomic energy 상한이 생기나? | 출력층이 선형이고 마지막 hidden layer가 tanh이면 $E_i=b+\sum_k w_k h_k$, $\lvert h_k\rvert<1$이므로 $\lvert E_i-b\rvert<\sum_k\lvert w_k\rvert$이다. 입력이 무엇이든 성립한다. 14장. |
+| radial / angular force를 왜 나누나? 합치면 total인가? | chain rule로 $F=-\sum_\mu(\partial E/\partial G_\mu)(\partial G_\mu/\partial x)$이고, μ를 G2 묶음과 G4/G5 묶음으로 나눈 것뿐이다. 둘을 더하면 정확히 total이다. 나누는 이유는 r→0 거동이 다르기 때문이다(G2: ∝r→0, angular: ≲1/r). 15장. |
+| 이걸 다들 알고 있나? | 재료(유계 활성화 함수, ACSF 미분식)는 교과서적이다. 하지만 "그래서 BPNN은 r→0에서 폭발하지 않는다"를 식으로 정리한 문헌은 내가 아는 한 없다. 보통 반대쪽 표현인 "NNP는 짧은 거리에서 평평해져서 원자가 뚫고 지나간다"로 알려져 있다. 16장. |
+| switching을 영리하게 한 사람은? | atom 단위 가중치를 매끄러운 원자 변수(softmin 거리)로 만드는 방법(DeePMD의 DP/ZBL)이 있고, **연구실 SevenNet checkpoint가 바로 이 방식**이다. 대가로 $-E_i^{ML}\nabla f_i$ 항이 생기고, 실측하면 spectator에 ~54 eV/Å이다. bond(edge) 단위로 끄는 방법이 이 항을 피한다. 17장. |
+| U-MLIP에서 spectator force가 튀는 이유? 수렴값을 미리 계산할 수 있나? | message passing은 충돌한 edge의 정보를 이웃 원자로 전달한다. Bessel basis는 r→0에서 유한값으로 수렴하고 기울기는 0이므로 dimer 에너지는 유한값으로 수렴한다. SevenNet Si–Si는 1948.8 eV다. 계산할 수 있고, 모델을 r≈10⁻³ Å에서 평가하면 된다. 18장. |
+
+---
+
+## 12. hybrid ZBL + MLIP에서 MLIP는 inner 안쪽에서도 켜져 있다
+
+- `lammps/pair_zbl_p.cpp`는 ZBL+S만 계산한다. NN(`nn/intel`)은 `pair_style hybrid/overlay nn/intel zbl/pair`로 따로 계산되어 더해진다. 그래서 NN은 모든 거리에서 켜져 있다.
+- delta learning에서는 이것이 맞다. inner 안쪽 residual은 $E_{DFT}-(V_{ZBL}+C)\approx -C+(\text{작은 DFT−ZBL 차})$이고, 이 $-C$를 NN이 채운다. NN을 끄면 $C$가 보상되지 않는다(7장).
+- 걱정해야 할 것은 "NN이 켜져 있다는 사실"이 아니다. **켜져 있는 NN이 거기서 어떤 값을 내느냐**다. 이 저장소의 BPNN에서는 그 값이 유한하다는 것이 수학적으로 보장된다(14–15장). 실제로 확인해야 하는 곳은 0.5–1.5 Å의 중간 구간이다(15.5).
+
+---
+
+## 13. PES softening: 데이터 탓인가, 구조(activation/basis) 탓인가
+
+**주원인은 데이터다.** U-MLIP가 학습하는 재료 DB(예: Materials Project relaxation trajectory)는 대부분 평형 근처 구조다. 이 편향 때문에 표면·결함·phonon·이동 장벽처럼 평형에서 벗어난 영역에서 에너지와 곡률을 **체계적으로 과소평가**한다는 것이 Deng et al.의 보고다. 이들은 off-equilibrium 데이터를 조금만 추가해 fine-tuning해도 상당 부분 고쳐진다고 했다. "softening"이라는 말도 이 논문에서 정착했다.
+
+**구조의 역할은 "막지 못한다"는 쪽이다.**
+
+- 손실함수는 데이터가 있는 곳에서만 기울기를 요구한다. 데이터가 희박한 곳에서는 regularization, early stopping, 매끄러운 basis 같은 귀납 편향이 함수를 "작고 매끄러운" 쪽으로 당긴다. 그래서 가파른 벽은 덜 가파르게 학습된다.
+- 데이터가 아예 없는 곳(r≪1 Å)에서는 가파르게 올라가라고 요구하는 항이 손실에 전혀 없다. radial basis가 유한값으로 수렴하므로(18.2), $1/r$처럼 발산하는 함수는 구조적으로 나올 수 없다.
+- 즉, **데이터가 얼마나 가파른지 알려 주지 않는 곳에서 구조는 가파름을 만들어 내지 않는다.** 그 결과가 "증가는 하지만 가파르지 않은" 곡선이다.
+
+연구실 SevenNet checkpoint의 raw ML 부분(switch를 끄고 본 값)을 실측했다. Si–Si는 1.0–1.3 Å에서 bare ZBL과 거의 겹친다. 하지만 0.6 Å에서는 66 eV로 ZBL(278 eV)의 1/4이다. 데이터가 있는 거리까지는 맞고, 그 아래부터 무른 것이다.
+
+<!-- demo:soft -->
+
+![keep:softening](figures/softening_toy.svg)
+
+*그림 2-1. 같은 매끄러운 모델(Gaussian RBF ridge 회귀)에 평형 근처 데이터와 off-equilibrium 데이터를 섞어 Morse PES를 fit했다. off-equilibrium 비율이 작을수록 반발 벽의 기울기를 과소평가한다(0% → 거의 평평, 5% → 약 0.75배, 30% 이상 → 약 0.94배). HTML 버전에서는 비율, regularization, 평형 근처 분포 폭을 바꿔 볼 수 있다.*
+
+---
+
+## 14. tanh면 왜 atomic energy에 상한이 생기나
+
+### 14.1 식
+
+이 저장소의 SIMPLE-NN potential은 원소마다 `182 → (linear PCA 182) → tanh 60 → tanh 60 → linear 1` 구조다(`pot/simplenn/*` 파일의 `NET 3 182 60 60 1`, `LAYER … tanh`). 정확히 말하면 "마지막 layer가 tanh"가 아니라 **마지막 hidden layer가 tanh이고 출력층은 선형**이다.
+
+$$
+E_i = b + \sum_{k=1}^{60} w_k\,h_k,\qquad h_k=\tanh(a_k),\quad a_k=\text{(앞 layer들의 임의의 함수)}
+$$
+
+$\tanh$의 치역이 $(-1,1)$이므로 $a_k$가 무엇이든 $\lvert h_k\rvert<1$이다. 삼각부등식을 쓰면
+
+$$
+\lvert E_i-b\rvert=\Big\lvert\sum_k w_k h_k\Big\rvert\le\sum_k\lvert w_k\rvert\,\lvert h_k\rvert<\sum_k\lvert w_k\rvert\equiv S_i .
+$$
+
+이 부등식에는 입력 $G$가 전혀 들어가지 않는다. **descriptor가 학습 범위를 아무리 벗어나도** $E_i\in(b-S_i,\;b+S_i)$다. 원자 하나가 충돌로 바꿀 수 있는 NN 에너지는 $2S_i$보다 작고, 충돌 쌍 전체의 NN 에너지 변화도 $2(S_A+S_B)$보다 작다. 반면 ZBL은 $Z_AZ_Be^2/r$로 발산하므로, 충분히 짧은 거리에서는 반드시 ZBL이 이긴다.
+
+pot 파일에서 직접 읽은 값:
+
+| potential | Si | N / O | C | H | F |
+|---|---|---|---|---|---|
+| Si3N4: $b$, $S$ (eV) | −1.52, 11.30 | N: −0.97, 13.80 | −2.04, 18.68 | 1.51, 11.70 | −4.01, 11.79 |
+| SiO2: $b$, $S$ (eV) | −1.62, 8.29 | O: −0.91, 12.50 | −1.93, 16.53 | 1.56, 11.80 | −3.97, 13.00 |
+
+이 값은 모든 hidden unit이 부호를 맞춰 포화할 때만 도달하는 최악의 경우다. 실제 dimer에서 본 변화폭은 수~20 eV 정도였다(15.5).
+
+### 14.2 힘(기울기)의 상한
+
+$$
+\frac{\partial E_i}{\partial G}=W_1^{\top}\,\mathrm{diag}(1-h^{(1)2})\,W_2^{\top}\,\mathrm{diag}(1-h^{(2)2})\,w\quad\Rightarrow\quad
+\Big\lVert\frac{\partial E_i}{\partial G}\Big\rVert\le\lVert W_1\rVert\,\lVert W_2\rVert\,\lVert w\rVert
+$$
+
+여기서 $0<1-\tanh^2\le1$이고, $W_1$은 PCA와 scaling을 접은 첫 layer다. 따라서 $\partial E/\partial G$도 입력과 무관하게 유계다. 학습 범위 밖에서 unit이 포화하면 $1-h^2\to0$이 되어 오히려 **작아진다**. 그러면 힘의 크기는 $\partial G/\partial x$가 결정한다(15장).
+
+### 14.3 tanh가 아니면?
+
+- ReLU/SiLU처럼 위로 열린 활성화 함수는 $E_i$를 입력에 대해 선형으로 키울 수 있다. 다만 ACSF 값 자체가 유계다(G2 각 항 ≤ 1, 이웃 수만큼의 합). 그래서 도달 가능한 입력 영역 위에서는 여전히 유계다. 대신 그 상한이 크고, 가중치 norm의 곱(Lipschitz 상수)에 따라 정해진다.
+- 결론: "폭발하지 않는다"는 tanh뿐 아니라 **유계 descriptor + 연속 함수**라면 성립한다. tanh는 그 상한을 $\sum\lvert w\rvert$라는 작고 명시적인 값으로 만들어 준다.
+
+### 14.4 실제 네트워크로 확인
+
+SiO2 potential의 Si 네트워크에 SiO4 정사면체의 Si 환경을 넣고, Si–O 거리를 4 Å에서 0.05 Å까지 바꿨다.
+
+<!-- demo:tanh -->
+
+![keep:tanh](figures/tanh_bound.svg)
+
+*그림 2-2. 왼쪽: $E_{Si}$는 tanh 한계(회색 띠) 안에 머물고, 0.8 Å 아래에서는 거의 상수다. 오른쪽: 평형(파란 띠)에서는 layer 1 unit의 약 30%만 포화하지만, 0.6 Å 아래에서는 거의 100% 포화한다. 포화하면 $\partial E/\partial G\to0$이 되어 NN의 힘이 사라진다. HTML 버전에서는 슬라이더로 거리를 바꾸며 120개 hidden unit의 값을 색으로 볼 수 있다.*
+
+---
+
+## 15. radial force와 angular force
+
+### 15.1 둘은 더해서 total force가 된다
+
+$$
+\mathbf F_k=-\frac{\partial E}{\partial\mathbf x_k}=-\sum_i\sum_{\mu}\frac{\partial E_i}{\partial G_{i\mu}}\,\frac{\partial G_{i\mu}}{\partial\mathbf x_k}
+=\underbrace{-\sum_i\sum_{\mu\in\text{G2}}(\cdots)}_{\mathbf F_k^{rad}}\;\underbrace{-\sum_i\sum_{\mu\in\text{G4,G5}}(\cdots)}_{\mathbf F_k^{ang}}
+$$
+
+chain rule의 합을 descriptor 종류별로 묶은 것일 뿐이므로 $\mathbf F=\mathbf F^{rad}+\mathbf F^{ang}$가 정확히 성립한다. `pair_nn.cpp`도 G2와 G4/G5의 미분을 따로 계산해서 같은 force 배열에 더한다. 나눠서 보는 이유는 **r→0 거동이 다르기 때문**이다.
+
+### 15.2 radial: 곱의 미분에서 한쪽은 r이 나오고, 다른 쪽은 0이 된다
+
+$$
+G2(r)=e^{-\eta(r-R_s)^2}f_c(r),\qquad
+\frac{dG2}{dr}=\underbrace{-2\eta(r-R_s)e^{-\eta(r-R_s)^2}f_c}_{\text{term 1}}+\underbrace{e^{-\eta(r-R_s)^2}f_c'(r)}_{\text{term 2}}
+$$
+
+$f_c(r)=\tfrac12[1+\cos(\pi r/r_c)]$이므로 $f_c'(r)=-\tfrac{\pi}{2r_c}\sin(\pi r/r_c)$이고, $f_c'(0)=0$이다.
+
+- $R_s=0$(이 저장소의 모든 G2): term 1 $\approx-2\eta r\to0$, term 2 $\approx-\tfrac{\pi^2}{2r_c^2}r\to0$. **둘 다 r에 비례해서 0으로 간다.** 그래서 충돌하는 쌍의 radial force는 r→0에서 사라진다.
+- $R_s>0$: term 1 → $2\eta R_s e^{-\eta R_s^2}$로 **유한하지만 0은 아니다**. 이 경우에도 유계라는 결론은 그대로다.
+
+<!-- demo:g2 -->
+
+![g2](figures/g2_derivative.svg)
+
+*그림 2-3. 실선 $R_s=0$, 점선 $R_s=1$. 오른쪽 그림이 두 항을 따로 보여 준다.*
+
+### 15.3 angular: 값은 유계, 옆 방향 기울기는 ~1/r
+
+$$
+G4=2^{1-\zeta}\sum_{j<k}(1+\lambda\cos\theta_{jik})^{\zeta}\,e^{-\eta(r_{ij}^2+r_{ik}^2+r_{jk}^2)}f_c(r_{ij})f_c(r_{ik})f_c(r_{jk})
+$$
+
+$\cos\theta_{jik}$는 $\mathbf r_{ij}$의 **방향**에만 의존한다. 원자 j를 $\mathbf r_{ij}$에 수직으로 δ만큼 움직이면 각도가 $\delta/r_{ij}$만큼 바뀐다. 그래서
+
+$$
+\Big\lvert\frac{\partial\cos\theta_{jik}}{\partial\mathbf x_j}\Big\rvert=\frac{\sin\theta_{jik}}{r_{ij}}
+$$
+
+이고, G4의 수직 방향 기울기는 $\sim1/r_{ij}$로 커진다. $\mathbf r_{ij}$ 방향으로는 각도가 변하지 않으므로 유한하다. 결과적으로 NN의 angular force는 최대 $\sim C/r$이다(C는 14.2의 유계 계수). ZBL force는 $\sim Z_AZ_Be^2/r^2$이므로 r→0에서는 ZBL이 이긴다.
+
+<!-- demo:angular -->
+
+![angular](figures/angular_gradient.svg)
+
+*그림 2-4. descriptor 수준의 기울기(log–log). radial ∝ r, angular 수직 성분 ∝ 1/r, ZBL force ∝ 1/r².*
+
+### 15.4 실제 계산: F가 SiO4로 접근할 때 (SiO2 BPNN)
+
+`simplenn_eval.py`로 G2/G4/G5 전체를 계산하고 force를 radial과 angular로 나눴다. F는 한 O의 반대쪽에서 20° 비껴서 접근한다.
+
+| Si–F (Å) | 2.0 | 1.3 | 1.1 | 0.9 | 0.5 | 0.25 | 0.12 |
+|---|---|---|---|---|---|---|---|
+| $\lvert F_{NN}\rvert$ on F (eV/Å) | 7.1 | 13.5 | 17.7 | 11.9 | 2.1 | 17.0 | 16.1 |
+| angular ⊥ 성분 | 3.0 | 4.2 | 7.0 | 3.6 | 10.3 | 12.5 | 15.4 |
+| ZBL+S on F | 0 | 29 | 91 | 209 | 1800 | 14600 | 93000 |
+| spectator O 최대 $\lvert F_{NN}\rvert$ | 5.7 | 9.8 | 15.0 | 15.7 | 10.5 | 8.5 | 5.1 |
+
+- NN force는 모든 거리에서 ~20 eV/Å 이하로 유지된다. ZBL은 1/r²로 커진다.
+- angular 수직 성분은 0.5 → 0.12 Å에서 10 → 15 eV/Å로 천천히 커진다. 15.3의 1/r 인자에 포화된 $\partial E/\partial G$가 곱해진 결과다.
+- 충돌에 참여하지 않는 O 원자의 NN force도 유계다(≤16 eV/Å).
+
+![cluster](figures/cluster_forces.svg)
+
+### 15.5 이 저장소 BPNN의 dimer: 진짜 확인할 곳은 중간 구간
+
+<!-- demo:dimer -->
+
+![dimers](figures/bpnn_dimers.svg)
+
+*그림 2-5. 진공 dimer의 NN 에너지(주황)는 r ≲ 0.8 Å에서 평평하다. ZBL+S(파랑)를 더한 총에너지(점선)는 단조 증가한다.*
+
+r < inner 구간에서 $\max\lvert F_{NN}/F_{ZBL}\rvert$:
+
+| potential | 대부분의 pair | 큰 경우 |
+|---|---|---|
+| Si3N4 | 0.03–0.35 | N–N 0.51 (0.60 Å: 228 vs 446 eV/Å), Si–Si 0.61 (1.40 Å) |
+| SiO2 | 0.02–0.29 | **Si–Si 1.67** (1.50 Å: −48.7 vs +29.2 eV/Å, total force가 잠깐 인력) |
+
+r→0의 안전은 보장된다. 확인해야 하는 것은 **중간 구간에서 NN이 extrapolation으로 내는 force가 ZBL보다 작은가**다. 진공 dimer는 가장 극단적인 extrapolation이므로, slab 충돌 경로로 한 번 더 확인하는 것이 좋다.
+
+---
+
+## 16. 이걸 다들 알고 있나?
+
+- **재료는 교과서적이다.** 유계 활성화 함수 → 유계 출력은 신경망의 기본 성질이다. ACSF와 그 미분식은 Behler(2011)에 그대로 있다. "NNP는 짧은 거리를 학습하지 못하므로 ZBL 같은 pair 반발을 더해야 한다"도 방사선 손상·스퍼터링 MLIP 문헌에서 표준적인 인식이다.
+- **하지만 결론까지 식으로 정리한 문헌은 내가 아는 한 없다.** 보통은 반대쪽 현상으로 알려져 있다. "NNP 에너지가 짧은 거리에서 평평해져서(plateau) 원자가 서로 뚫고 지나간다"는 것이다. 이것은 14–15장의 수학(포화 + $dG/dr\to0$)이 만드는 바로 그 현상이다. 같은 성질이 "ZBL 없이는 위험하다"로도, "ZBL을 더하면 안전하다"로도 읽힌다.
+- 따라서 "Rs=0 G2와 tanh BPNN은 r→0에서 에너지가 유계이고, radial force가 0으로 가며, angular force는 O(1/r)이다. 그러므로 ZBL(∝1/r²)이 지배한다"는 짧은 명제는 논문이나 학위논문의 한 단락으로 충분히 쓸 수 있는 내용이다.
+
+---
+
+## 17. atom-wise vs bond-wise: switching을 영리하게 하는 방법
+
+### 17.1 왜 정의가 어려운가
+
+ZBL은 **pair(bond)** 단위 $V(r_{ij})$인데, BPNN/GNN 에너지는 **원자** 단위 $E_i$다. "가까운 쌍에서 ML을 끈다"를 쓰려면 원자 단위 가중치 $f_i$를 정의해야 하고, 그러면
+
+$$
+E=\sum_i f_i\,E_i^{ML}+\sum_{i<j}V_{ZBL}^{sw}(r_{ij}),\qquad
+\mathbf F_k\supset-\sum_i E_i^{ML}\,\frac{\partial f_i}{\partial\mathbf x_k}
+$$
+
+라는 항이 생긴다. 이 항에는 두 가지 문제가 있다.
+
+1. **$E_i^{ML}$의 기준(gauge)이 임의적이다.** 원자 에너지는 전체 합만 의미가 있다. 원자별 shift를 바꾸면 이 force가 바뀐다.
+2. **$f_i$가 원자 i의 모든 이웃 위치에 의존한다.** 그래서 충돌하지 않는 이웃(spectator)에게도 force가 생긴다. 한 쌍이 가까워지면 원자 i의 다른 결합 에너지까지 함께 꺼지는 것도 같은 문제다.
+
+### 17.2 해법 A: pair baseline + MLIP는 그대로 (이 저장소의 BPNN)
+
+$f_i\equiv1$로 두고 ZBL+S를 더한 다음, residual을 학습한다. 위의 문제가 처음부터 없다. 대신 MLIP의 단거리 거동이 유계·평탄해야 한다(14–15장). BPNN은 이 조건을 구조적으로 만족한다.
+
+### 17.3 해법 B: 매끄러운 atom-level 변수로 가중치 만들기 (DeePMD DP/ZBL, 연구실 SevenNet)
+
+DeePMD-kit의 DP/ZBL 모델은 원자마다 이웃 거리의 softmin $\sigma_i$를 만들고, 그것으로 DP와 ZBL을 보간한다. **연구실 SevenNet checkpoint(`pot_7net_chg_tot_l3i3_zbl_a0.104.pt`)의 TorchScript 코드를 읽어 보면 같은 계열의 방식이 들어 있다.**
+
+$$
+\bar r_{ij}=\frac{r_{ij}}{s_{ij}},\quad s_{ij}=\frac{Z_i^{0.23}+Z_j^{0.23}}{0.4685},\qquad
+\sigma_i=\frac{\sum_j c(\bar r_{ij})\,\bar r_{ij}\,e^{-\bar r_{ij}/\alpha}}{\sum_j c(\bar r_{ij})\,e^{-\bar r_{ij}/\alpha}},\quad\alpha=0.104
+$$
+
+$$
+\tau_i=\frac{\sigma_i-0.069}{0.070},\qquad f_i=\tau^5(70\tau^4-315\tau^3+540\tau^2-420\tau+126)\ (0\le\tau\le1),\qquad E_i\leftarrow f_i\,E_i^{ML}
+$$
+
+- $c(\bar r)$는 $\bar r<0.139$에서 1이고 $\bar r_{max}=5/\max_Z s\approx0.407$에서 0이 되는 cutoff다.
+- ZBL은 pair마다 같은 window($\bar r$ = 0.069–0.139, 즉 $r$ = 0.069·$s_{ij}$ – 0.139·$s_{ij}$)의 gromacs S(r)로 **더해진다**. Si–Si는 0.54–1.09 Å, Si–F는 0.51–1.04 Å, H–H는 0.30–0.59 Å이다.
+- 파일 이름의 `a0.104`가 α다. 이 재구성은 dimer에서 모델 출력과 소수 넷째 자리까지 일치했다(`sevennet_scan.py`의 `f_atom`).
+
+이 방식은 "atom-wise 가중치를 원자 환경의 매끄러운 함수로 만든다"는 점에서 영리하다. 에너지가 연속이고 gradient도 일관되어 NVE를 깨지 않는다. 하지만 17.1의 $-E_i^{ML}\nabla f_i$ 항은 그대로 남는다. 실제로 재 보면:
+
+<!-- demo:softmin -->
+
+![softmin](figures/softmin_switch.svg)
+
+*그림 2-6. Si(O 3개는 1.61 Å에 고정) + 접근하는 F. 다른 이웃 때문에 softmin σ가 hard min보다 높게 유지되어, ML은 pair window(0.51–1.04 Å)보다 훨씬 안쪽(≲0.5 Å)에서야 꺼진다. HTML 버전에서는 α와 원자 에너지 기준(offset)을 바꿔서 −f′·E 항이 기준에 따라 어떻게 바뀌는지 볼 수 있다.*
+
+<!-- demo:spill -->
+
+![spill](figures/spill.svg)
+
+*그림 2-7. Si17 cluster(다이아몬드 1·2차 이웃)에서 한 원자를 중심 원자로 밀어 넣었을 때, 움직이지 않는 15개 원자의 force 변화.*
+
+| 밀어 넣은 거리 (Å) | 1.1 | 0.8 | 0.7 | 0.6 | 0.5 | 0.4 | 0.2 | 0.12 |
+|---|---|---|---|---|---|---|---|---|
+| SevenNet total (MD에서 쓰는 값) | 1.8 | 17.6 | 35.1 | **62.3** | **58.5** | 15.1 | 7.1 | 8.4 |
+| └ switch 항 $-E_i^{ML}\nabla f_i$ | 0 | 9.6 | 26.3 | 53.8 | 54.3 | 12.7 | 0 | 0 |
+| SevenNet raw ML (switch 없이) | 1.8 | 8.7 | 10.6 | 12.5 | 16.0 | 2.9 | 12.5 | **72.1** |
+| BPNN Si3N4 (switch 없음) | 4.2 | 13.1 | 7.0 | 3.6 | 3.7 | 1.6 | 0.9 | 0.7 |
+| 중심 원자 $E_i^{ML}$ (eV) | 13 | 25 | 34 | 50 | 75 | 128 | 456 | 604 |
+
+(단위 eV/Å, 15개 spectator 중 최대 $\lvert\Delta F\rvert$)
+
+- 0.5–0.7 Å의 spectator force 피크는 **대부분 switch 항**이다. 이 거리에서 U-MLIP의 $E_i^{ML}$이 이미 30–80 eV로 커져 있어서, $\nabla f_i$에 곱해지는 값이 크다.
+- switch가 없으면 raw ML 부분이 0.12 Å에서 spectator에 72 eV/Å를 준다. 이것은 switch가 잘 막고 있다(total 8 eV/Å).
+- BPNN은 switch 없이도 spectator force가 전 구간에서 작다(≤13 eV/Å, r→0에서 감소).
+
+### 17.4 해법 C: bond(edge) 단위로 끄기
+
+가중치를 원자 에너지가 아니라 **descriptor/message의 edge 가중치**에 넣는 방법이다.
+
+$$
+\text{BPNN: } G_{i\mu}=\sum_j g_\mu(r_{ij})\,u(r_{ij})\,\big[1-s_{in}(r_{ij})\big],\qquad
+\text{GNN: } m_{ij}=R(r_{ij})\,u(r_{ij})\,\big[1-s_{in}(r_{ij})\big]\,(\cdots)
+$$
+
+$s_{in}$은 inner 안쪽에서 1이 되는 매끄러운 함수다.
+
+- 가까운 쌍은 MLIP 입장에서 **이웃이 아닌 것처럼** 보인다. 그 쌍의 에너지는 ZBL(pair)이 맡는다. pair 단위끼리 맞물리므로 17.1의 atom/bond 불일치가 사라진다.
+- 추가되는 force는 $\partial s_{in}/\partial r_{ij}$를 통해 **i, j 두 원자에만** 걸린다. $E_i^{ML}$ 전체가 곱해지지 않으므로 gauge 문제도 없다.
+- 대가: 재학습이 필요하다(descriptor가 바뀜). angular 함수에서는 $f_c(r_{ij})f_c(r_{ik})f_c(r_{jk})$ 각각에 inner 인자를 넣어야 한다. inner 안쪽에서는 MLIP가 "두 원자가 겹쳐 있지만 서로 모르는" 상태를 보게 된다. 이 상태의 에너지는 다른 이웃들과의 결합으로 정해지므로 대체로 합리적이다.
+- ACE(pacemaker) 같은 일부 구현에는 radial basis에 inner cutoff를 두고 core repulsion으로 넘기는 옵션이 있는 것으로 알고 있다. 정확한 형태는 해당 문서를 확인하기 바란다.
+
+### 17.5 비교
+
+| | A: pair baseline (현재 BPNN) | B: atom-level softmin (DP/ZBL, 연구실 SevenNet) | C: edge-level inner cutoff |
+|---|---|---|---|
+| MLIP 단거리 거동 요구 | 유계·평탄해야 함 | 덜 중요 (꺼짐) | 덜 중요 (그 edge가 없음) |
+| 추가 force 항 | 없음 | $-E_i^{ML}\nabla f_i$ → spectator 포함, gauge 의존 | $\partial s_{in}/\partial r_{ij}$ → i, j에만 |
+| 다른 결합까지 꺼지나 | 아니오 | 예 (원자 i 전체) | 아니오 |
+| 재학습 | residual 학습만 | 필요 | 필요 |
+| 측정된 spectator 최대 $\lvert\Delta F\rvert$ | BPNN ≤13 eV/Å | 62 eV/Å (0.6 Å) | (미측정) |
+
+B를 유지한다면 두 가지를 개선할 수 있다. 하나는 **$E_i^{ML}$을 고립 원자 에너지 기준으로 둔 뒤 $f_i$를 곱하는 것**($E_i^{ML}-E_i^{atom}$; switch 항의 gauge 의존을 줄인다)이다. 다른 하나는 **switch 구간에서 $E_i^{ML}$이 커지지 않도록 학습 데이터를 구성하는 것**이다.
+
+---
+
+## 18. message passing U-MLIP에서 spectator force가 튀는 이유, 그리고 수렴값
+
+### 18.1 locality의 차이
+
+- **BPNN:** $E_k$는 원자 k의 cutoff(6 Å) 안의 원자 위치에만 의존한다. 충돌 쌍(i, j)과 멀리 떨어진 spectator k의 force는 $-\partial E_i/\partial G_i\cdot\partial G_i/\partial\mathbf x_k$를 통해서만 영향을 받는다. 14.2의 상한 때문에 유계이고, 포화되면 작아진다. 진공 dimer에서 fit한 근사가 slab에서도 통했던 이유와 같다. 주변 원자 간 거리는 거의 변하지 않으므로 그들의 descriptor도 거의 변하지 않는다.
+- **message passing (T층):** $h_i^{(t+1)}=\phi\big(h_i^{(t)},\sum_j R(r_{ij})\,Y(\hat r_{ij})\otimes h_j^{(t)}\big)$. 충돌한 edge (i, j)의 학습 범위 밖 입력이 $h_i$를 바꾸고, 그 변화가 다음 층에서 i의 이웃 k로 전달된다. 그러면 k의 force에 $R'(r_{ik})\,h_i$ 같은 항이 생긴다. $r_{ik}$는 변하지 않았는데 $h_i$가 커졌기 때문이다. receptive field는 $T\cdot r_c$(SevenNet 5 Å × 여러 층)이다. 출력 MLP와 filter는 SiLU처럼 위로 열린 함수이고, tensor product는 곱셈이므로 증폭될 수 있다.
+
+### 18.2 radial basis(Bessel)는 유한값으로 수렴하고 기울기는 0이다
+
+SevenNet checkpoint의 radial basis(TorchScript에서 확인):
+
+$$
+B_n(r)=0.4\,\frac{\sin(c_n r)}{r},\quad c_n=[0.48,\,1.08,\,1.70,\,2.36,\,3.02,\,3.72,\,4.42,\,5.14]\ \text{Å}^{-1}\ (\text{학습된 값}),\quad r_c=5\ \text{Å}
+$$
+
+envelope는 4.5–5 Å에서만 작동하는 XPLOR형이다.
+
+$$
+\frac{\sin(cr)}{r}=c-\frac{c^3r^2}{6}+\cdots\ \Rightarrow\ B_n(0)=0.4\,c_n,\quad B_n'(0)=0
+$$
+
+- **유한하다:** $B_n(0)$ = 0.19 – 2.06이다. 하지만 데이터 범위(r ≥ 1.5 Å)에서 본 최대값과 비교하면 n = 1에서 1.1배, n ≥ 6에서 7.8배다. 범위 밖 입력이다.
+- **기울기가 0이다:** G2(Rs=0)와 같은 구조다. 충돌 edge의 radial 입력은 r→0에서 변하지 않게 된다.
+- 방향 $Y_{lm}(\hat r)$은 angular ACSF처럼 수직 방향으로 ~1/r 기울기를 만든다.
+- 수렴은 $r\ll1/c_{max}\approx0.2$ Å에서 일어난다. 그래서 0.3 Å과 0.01 Å 사이에서는 여전히 크게 변한다.
+
+<!-- demo:bessel -->
+
+![bessel](figures/bessel_basis.svg)
+
+### 18.3 그래서 수렴값을 미리 계산할 수 있나? → 있다
+
+dimer라면 방향이 고정되므로 모든 입력이 유한한 극한을 갖는다. 모델을 r ≈ 10⁻³ Å에서 평가하면 그것이 극한값이다. 실측(연구실 SevenNet, raw ML 부분, 분리된 원자 기준):
+
+| pair | 0.3 Å | 0.1 Å | 0.03 Å | 0.01 Å | 10⁻³ Å | 3×10⁻⁴ Å |
+|---|---|---|---|---|---|---|
+| Si–Si | 655 | 1732 | 1928 | 1946 | 1948.8 | **1948.8** |
+| Si–F | 140 | 296 | 333 | 336 | 336.8 | **336.8** |
+| Si–O | 312 | 674 | 739 | 745 | 745.8 | **745.8** |
+| C–F | 415 | 748 | 809 | 814 | 814.9 | **814.9** |
+| N–N | 653 | 1504 | 1656 | 1670 | 1672.1 | **1672.1** |
+| H–H | 6.5 | 18.5 | 20.8 | 21.0 | 21.1 | **21.1** |
+
+(eV) 비교: bare ZBL Si–Si는 0.3 Å에서 1713 eV이고 r→0에서 발산한다.
+
+<!-- demo:u7dimer -->
+
+![u7](figures/sevennet_dimer.svg)
+
+*그림 2-8. SevenNet raw ML(빨강)은 1.0–1.3 Å에서 ZBL과 거의 같다가 그 아래에서 무르다(13장). r→0에서 유한값으로 수렴한다. 실제 MD에서 쓰는 total(점선)은 switch 때문에 ZBL을 따라간다.*
+
+정리하면:
+
+- **dimer 에너지의 극한:** 계산할 수 있다(위 표).
+- **다체 환경에서 spectator force의 크기:** "몇으로 수렴하나"보다 **충돌 경로를 따라 spectator force를 직접 재는 것**이 실용적이다. 17.3처럼 cluster/slab에서 한 원자를 밀어 넣고 나머지 원자의 force 변화를 보면 된다(`sevennet_scan.py`의 `spill()`). 이번 측정에서 큰 값은 r→0이 아니라 **switch 구간(0.5–0.7 Å)**에서 나왔다.
+
+---
+
+## 19. 2부 정리: 이 저장소에 대해
+
+- BPNN(SIMPLE-NN, tanh, Rs=0 G2)은 r→0에서 에너지가 유계($\lvert E_i-b\rvert<\sum\lvert w\rvert$)이고, radial force는 0으로 가며, angular force는 O(1/r)이다. 그러므로 ZBL+S overlay 방식은 **경험적 믿음이 아니라 식으로 정당화된다.** 남는 확인 사항은 중간 구간(0.5–1.5 Å)의 $\lvert F_{NN}\rvert/F_{ZBL}$이고, SiO2 Si–Si 1.5 Å이 가장 크다.
+- 연구실 SevenNet(`…_zbl_a0.104`)은 atom-level softmin switch를 쓴다. NVE는 지키지만 switch 구간에서 spectator force가 커진다(Si17에서 62 eV/Å). 줄이려면 (1) $E_i^{ML}$ 기준을 고립 원자로 옮기고, (2) α를 줄이거나 window를 조정하고, (3) edge-level inner cutoff(17.4)를 쓰는 방법이 있다.
+- U-MLIP를 reference로 쓸 때는 softening 때문에 짧은 거리 데이터를 DFT로 채우는 것이 가장 확실하다(9장, 13장).
+
+---
+
 ## 참고 문헌
 
 - J. F. Ziegler, J. P. Biersack, U. Littmark, *The Stopping and Range of Ions in Matter*, Vol. 1, Pergamon (1985).
@@ -388,3 +739,10 @@ $$
 - J. Byggmästar, A. Hamedani, K. Nordlund, F. Djurabekova, "Machine-learning interatomic potential for radiation damage and defects in tungsten", *Phys. Rev. B* **100**, 144105 (2019).
 - E. Hairer, C. Lubich, G. Wanner, *Geometric Numerical Integration*, Springer (2006). symplectic 적분기와 에너지 보존.
 - LAMMPS 문서: `pair_style zbl`, `pair_style lj/gromacs`, `pair_style tersoff/zbl`.
+- J. Behler, M. Parrinello, "Generalized neural-network representation of high-dimensional potential-energy surfaces", *Phys. Rev. Lett.* **98**, 146401 (2007).
+- J. Behler, "Atom-centered symmetry functions for constructing high-dimensional neural network potentials", *J. Chem. Phys.* **134**, 074106 (2011).
+- B. Deng et al., "Overcoming systematic softening in universal machine learning interatomic potentials by fine-tuning" (arXiv 2024; *npj Comput. Mater.* 2025).
+- J. Klicpera (Gasteiger), J. Groß, S. Günnemann, "Directional message passing for molecular graphs" (DimeNet), ICLR (2020). Bessel radial basis + polynomial envelope.
+- S. Batzner et al., "E(3)-equivariant graph neural networks for data-efficient and accurate interatomic potentials" (NequIP), *Nat. Commun.* **13**, 2453 (2022).
+- Y. Park et al., "Scalable parallel algorithm for graph neural network interatomic potentials in molecular dynamics simulations" (SevenNet), *J. Chem. Theory Comput.* **20**, 4857 (2024).
+- DeePMD-kit 문서: DP/ZBL 모델 (`sw_rmin`, `sw_rmax`, `smin_alpha`).
