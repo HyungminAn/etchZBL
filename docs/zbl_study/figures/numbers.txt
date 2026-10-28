@@ -1,0 +1,68 @@
+== shift C and outer force (training cutoffs) ==
+Si-Si   1.598  2.054  E_zbl(r1)=   7.19  C=  -3.56  F_zbl(rc)=  5.27
+Si-F    1.145  1.472  E_zbl(r1)=  22.50  C= -12.56  F_zbl(rc)= 23.74
+Si-C    1.208  1.553  E_zbl(r1)=  13.80  C=  -7.68  F_zbl(rc)= 13.79
+Si-H    1.079  1.388  E_zbl(r1)=   5.39  C=  -3.24  F_zbl(rc)=  5.99
+C-F     0.908  1.168  E_zbl(r1)=  28.57  C= -17.42  F_zbl(rc)= 37.64
+F-F     0.997  1.282  E_zbl(r1)=  27.83  C= -16.40  F_zbl(rc)= 33.69
+H-H     0.525  0.675  E_zbl(r1)=   5.30  C=  -3.83  F_zbl(rc)= 10.75
+== closest approach (head-on), ZBL vs ZBL+S ==
+Si-Si  Ecm=   10  r_min(ZBL)=1.487  r_min(ZBL+S)=1.388
+Si-Si  Ecm=   30  r_min(ZBL)=1.148  r_min(ZBL+S)=1.116
+Si-Si  Ecm=  100  r_min(ZBL)=0.828  r_min(ZBL+S)=0.819
+Si-Si  Ecm=  300  r_min(ZBL)=0.585  r_min(ZBL+S)=0.583
+Si-Si  Ecm= 1000  r_min(ZBL)=0.376  r_min(ZBL+S)=0.375
+Si-F   Ecm=   10  r_min(ZBL)=1.397  r_min(ZBL+S)=1.144
+Si-F   Ecm=   30  r_min(ZBL)=1.062  r_min(ZBL+S)=0.965
+Si-F   Ecm=  100  r_min(ZBL)=0.749  r_min(ZBL+S)=0.722
+Si-F   Ecm=  300  r_min(ZBL)=0.518  r_min(ZBL+S)=0.510
+Si-F   Ecm= 1000  r_min(ZBL)=0.322  r_min(ZBL+S)=0.320
+C-F    Ecm=   10  r_min(ZBL)=1.219  r_min(ZBL+S)=0.919
+C-F    Ecm=   30  r_min(ZBL)=0.895  r_min(ZBL+S)=0.776
+C-F    Ecm=  100  r_min(ZBL)=0.603  r_min(ZBL+S)=0.569
+C-F    Ecm=  300  r_min(ZBL)=0.396  r_min(ZBL+S)=0.387
+C-F    Ecm= 1000  r_min(ZBL)=0.227  r_min(ZBL+S)=0.225
+== NVE: max |dE| during collision, final dE ==
+(a) ZBL + S(r) [gromacs]                 max|dE|=   0.4435  final dE=   0.0111  r_end=79.80
+(b) hard cutoff (no S)                   max|dE|=   2.2940  final dE=   0.0233  r_end=79.78
+(c) Fermi blend, full gradient           max|dE|=   0.5195  final dE=   0.0381  r_end=77.45
+(d) Fermi blend, missing f'(r) term      max|dE|=   7.3121  final dE=  -0.0114  r_end=77.45
+(e) velocity-dependent ZBL on/off        max|dE|=   6.2604  final dE=  -3.0080  r_end=74.19
+_ref_sw_morse                            max|dE|=   0.5160  final dE=   0.0138  r_end=78.46
+== window width vs dt (N-N head-on, final |dE| after one collision) ==
+bare ZBL          Ecm=   10 dt=1.0 fs  final|dE|=0.0550 eV
+bare ZBL          Ecm=   10 dt=0.5 fs  final|dE|=0.0137 eV
+bare ZBL          Ecm=   10 dt=0.2 fs  final|dE|=0.0022 eV
+bare ZBL          Ecm=   10 dt=0.1 fs  final|dE|=0.0005 eV
+bare ZBL          Ecm=   30 dt=1.0 fs  final|dE|=0.1881 eV
+bare ZBL          Ecm=   30 dt=0.5 fs  final|dE|=0.0430 eV
+bare ZBL          Ecm=   30 dt=0.2 fs  final|dE|=0.0069 eV
+bare ZBL          Ecm=   30 dt=0.1 fs  final|dE|=0.0017 eV
+bare ZBL          Ecm=  100 dt=1.0 fs  final|dE|=11.1753 eV
+bare ZBL          Ecm=  100 dt=0.5 fs  final|dE|=0.2211 eV
+bare ZBL          Ecm=  100 dt=0.2 fs  final|dE|=0.0233 eV
+bare ZBL          Ecm=  100 dt=0.1 fs  final|dE|=0.0058 eV
+wide 0.78/1.00    Ecm=   10 dt=1.0 fs  final|dE|=1.4643 eV
+wide 0.78/1.00    Ecm=   10 dt=0.5 fs  final|dE|=0.0356 eV
+wide 0.78/1.00    Ecm=   10 dt=0.2 fs  final|dE|=0.0057 eV
+wide 0.78/1.00    Ecm=   10 dt=0.1 fs  final|dE|=0.0010 eV
+wide 0.78/1.00    Ecm=   30 dt=1.0 fs  final|dE|=0.5713 eV
+wide 0.78/1.00    Ecm=   30 dt=0.5 fs  final|dE|=0.4822 eV
+wide 0.78/1.00    Ecm=   30 dt=0.2 fs  final|dE|=0.0160 eV
+wide 0.78/1.00    Ecm=   30 dt=0.1 fs  final|dE|=0.0034 eV
+wide 0.78/1.00    Ecm=  100 dt=1.0 fs  final|dE|=26.4479 eV
+wide 0.78/1.00    Ecm=  100 dt=0.5 fs  final|dE|=6.0082 eV
+wide 0.78/1.00    Ecm=  100 dt=0.2 fs  final|dE|=0.0005 eV
+wide 0.78/1.00    Ecm=  100 dt=0.1 fs  final|dE|=0.0083 eV
+narrow 0.95/1.00  Ecm=   10 dt=1.0 fs  final|dE|=5.1681 eV
+narrow 0.95/1.00  Ecm=   10 dt=0.5 fs  final|dE|=1.2423 eV
+narrow 0.95/1.00  Ecm=   10 dt=0.2 fs  final|dE|=0.0149 eV
+narrow 0.95/1.00  Ecm=   10 dt=0.1 fs  final|dE|=0.0204 eV
+narrow 0.95/1.00  Ecm=   30 dt=1.0 fs  final|dE|=0.5713 eV
+narrow 0.95/1.00  Ecm=   30 dt=0.5 fs  final|dE|=2.0120 eV
+narrow 0.95/1.00  Ecm=   30 dt=0.2 fs  final|dE|=0.8400 eV
+narrow 0.95/1.00  Ecm=   30 dt=0.1 fs  final|dE|=0.0980 eV
+narrow 0.95/1.00  Ecm=  100 dt=1.0 fs  final|dE|=19.9385 eV
+narrow 0.95/1.00  Ecm=  100 dt=0.5 fs  final|dE|=9.3819 eV
+narrow 0.95/1.00  Ecm=  100 dt=0.2 fs  final|dE|=1.4668 eV
+narrow 0.95/1.00  Ecm=  100 dt=0.1 fs  final|dE|=0.0644 eV
